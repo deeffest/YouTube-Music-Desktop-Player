@@ -2,7 +2,7 @@ from PyQt5.QtCore import QTimer
 from qfluentwidgets import MessageBoxBase, SubtitleLabel, LineEdit
 
 
-class InputDialog(MessageBoxBase):
+class InputMessageBox(MessageBoxBase):
     def __init__(self, msg, text=None, parent=None):
         super().__init__(parent)
         self.title_label = SubtitleLabel(self)

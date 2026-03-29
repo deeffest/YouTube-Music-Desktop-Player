@@ -1,24 +1,27 @@
 <img src="resources/icons/logo.png" width="128" height="128" alt="logo"/>
 
 # Youtube Music Desktop Player
-Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform desktop application using [QtWebEngine](https://wiki.qt.io/QtWebEngine).
+Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform desktop application for Windows and Linux using [QtWebEngine](https://wiki.qt.io/QtWebEngine).
 
 <img src="https://img.shields.io/badge/PyQt-5.15.11-00B16A"/> <img src="https://img.shields.io/badge/Python-3.13.7-00B16A"/> <img src="https://img.shields.io/badge/Platform-Win32%20|%20Linux-00B16A"/>
 
 ## Screenshots
-<img src="resources/images/main_window.png" width="100%"/>
+<img src="resources/images/screenshot4.png" width="100%"/>
 
 ## Features
-- Built-in yt-dlp
-- Picture-in-Picture
-- Windows thumbnail buttons
-- Skip video ads
-- Discord Rich Presence
-- System tray icon
-- Playback hotkeys
-- Audio-only mode
-- Non-stop music
-- Hide mini player
+- Built-in yt-dlp - **Download**
+- Picture-in-Picture - **Multitask**
+- Windows thumbnail buttons - **Control**
+- Discord Rich Presence - **Share**
+- System tray icon - **Minimize**
+- Playback hotkeys - **Shortcut**
+
+## Plugins
+- Skip video ads - **Say** goodbye to ads
+- Audio-only mode - **Save** on data usage
+- Non-stop music - **Forget** about "Video paused..."
+- Hide mini player - **Hide** what you don't need
+- I'm not a kid! - **Don't worry** about "Miniplayer is off..."
 
 ## Get App
 Just download and extract ↓

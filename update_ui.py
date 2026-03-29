@@ -1,7 +1,6 @@
 import subprocess
 
 ui_files = [
-    "about_dialog",
     "main_window",
     "picture_in_picture_dialog",
     "settings_dialog",

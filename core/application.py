@@ -56,6 +56,9 @@ class SingletonApplication(QApplication):
 
 
 def exception_hook(type, value, tb):
+    if issubclass(type, KeyboardInterrupt):
+        sys.__excepthook__(type, value, tb)
+        return
     logging.error("".join(traceback.format_exception(type, value, tb)))
     error_msg = "".join(traceback.format_exception(type, value, tb))
     signal_bus.app_error_sig.emit(error_msg)

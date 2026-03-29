@@ -1,3 +1,18 @@
+v1.25.0-rc1 is Here! (29.03.2026)
+- Added light theme.
+- Added "I'm not a kid!" plugin.
+- Added PiP opacity and always-on-top settings.
+- Added yt-dlp format settings (audio: Opus, M4A; video: MP4, WebM). 
+- Added yt-dlp "Embed metadata" setting.
+- Added icon color setting (system tray). 
+- Added "Delete from device" button for yt-dlp, ffmpeg and deno.
+- Changed toolbar style.
+- Changed main context menu.
+- Changed settings dialog.
+- Removed proxy server functionality.
+- Removed "Convert to MP3" setting for yt-dlp.
+- Other fixes and improvements.
+
 v1.24.3 is Here! (26.12.2025)
 - Fixed a problem where the main window would go up when switching its visibility in GNOME and some other DEs. (Take 2)
 - Fixed a bug with the progress bar in the `Discord Rich Presence` plugin. (Take 2)

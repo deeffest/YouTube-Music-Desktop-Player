@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+
 from PyQt5.QtCore import QObject, pyqtSlot
 
 if TYPE_CHECKING:
@@ -27,16 +28,20 @@ class WebChannelBackend(QObject):
         )
 
         if is_empty:
-            window_title = "Youtube Music Desktop Player"
+            window_title = self.window.display_name
             self.window.clear_discord_rpc()
             self.window.go_to_youtube_action.setEnabled(False)
             self.window.go_to_youtube_shortcut.setEnabled(False)
+            self.window.musicbrainz_action.setEnabled(False)
+            self.window.musicbrainz_shortcut.setEnabled(False)
         else:
-            window_title = f"{self.window.title} - Youtube Music Desktop Player"
+            window_title = f"{self.window.title} - {self.window.display_name}"
             self.window.update_picture_in_picture_song_info()
             self.window.update_discord_rpc()
             self.window.go_to_youtube_action.setEnabled(True)
             self.window.go_to_youtube_shortcut.setEnabled(True)
+            self.window.musicbrainz_action.setEnabled(True)
+            self.window.musicbrainz_shortcut.setEnabled(True)
 
         self.window.update_download_buttons_state()
         self.window.setWindowTitle(window_title)

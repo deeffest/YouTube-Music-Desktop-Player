@@ -3,7 +3,6 @@ import requests
 from typing import TYPE_CHECKING
 
 from PyQt5.QtCore import QThread, pyqtSignal
-from core.helpers import get_proxies
 
 if TYPE_CHECKING:
     from core.main_window import MainWindow
@@ -21,13 +20,6 @@ class UpdateChecker(QThread):
             response = requests.get(
                 f"https://api.github.com/repos/{self.window.author}/"
                 f"{self.window.name}/releases/latest",
-                proxies=get_proxies(
-                    self.window.proxy_type_setting,
-                    self.window.proxy_host_name_setting,
-                    self.window.proxy_port_setting,
-                    self.window.proxy_login_setting,
-                    self.window.proxy_password_setting,
-                ),
                 timeout=10,
             )
             response.raise_for_status()

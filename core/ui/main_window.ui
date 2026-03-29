@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>YouTube Music Desktop Player</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -34,22 +34,22 @@
      <widget class="QFrame" name="ToolBar">
       <layout class="QHBoxLayout" name="toolbar_layout">
        <property name="spacing">
-        <number>6</number>
+        <number>0</number>
        </property>
        <property name="leftMargin">
         <number>6</number>
        </property>
        <property name="topMargin">
-        <number>6</number>
+        <number>4</number>
        </property>
        <property name="rightMargin">
         <number>6</number>
        </property>
        <property name="bottomMargin">
-        <number>6</number>
+        <number>4</number>
        </property>
        <item>
-        <widget class="ToolButton" name="back_tbutton">
+        <widget class="TransparentToolButton" name="back_tbutton">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -59,7 +59,7 @@
         </widget>
        </item>
        <item>
-        <widget class="ToolButton" name="forward_tbutton">
+        <widget class="TransparentToolButton" name="forward_tbutton">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -69,64 +69,118 @@
         </widget>
        </item>
        <item>
-        <widget class="ToolButton" name="home_tbutton">
+        <widget class="TransparentToolButton" name="home_tbutton">
          <property name="toolTip">
           <string>Home</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="ToolButton" name="reload_tbutton">
+        <widget class="TransparentToolButton" name="reload_tbutton">
          <property name="toolTip">
           <string>Reload</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="LineEdit" name="url_line_edit">
-         <property name="focusPolicy">
-          <enum>Qt::StrongFocus</enum>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
-         <property name="readOnly">
-          <bool>false</bool>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
          </property>
-         <property name="placeholderText">
-          <string>https://music.youtube.com/</string>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>6</width>
+           <height>0</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="BodyLabel" name="url_label">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>30</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    color: rgb(210, 210, 210);
+    background-color: rgb(33, 33, 33);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 3px 6px;
+}
+QLabel:hover {
+    border: 1px solid rgb(255, 41, 41);
+}
+</string>
+         </property>
+         <property name="text">
+          <string>🔒 music.youtube.com</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="DropDownToolButton" name="download_ddtbutton">
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>6</width>
+           <height>0</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="TransparentDropDownToolButton" name="download_ddtbutton">
          <property name="toolTip">
           <string>Download...</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="ToolButton" name="watch_in_pip_tbutton">
+        <widget class="TransparentToolButtonWithMenu" name="watch_in_pip_tbutton">
          <property name="toolTip">
           <string>Watch in PiP</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="ToolButton" name="settings_tbutton">
+        <widget class="TransparentToolButtonWithMenu" name="settings_ddtbutton">
          <property name="toolTip">
           <string>Settings...</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="ToolButton" name="bug_report_tbutton">
+        <widget class="TransparentDropDownToolButton" name="plugins_ddtbutton">
          <property name="toolTip">
-          <string>Bug Report</string>
+          <string>Plugins...</string>
+         </property>
+         <property name="text">
+          <string/>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="ToolButton" name="about_tbutton">
+        <widget class="TransparentToolButtonWithMenu" name="more_ddtbutton">
          <property name="toolTip">
-          <string>About...</string>
+          <string>More...</string>
          </property>
         </widget>
        </item>
@@ -155,17 +209,22 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ToolButton</class>
+   <class>TransparentToolButton</class>
    <extends>QToolButton</extends>
    <header>qfluentwidgets</header>
   </customwidget>
   <customwidget>
-   <class>LineEdit</class>
-   <extends>QLineEdit</extends>
+   <class>TransparentToolButtonWithMenu</class>
+   <extends>QToolButton</extends>
    <header>qfluentwidgets</header>
   </customwidget>
   <customwidget>
-   <class>DropDownToolButton</class>
+   <class>BodyLabel</class>
+   <extends>QLabel</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>TransparentDropDownToolButton</class>
    <extends>QToolButton</extends>
    <header>qfluentwidgets</header>
   </customwidget>

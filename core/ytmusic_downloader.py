@@ -5,10 +5,9 @@ import logging
 import requests
 import platform
 import subprocess
-
 from typing import TYPE_CHECKING
+
 from PyQt5.QtCore import QThread, pyqtSignal
-from core.helpers import get_proxies
 
 if TYPE_CHECKING:
     from core.main_window import MainWindow
@@ -33,57 +32,21 @@ class DownloadThread(QThread):
         url,
         download_folder,
         use_cookies,
-        convert_to_mp3,
         auto_update,
+        embed_metadata,
+        ytdlp_format,
         parent=None,
     ):
         super().__init__(parent)
         self.window: "MainWindow" = parent
-
         self.url = url
         self.download_folder = download_folder
         self.use_cookies = use_cookies
-        self.convert_to_mp3 = convert_to_mp3
         self.auto_update = auto_update
+        self.embed_metadata = embed_metadata
+        self.ytdlp_format = ytdlp_format
 
-        base_path = os.path.join(os.path.expanduser("~"), self.window.name)
-        self.bin_folder = os.path.join(base_path, "bin")
-
-        if platform.system() == "Windows":
-            self.ffmpeg_url = (
-                "https://github.com/deeffest/pytubefix/"
-                "releases/download/v8.12.3/FFmpeg-Win32.exe"
-            )
-            self.deno_url = (
-                "https://github.com/deeffest/pytubefix/"
-                "releases/download/v8.12.3/Deno-Win32.exe"
-            )
-            self.ytdlp_url = (
-                "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
-            )
-            self.ffmpeg_path = os.path.join(self.bin_folder, "ffmpeg.exe")
-            self.deno_path = os.path.join(self.bin_folder, "deno.exe")
-            self.ytdlp_path = os.path.join(self.bin_folder, "yt-dlp.exe")
-        else:
-            self.ffmpeg_url = (
-                "https://github.com/deeffest/pytubefix/"
-                "releases/download/v8.12.3/FFmpeg-Linux"
-            )
-            self.deno_url = (
-                "https://github.com/deeffest/pytubefix/"
-                "releases/download/v8.12.3/Deno-Linux"
-            )
-            self.ytdlp_url = (
-                "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux"
-            )
-            self.ffmpeg_path = os.path.join(self.bin_folder, "ffmpeg")
-            self.deno_path = os.path.join(self.bin_folder, "deno")
-            self.ytdlp_path = os.path.join(self.bin_folder, "yt-dlp_linux")
-
-        self.cookies_txt = os.path.join(base_path, "__cache__", "cookies.txt")
-        self.cookies_sqlite = os.path.join(
-            self.window.webview.page().profile().persistentStoragePath(), "Cookies"
-        )
+        self.format_name = {0: "opus", 1: "m4a", 2: "mp4", 3: "webm"}
 
     def run(self):
         self.ensure_tools()
@@ -96,13 +59,6 @@ class DownloadThread(QThread):
             tmp_path = dst_path + ".tmp"
             r = requests.get(
                 url,
-                proxies=get_proxies(
-                    self.window.proxy_type_setting,
-                    self.window.proxy_host_name_setting,
-                    self.window.proxy_port_setting,
-                    self.window.proxy_login_setting,
-                    self.window.proxy_password_setting,
-                ),
                 stream=True,
                 timeout=10,
             )
@@ -115,31 +71,31 @@ class DownloadThread(QThread):
             if platform.system() != "Windows":
                 os.chmod(dst_path, 0o755)
 
-        os.makedirs(self.bin_folder, exist_ok=True)
-        if not os.path.exists(self.ffmpeg_path):
+        os.makedirs(os.path.join(self.window.home_dir, "bin"), exist_ok=True)
+        if not os.path.exists(self.window.ffmpeg_path):
             self.downloading_ffmpeg.emit()
-            download_binary(self.ffmpeg_url, self.ffmpeg_path)
+            download_binary(self.window.ffmpeg_url, self.window.ffmpeg_path)
             self.downloading_ffmpeg_success.emit()
-        if not os.path.exists(self.deno_path):
+        if not os.path.exists(self.window.deno_path):
             self.downloading_deno.emit()
-            download_binary(self.deno_url, self.deno_path)
+            download_binary(self.window.deno_url, self.window.deno_path)
             self.downloading_deno_success.emit()
-        if not os.path.exists(self.ytdlp_path):
+        if not os.path.exists(self.window.ytdlp_path):
             self.downloading_ytdlp.emit()
-            download_binary(self.ytdlp_url, self.ytdlp_path)
+            download_binary(self.window.ytdlp_url, self.window.ytdlp_path)
             self.downloading_ytdlp_success.emit()
 
     def export_cookies(self):
-        if not os.path.exists(self.cookies_sqlite):
+        if not os.path.exists(self.window.cookies_sqlite):
             return
-        os.makedirs(os.path.dirname(self.cookies_txt), exist_ok=True)
-        conn = sqlite3.connect(self.cookies_sqlite)
+        os.makedirs(os.path.dirname(self.window.cookies_txt), exist_ok=True)
+        conn = sqlite3.connect(self.window.cookies_sqlite)
         cursor = conn.cursor()
 
         def chrome_time_to_unix(chrome_time):
             return int(chrome_time / 1_000_000 - 11644473600) if chrome_time else 0
 
-        with open(self.cookies_txt, "w", encoding="utf-8") as f:
+        with open(self.window.cookies_txt, "w", encoding="utf-8") as f:
             f.write("# Netscape HTTP Cookie File\n")
             for row in cursor.execute(
                 "SELECT host_key, path, is_secure, expires_utc, name, value "
@@ -157,54 +113,69 @@ class DownloadThread(QThread):
 
     def emit_command(self):
         url = self.url.replace("music.youtube.com", "www.youtube.com")
+        is_playlist = "list=" in url and "watch" not in url
 
         output_template = (
             "%(playlist_title).80B/%(title).150B.%(ext)s"
-            if "list=" in url and "watch" not in url
+            if is_playlist
             else "%(title).150B.%(ext)s"
         )
 
+        is_video = self.ytdlp_format in (2, 3)
+
+        if self.ytdlp_format == 1:
+            format_selector = "ba[ext=m4a]/ba/best"
+        elif self.ytdlp_format == 2:
+            format_selector = (
+                "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best"
+            )
+        elif self.ytdlp_format == 3:
+            format_selector = (
+                "bestvideo[ext=webm]+bestaudio[ext=webm]/bestvideo+bestaudio/best"
+            )
+        else:
+            format_selector = "ba/best"
+
         command = [
-            self.ytdlp_path,
+            self.window.ytdlp_path,
             "-f",
-            "ba/best",
-            "--extract-audio",
-            "--audio-format",
-            f"{"mp3" if self.convert_to_mp3 else "opus"}",
+            format_selector,
             "--ffmpeg-location",
-            self.ffmpeg_path,
+            self.window.ffmpeg_path,
             "-o",
             output_template,
             "--print-json",
             "--socket-timeout",
             "10",
             "--js-runtimes",
-            f"deno:{self.deno_path}",
+            f"deno:{self.window.deno_path}",
         ]
+
+        if is_video:
+            command += ["--merge-output-format", self.format_name[self.ytdlp_format]]
+        else:
+            command += [
+                "--extract-audio",
+                "--audio-format",
+                self.format_name[self.ytdlp_format],
+            ]
+
+        if self.embed_metadata:
+            command += ["--embed-metadata"]
+            if self.ytdlp_format != 3:
+                command += [
+                    "--embed-thumbnail",
+                    "--convert-thumbnails",
+                    "jpg",
+                    "--ppa",
+                    "ThumbnailsConvertor+ffmpeg_o:-vf crop=ih:ih",
+                ]
 
         if "watch" in url and "list=" in url:
             command.append("--no-playlist")
 
-        if self.use_cookies and os.path.exists(self.cookies_txt):
-            command += ["--cookies", self.cookies_txt]
-
-        proxy_config = {
-            "proxy_type": self.window.proxy_type_setting,
-            "host_name": self.window.proxy_host_name_setting,
-            "port": self.window.proxy_port_setting,
-            "login": self.window.proxy_login_setting,
-            "password": self.window.proxy_password_setting,
-        }
-
-        proxies = {}
-        if proxy_config["proxy_type"] == "DefaultProxy":
-            proxies = get_proxies(proxy_type="DefaultProxy")
-        elif proxy_config["proxy_type"] in ["HttpProxy", "Socks5Proxy"]:
-            if proxy_config["host_name"] and proxy_config["port"]:
-                proxies = get_proxies(**proxy_config)
-
-        if "https" in proxies:
-            command += ["--proxy", proxies["https"]]
+        if self.use_cookies and os.path.exists(self.window.cookies_txt):
+            command += ["--cookies", self.window.cookies_txt]
 
         command.append(url)
         self.start_ytdlp(command)
@@ -219,7 +190,7 @@ class DownloadThread(QThread):
                     cflags = subprocess.CREATE_NO_WINDOW
 
                 subprocess.run(
-                    [self.ytdlp_path, "--update"],
+                    [self.window.ytdlp_path, "--update"],
                     check=False,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,

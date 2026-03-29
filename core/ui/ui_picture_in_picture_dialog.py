@@ -22,8 +22,6 @@ class Ui_PictureInPictureDialog(object):
         PictureInPictureDialog.setSizePolicy(sizePolicy)
         PictureInPictureDialog.setMinimumSize(QtCore.QSize(360, 150))
         PictureInPictureDialog.setMaximumSize(QtCore.QSize(16777215, 16777215))
-        PictureInPictureDialog.setMouseTracking(True)
-        PictureInPictureDialog.setStyleSheet("")
         self.verticalLayout = QtWidgets.QVBoxLayout(PictureInPictureDialog)
         self.verticalLayout.setContentsMargins(0, 18, 0, 0)
         self.verticalLayout.setSpacing(0)
@@ -190,7 +188,7 @@ class Ui_PictureInPictureDialog(object):
 
     def retranslateUi(self, PictureInPictureDialog):
         _translate = QtCore.QCoreApplication.translate
-        PictureInPictureDialog.setWindowTitle(_translate("PictureInPictureDialog", "Dialog"))
+        PictureInPictureDialog.setWindowTitle(_translate("PictureInPictureDialog", "Picture-in-Picture"))
         self.BodyLabel.setText(_translate("PictureInPictureDialog", "0:38"))
         self.dislike_button.setToolTip(_translate("PictureInPictureDialog", "Dislike"))
         self.previous_button.setToolTip(_translate("PictureInPictureDialog", "Previous"))

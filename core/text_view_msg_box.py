@@ -1,7 +1,7 @@
 from qfluentwidgets import MessageBoxBase, SubtitleLabel, TextEdit
 
 
-class TextViewDialog(MessageBoxBase):
+class TextViewMessageBox(MessageBoxBase):
     def __init__(self, msg, text, parent=None):
         super().__init__(parent)
         self.title_label = SubtitleLabel(self)

@@ -1,6 +1,6 @@
 pyqt5==5.15.11
 pyqtwebengine==5.15.7
-git+https://github.com/deeffest/PyQt-Fluent-Widgets.git@2d515e6
+git+https://github.com/deeffest/PyQt-Fluent-Widgets.git@a520940
 pywinstyles==1.8; sys_platform=="win32"
 requests==2.32.5
 packaging==25.0

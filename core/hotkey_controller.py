@@ -1,8 +1,8 @@
 import logging
 from typing import TYPE_CHECKING
 
-from pynput import keyboard
 from PyQt5.QtCore import QThread, pyqtSignal
+from pynput import keyboard
 
 if TYPE_CHECKING:
     from core.main_window import MainWindow

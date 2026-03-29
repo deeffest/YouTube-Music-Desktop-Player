@@ -4,15 +4,16 @@ from typing import TYPE_CHECKING
 
 from PyQt5.QtWebEngineWidgets import QWebEnginePage
 from qfluentwidgets import MessageBox
-from core.input_dialog import InputDialog
+
+from core.input_msg_box import InputMessageBox
 
 if TYPE_CHECKING:
     from core.main_window import MainWindow
 
 
 class WebEnginePage(QWebEnginePage):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, profile, parent=None):
+        super().__init__(profile, parent)
         self.window: "MainWindow" = parent
 
     def acceptNavigationRequest(self, url, type, isMainFrame):
@@ -27,6 +28,7 @@ class WebEnginePage(QWebEnginePage):
             r"^https://consent\.youtube\.com/.*$",
             r"^https://www\.google\.com/tools/feedback/.*$",
             r"^https://gds\.google\.com/web/landing.*$",
+            r"^https://www\.google\.com/sorry/.*$",
         ]
 
         for pattern in patterns:
@@ -37,19 +39,19 @@ class WebEnginePage(QWebEnginePage):
 
     def javaScriptAlert(self, securityOrigin, msg):
         msg_box = MessageBox(
-            f"JavaScript Alert - {securityOrigin.toString()}", msg, self.window
+            f"JavaScript alert - {securityOrigin.toString()}", msg, self.window
         )
         msg_box.cancelButton.hide()
         msg_box.exec_()
 
     def javaScriptConfirm(self, securityOrigin, msg):
         msg_box = MessageBox(
-            f"JavaScript Confirm - {securityOrigin.toString()}", msg, self.window
+            f"JavaScript confirm - {securityOrigin.toString()}", msg, self.window
         )
         return msg_box.exec_()
 
     def javaScriptPrompt(self, securityOrigin, msg, defaultValue):
-        input_dialog = InputDialog(msg, defaultValue, self.window)
+        input_dialog = InputMessageBox(msg, defaultValue, self.window)
         if input_dialog.exec_():
             return (True, input_dialog.line_edit.text())
         else:

@@ -4,6 +4,8 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QSystemTrayIcon
 from qfluentwidgets import SystemTrayMenu, Action
 
+from core.helpers import recolor_icon
+
 if TYPE_CHECKING:
     from core.main_window import MainWindow
 
@@ -25,32 +27,110 @@ class SystemTrayIcon(QSystemTrayIcon):
         )
 
         self.play_pause_action = Action("Play/Pause", self)
-        self.play_pause_action.setIcon(QIcon(f"{self.window.icon_folder}/play.png"))
+        self.play_pause_action.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/play.png",
+                (
+                    1
+                    if self.window.icon_color_setting == 1
+                    else (
+                        2
+                        if self.window.icon_color_setting == 2
+                        else self.window.theme_setting
+                    )
+                ),
+            )
+        )
         self.play_pause_action.setEnabled(False)
         self.play_pause_action.triggered.connect(self.window.play_pause)
 
         self.like_action = Action("Like", self)
-        self.like_action.setIcon(QIcon(f"{self.window.icon_folder}/like.png"))
+        self.like_action.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/like.png",
+                (
+                    1
+                    if self.window.icon_color_setting == 1
+                    else (
+                        2
+                        if self.window.icon_color_setting == 2
+                        else self.window.theme_setting
+                    )
+                ),
+            )
+        )
         self.like_action.setEnabled(False)
         self.like_action.triggered.connect(self.window.like)
 
         self.previous_action = Action("Previous", self)
-        self.previous_action.setIcon(QIcon(f"{self.window.icon_folder}/previous.png"))
+        self.previous_action.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/previous.png",
+                (
+                    1
+                    if self.window.icon_color_setting == 1
+                    else (
+                        2
+                        if self.window.icon_color_setting == 2
+                        else self.window.theme_setting
+                    )
+                ),
+            )
+        )
         self.previous_action.setEnabled(False)
         self.previous_action.triggered.connect(self.window.previous)
 
         self.next_action = Action("Next", self)
-        self.next_action.setIcon(QIcon(f"{self.window.icon_folder}/next.png"))
+        self.next_action.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/next.png",
+                (
+                    1
+                    if self.window.icon_color_setting == 1
+                    else (
+                        2
+                        if self.window.icon_color_setting == 2
+                        else self.window.theme_setting
+                    )
+                ),
+            )
+        )
         self.next_action.setEnabled(False)
         self.next_action.triggered.connect(self.window.next)
 
         self.dislike_action = Action("Dislike", self)
-        self.dislike_action.setIcon(QIcon(f"{self.window.icon_folder}/dislike.png"))
+        self.dislike_action.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/dislike.png",
+                (
+                    1
+                    if self.window.icon_color_setting == 1
+                    else (
+                        2
+                        if self.window.icon_color_setting == 2
+                        else self.window.theme_setting
+                    )
+                ),
+            )
+        )
         self.dislike_action.setEnabled(False)
         self.dislike_action.triggered.connect(self.window.dislike)
 
         self.exit_action = Action("Exit", self)
-        self.exit_action.setIcon(QIcon(f"{self.window.icon_folder}/exit.png"))
+        self.exit_action.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/exit.png",
+                (
+                    1
+                    if self.window.icon_color_setting == 1
+                    else (
+                        2
+                        if self.window.icon_color_setting == 2
+                        else self.window.theme_setting
+                    )
+                ),
+            )
+        )
         self.exit_action.triggered.connect(self.close_window)
 
         self.sytem_tray_menu = SystemTrayMenu()

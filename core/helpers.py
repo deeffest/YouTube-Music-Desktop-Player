@@ -1,16 +1,23 @@
 import os
-import logging
 import platform
 import subprocess
 from urllib.parse import urlparse
 
-from PyQt5.QtWidgets import QDesktopWidget
-from PyQt5.QtCore import QRect
+from PyQt5.QtCore import QRect, Qt
+from PyQt5.QtGui import QColor, QIcon, QPixmap, QPainter
+from PyQt5.QtWidgets import QDesktopWidget, QApplication
 
 if platform.system() == "Windows":
-    import winreg
     import win32api  # type: ignore
     import win32gui  # type: ignore
+
+
+def str_to_bool(value):
+    return str(value).lower() == "true"
+
+
+def copy_text(text):
+    QApplication.clipboard().setText(text)
 
 
 def is_valid_ytmusic_url(url):
@@ -35,6 +42,40 @@ def open_url(url):
         env.pop(var, None)
 
     subprocess.Popen(["xdg-open", url], env=env)
+
+
+def recolor_icon(icon, color):
+    pixmap = QPixmap(icon)
+
+    if color == 1:
+        result = QPixmap(pixmap.size())
+        result.fill(Qt.transparent)
+        painter = QPainter(result)
+        painter.drawPixmap(0, 0, pixmap)
+        painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
+        painter.fillRect(result.rect(), QColor(0, 0, 0))
+        painter.end()
+        pixmap = result
+
+    return QIcon(pixmap)
+
+
+def clean_up_url(url):
+    parsed = urlparse(str(url))
+    if parsed.netloc != "music.youtube.com":
+        return url
+
+    params = dict(
+        param.split("=", 1) for param in parsed.query.split("&") if "=" in param
+    )
+
+    if parsed.path == "/watch" and "v" in params:
+        return f"https://music.youtube.com/watch?v={params['v']}"
+
+    if parsed.path == "/playlist" and "list" in params:
+        return f"https://music.youtube.com/playlist?list={params['list']}"
+
+    return f"https://{parsed.netloc}{parsed.path}"
 
 
 def get_taskbar_position():
@@ -67,40 +108,3 @@ def get_taskbar_position():
             position = "Right"
 
     return position
-
-
-def get_proxies(proxy_type, host_name=None, port=None, login=None, password=None):
-    proxies = {}
-
-    if proxy_type in ["HttpProxy", "Socks5Proxy"] and host_name and port:
-        proxy_address = f"{host_name}:{port}"
-        if login and password:
-            proxy_address = f"{login}:{password}@{proxy_address}"
-
-        scheme = "http" if proxy_type == "HttpProxy" else "socks5"
-        proxy_url = f"{scheme}://{proxy_address}"
-        proxies = {"http": proxy_url, "https": proxy_url}
-
-    elif proxy_type == "DefaultProxy":
-        if platform.system() == "Windows":
-            try:
-                with winreg.OpenKey(
-                    winreg.HKEY_CURRENT_USER,
-                    r"Software\Microsoft\Windows\CurrentVersion\Internet Settings",
-                ) as key:
-                    enabled, _ = winreg.QueryValueEx(key, "ProxyEnable")
-                    if enabled:
-                        server, _ = winreg.QueryValueEx(key, "ProxyServer")
-                        proxy_url = f"http://{server}"
-                        proxies = {"http": proxy_url, "https": proxy_url}
-            except Exception as e:
-                logging.error(f"Failed to get system proxy: {e}")
-        else:
-            http_proxy = os.environ.get("http_proxy")
-            https_proxy = os.environ.get("https_proxy")
-            if http_proxy:
-                proxies["http"] = http_proxy
-            if https_proxy:
-                proxies["https"] = https_proxy
-
-    return proxies

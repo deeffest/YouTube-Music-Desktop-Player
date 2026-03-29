@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QDialog, QDesktopWidget
 from qfluentwidgets import ToolTipFilter, ToolTipPosition
 
 from core.artwork_loader import ArtworkLoader
-from core.helpers import get_taskbar_position
+from core.helpers import get_taskbar_position, recolor_icon
 from core.ui.ui_picture_in_picture_dialog import Ui_PictureInPictureDialog
 
 if TYPE_CHECKING:
@@ -29,20 +29,22 @@ class PictureInPictureDialog(QDialog, Ui_PictureInPictureDialog):
         if platform.system() == "Windows":
             from pywinstyles import apply_style  # type: ignore
 
+            theme = self.window.theme_setting
+            color = "dark" if theme == 0 else "light"
+
             try:
-                apply_style(self, "dark")
+                apply_style(self, color)
             except Exception as e:
                 logging.error(f"Failed to apply dark style: + {str(e)}")
 
         self.setupUi(self)
-        self.setWindowTitle("Picture-in-Picture")
-        self.setWindowFlags(
-            Qt.Window | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint
-        )
+        flags = Qt.Window | Qt.WindowCloseButtonHint
+        if self.window.pip_is_always_on_top_setting == 1:
+            flags |= Qt.WindowStaysOnTopHint
+        self.setWindowFlags(flags)
         self.setWindowIcon(
-            QIcon(f"{self.window.icon_folder}/picture-in-picture-filled-border.png")
+            QIcon(f"{self.window.icon_folder}/picture_in_picture-titlebar.png")
         )
-
         if self.window.save_last_pos_of_mp_setting == 1:
             self.setGeometry(self.window.geometry_of_mp_setting)
         else:
@@ -56,6 +58,7 @@ class PictureInPictureDialog(QDialog, Ui_PictureInPictureDialog):
                 y = screen_geometry.height() - self.height() - 71
             self.setGeometry(x, y, self.width(), self.height())
         self.setFixedSize(self.size())
+        self.setWindowOpacity(self.window.pip_opacity_setting)
 
     def configure_ui_elements(self):
         self.dislike_button.clicked.connect(self.window.dislike)
@@ -80,15 +83,37 @@ class PictureInPictureDialog(QDialog, Ui_PictureInPictureDialog):
             ToolTipFilter(self.like_button, 300, ToolTipPosition.TOP)
         )
 
-        self.dislike_button.setIcon(QIcon(f"{self.window.icon_folder}/dislike.png"))
+        self.dislike_button.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/dislike.png", self.window.theme_setting
+            )
+        )
         self.previous_button.setIcon(
-            QIcon(f"{self.window.icon_folder}/previous-filled.png")
+            recolor_icon(
+                f"{self.window.icon_folder}/previous-filled.png",
+                self.window.theme_setting,
+            )
         )
         self.play_pause_button.setIcon(
-            QIcon(f"{self.window.icon_folder}/play-filled.png")
+            recolor_icon(
+                f"{self.window.icon_folder}/play-filled.png", self.window.theme_setting
+            )
         )
-        self.next_button.setIcon(QIcon(f"{self.window.icon_folder}/next-filled.png"))
-        self.like_button.setIcon(QIcon(f"{self.window.icon_folder}/like.png"))
+        self.next_button.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/next-filled.png", self.window.theme_setting
+            )
+        )
+        self.like_button.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/like.png", self.window.theme_setting
+            )
+        )
+
+        if self.window.theme_setting == 1:
+            self.artist_label.setStyleSheet("color: gray")
+            self.BodyLabel.setStyleSheet("color: gray")
+            self.BodyLabel_2.setStyleSheet("color: gray")
 
     def load_artwork(self, url):
         self.stop_running_threads()
@@ -128,6 +153,7 @@ class PictureInPictureDialog(QDialog, Ui_PictureInPictureDialog):
         self.window.show()
         self.window.activateWindow()
         self.window.setGeometry(self.last_win_geo)
+
         if self.window.system_tray_icon:
             self.window.system_tray_icon.show()
 

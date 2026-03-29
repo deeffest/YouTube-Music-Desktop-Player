@@ -1,16 +1,12 @@
-import sys
 import logging
 import platform
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import Qt, QProcess, QRegExp, QTimer
-from PyQt5.QtGui import QIcon, QPixmap, QRegExpValidator
-from PyQt5.QtWidgets import QDialog, QApplication, QSystemTrayIcon
-from qfluentwidgets import (
-    MessageBox,
-    ToolTipFilter,
-    ToolTipPosition,
-)
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtWidgets import QDialog, QSystemTrayIcon
+
+from core.helpers import recolor_icon
 from core.ui.ui_settings_dialog import Ui_SettingsDialog
 
 if TYPE_CHECKING:
@@ -29,393 +25,232 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         if platform.system() == "Windows":
             from pywinstyles import apply_style  # type: ignore
 
+            theme = self.window.theme_setting
+            color = "dark" if theme == 0 else "light"
+
             try:
-                apply_style(self, "dark")
+                apply_style(self, color)
             except Exception as e:
                 logging.error(f"Failed to apply dark style: + {str(e)}")
 
         self.setupUi(self)
-        self.setWindowTitle("Settings")
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
-        self.setWindowIcon(
-            QIcon(f"{self.window.icon_folder}/settings-filled-border.png")
-        )
-        self.setFixedSize(self.size())
+        self.setWindowIcon(QIcon(f"{self.window.icon_folder}/settings-titlebar.png"))
 
     def configure_ui_elements(self):
-        self.PillPushButton.setChecked(True)
-        regex = QRegExp(r"^[1-9][0-9]{0,4}$")
-        regex_validator = QRegExpValidator(regex)
-        self.LineEdit_2.setValidator(regex_validator)
-        self.proxy_types = ["HttpProxy", "Socks5Proxy", "DefaultProxy", "NoProxy"]
-        self.ComboBox.addItems(self.proxy_types)
-        self.opengl_enviroments = ["Desktop", "Angle", "Software", "Auto"]
-        self.ComboBox_3.addItems(self.opengl_enviroments)
+        self.buttonBox.accepted.connect(self.save_settings)
+        self.buttonBox.rejected.connect(self.close)
 
-        self.PillPushButton.clicked.connect(self.configure_tabs)
-        self.PillPushButton_2.clicked.connect(self.configure_tabs)
-        self.PillPushButton_3.clicked.connect(self.configure_tabs)
-        self.PillPushButton_4.clicked.connect(self.configure_tabs)
-        self.PushButton_2.clicked.connect(self.restart_app)
-        self.PrimaryPushButton.clicked.connect(self.save_settings)
-        self.PushButton.clicked.connect(self.close)
-        self.ComboBox.currentIndexChanged.connect(self.toggle_proxy_config)
-        self.SwitchButton_12.checkedChanged.connect(self.toggle_tray_icon)
-
-        self.SwitchButton.checkedChanged.connect(self.check_if_settings_changed)
-        self.SwitchButton_4.checkedChanged.connect(self.check_if_settings_changed)
-        self.SwitchButton_3.checkedChanged.connect(self.check_if_settings_changed)
-        self.SwitchButton_5.checkedChanged.connect(self.check_if_settings_changed)
-        self.SwitchButton_6.checkedChanged.connect(self.check_if_settings_changed)
-        self.SwitchButton_2.checkedChanged.connect(self.check_if_settings_changed)
-        self.SwitchButton_8.checkedChanged.connect(self.check_if_settings_changed)
-        self.SwitchButton_7.checkedChanged.connect(self.check_if_settings_changed)
-        self.SwitchButton_12.checkedChanged.connect(self.check_if_settings_changed)
-        self.ComboBox.currentIndexChanged.connect(self.check_if_settings_changed)
-        self.LineEdit.textChanged.connect(self.check_if_settings_changed)
-        self.LineEdit_2.textChanged.connect(self.check_if_settings_changed)
-        self.LineEdit_3.textChanged.connect(self.check_if_settings_changed)
-        self.PasswordLineEdit.textChanged.connect(self.check_if_settings_changed)
-        self.SwitchButton_14.checkedChanged.connect(self.check_if_settings_changed)
-        self.SwitchButton_15.checkedChanged.connect(self.check_if_settings_changed)
-        self.ComboBox_3.currentIndexChanged.connect(self.check_if_settings_changed)
-        self.SwitchButton_16.checkedChanged.connect(self.check_if_settings_changed)
-        self.checkBox_2.toggled.connect(self.check_if_settings_changed)
-        self.SwitchButton_17.checkedChanged.connect(self.check_if_settings_changed)
-
-        self.configure_tabs()
-
-        self.SwitchButton.setChecked(self.window.save_last_win_geometry_setting)
-        self.SwitchButton_4.setChecked(self.window.open_last_url_at_startup_setting)
-        self.SwitchButton_3.setChecked(self.window.ad_blocker_setting)
-        self.SwitchButton_5.setChecked(self.window.fullscreen_mode_support_setting)
-        self.SwitchButton_6.setChecked(self.window.support_animated_scrolling_setting)
-        self.SwitchButton_2.setChecked(self.window.save_last_pos_of_mp_setting)
-        self.SwitchButton_8.setChecked(self.window.save_last_zoom_factor_setting)
-        self.SwitchButton_7.setChecked(self.window.discord_rpc_setting)
-        self.SwitchButton_12.setChecked(self.window.tray_icon_setting)
-        self.ComboBox.setCurrentIndex(
-            self.proxy_types.index(self.window.proxy_type_setting)
+        self.checkBox.setChecked(self.window.save_last_win_geometry_setting)
+        self.checkBox_2.setChecked(self.window.open_last_url_at_startup_setting)
+        self.checkBox_3.setChecked(self.window.save_last_zoom_factor_setting)
+        self.checkBox_7.setChecked(self.window.theme_setting)
+        self.comboBox_2.setCurrentIndex(
+            1
+            if self.window.icon_color_setting == 1
+            else 2 if self.window.icon_color_setting == 2 else 0
         )
-        self.toggle_proxy_config()
-        if self.window.proxy_host_name_setting is not None:
-            self.LineEdit.setText(self.window.proxy_host_name_setting)
-        if self.window.proxy_port_setting is not None:
-            self.LineEdit_2.setText(str(self.window.proxy_port_setting))
-        if self.window.proxy_login_setting is not None:
-            self.LineEdit_3.setText(self.window.proxy_login_setting)
-        if self.window.proxy_password_setting is not None:
-            self.PasswordLineEdit.setText(self.window.proxy_password_setting)
-        self.SwitchButton_14.setChecked(self.window.hotkey_playback_control_setting)
-        self.SwitchButton_15.setChecked(self.window.only_audio_mode_setting)
-        self.ComboBox_3.setCurrentIndex(
-            self.opengl_enviroments.index(self.window.opengl_enviroment_setting)
-        )
-        self.SwitchButton_16.setChecked(self.window.nonstop_music_setting)
-        self.checkBox_2.setChecked(self.window.use_hd_thumbnails_setting)
-        self.SwitchButton_17.setChecked(self.window.hide_mini_player_setting)
-
-        self.check_settings_dependency()
-        self.SwitchButton_15.checkedChanged.connect(self.check_settings_dependency)
-
-        self.check_if_settings_changed()
-
-        self.PushButton_2.setIcon(QIcon(f"{self.window.icon_folder}/restart.png"))
-        self.PillPushButton_4.setIcon(
-            QIcon(QPixmap(f"{self.window.icon_folder}/plugins.png"))
-        )
-        self.label.setPixmap(QPixmap(f"{self.window.icon_folder}/adblock.png"))
-        self.label_2.setPixmap(QPixmap(f"{self.window.icon_folder}/discord.png"))
-        self.label_4.setPixmap(QPixmap(f"{self.window.icon_folder}/logo.png"))
-        self.label_7.setPixmap(QPixmap(f"{self.window.icon_folder}/hotkeys.png"))
-        self.label_9.setPixmap(QPixmap(f"{self.window.icon_folder}/audio.png"))
-        self.label_11.setPixmap(QPixmap(f"{self.window.icon_folder}/nonstop-music.png"))
-        self.label_12.setPixmap(
-            QPixmap(f"{self.window.icon_folder}/hide_mini_player.png")
-        )
-
-        self.label_8.setToolTip(
-            "• HttpProxy: For HTTP/HTTPS traffic.\n"
-            "• Socks5Proxy: For TCP/UDP, anonymity.\n"
-            "• DefaultProxy: Uses system proxy.\n"
-            "• NoProxy: Direct connection."
-        )
-
-        self.label_10.setToolTip(
-            "• Desktop: Native OpenGL implementation.\n"
-            "• Angle: OpenGL over Direct3D.\n"
-            "• Software: Software-based rendering.\n"
-            "• Auto: Automatic selection based on system."
-        )
-
-        self.label_6.setToolTip(
-            "• Ctrl + Shift + Space: Play/Pause.\n"
-            "• Ctrl + Shift + Left: Previous.\n"
-            "• Ctrl + Shift + Right: Next."
-        )
-
-        self.label_10.installEventFilter(
-            ToolTipFilter(self.label_10, 300, ToolTipPosition.TOP)
-        )
-        self.label_8.installEventFilter(
-            ToolTipFilter(self.label_8, 300, ToolTipPosition.TOP)
-        )
-        self.label_6.installEventFilter(
-            ToolTipFilter(self.label_6, 300, ToolTipPosition.TOP)
-        )
-
-        self.label_5.hide()
-        self.label_3.hide()
-
-    def check_settings_dependency(self):
-        if not self.SwitchButton_15.isChecked():
-            self.checkBox_2.setEnabled(False)
-        else:
-            self.checkBox_2.setEnabled(True)
-
-        self.check_if_settings_changed()
-
-    def restart_app(self):
-        msg_box = None
-
-        if self.window.song_state == "Playing":
-            msg_box = MessageBox(
-                "Restart Confirmation",
-                (
-                    "Restarting now will stop the current playback and "
-                    "close the application.\n"
-                    "Do you want to restart now?"
-                ),
-                self,
+        self.checkBox_14.setChecked(self.window.win_thumbnail_buttons_setting)
+        self.checkBox_10.setChecked(self.window.tray_icon_setting)
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            self.checkBox_10.setEnabled(False)
+            self.checkBox_10.setToolTip("System tray is not available.")
+        self.checkBox_11.setChecked(self.window.discord_rpc_setting)
+        self.checkBox_13.setChecked(self.window.hotkey_playback_control_setting)
+        self.checkBox_8.setChecked(self.window.fullscreen_mode_support_setting)
+        self.checkBox_9.setChecked(self.window.support_animated_scrolling_setting)
+        self.comboBox.setCurrentIndex(
+            1
+            if self.window.opengl_enviroment_setting == "Desktop"
+            else (
+                2
+                if self.window.opengl_enviroment_setting == "Angle"
+                else 3 if self.window.opengl_enviroment_setting == "Software" else 0
             )
-            msg_box.yesButton.setText("Restart")
-        if not msg_box or msg_box.exec_():
-            self.window.save_settings()
-            if self.PrimaryPushButton.isEnabled():
-                if not self.save_settings():
-                    return
+        )
+        self.checkBox_15.setChecked(self.window.do_not_save_cookies_setting)
+        self.pushButton_4.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/delete.png", self.window.theme_setting
+            )
+        )
+        self.pushButton_4.clicked.connect(self.delete_all_saved_cookies)
+        self.checkBox_12.setChecked(self.window.save_last_pos_of_mp_setting)
+        self.doubleSpinBox.setRange(0.2, 1.0)
+        self.doubleSpinBox.setSingleStep(0.05)
+        self.doubleSpinBox.setDecimals(2)
+        self.doubleSpinBox.setValue(self.window.pip_opacity_setting)
+        self._preview_timer = QTimer(self)
+        self._preview_timer.setSingleShot(True)
+        self._preview_timer.timeout.connect(lambda: self.setWindowOpacity(1.0))
+        self.doubleSpinBox.valueChanged.connect(self.preview_opacity)
+        self.checkBox_16.setChecked(self.window.pip_is_always_on_top_setting)
+        self.checkBox_4.setChecked(self.window.use_cookies_setting)
+        self.checkBox_6.setChecked(self.window.auto_update_ytdlp_setting)
+        self.checkBox_17.setChecked(self.window.embed_metadata_setting)
+        self.comboBox_3.setCurrentIndex(
+            1
+            if self.window.ytdlp_format_setting == 1
+            else (
+                2
+                if self.window.ytdlp_format_setting == 2
+                else 3 if self.window.ytdlp_format_setting == 3 else 0
+            )
+        )
+        self.comboBox_3.setItemIcon(
+            0,
+            recolor_icon(
+                f"{self.window.icon_folder}/audio.png", self.window.theme_setting
+            ),
+        )
+        self.comboBox_3.setItemIcon(
+            1,
+            recolor_icon(
+                f"{self.window.icon_folder}/audio.png", self.window.theme_setting
+            ),
+        )
+        self.comboBox_3.setItemIcon(
+            2,
+            recolor_icon(
+                f"{self.window.icon_folder}/video.png", self.window.theme_setting
+            ),
+        )
+        self.comboBox_3.setItemIcon(
+            3,
+            recolor_icon(
+                f"{self.window.icon_folder}/video.png", self.window.theme_setting
+            ),
+        )
+        if self.window.is_downloading or not self.window.check_tool_availability(
+            "yt-dlp"
+        ):
+            self.pushButton.setEnabled(False)
+        self.pushButton.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/remove.png", self.window.theme_setting
+            )
+        )
+        self.pushButton.clicked.connect(self.remove_ytdlp_from_device)
+        if self.window.is_downloading or not self.window.check_tool_availability(
+            "FFmpeg"
+        ):
+            self.pushButton_2.setEnabled(False)
+        self.pushButton_2.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/remove.png", self.window.theme_setting
+            )
+        )
+        self.pushButton_2.clicked.connect(self.remove_ffmpeg_from_device)
+        if self.window.is_downloading or not self.window.check_tool_availability(
+            "Deno"
+        ):
+            self.pushButton_3.setEnabled(False)
+        self.pushButton_3.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/remove.png", self.window.theme_setting
+            )
+        )
+        self.pushButton_3.clicked.connect(self.remove_deno_from_device)
 
-            QProcess.startDetached(sys.executable, sys.argv)
-            QApplication.quit()
+    def preview_opacity(self, value):
+        self.setWindowOpacity(value)
+        self._preview_timer.start(2000)
+
+    def remove_deno_from_device(self):
+        self.window.remove_tool_from_device("Deno")
+        self.pushButton_3.setEnabled(False)
+
+    def remove_ffmpeg_from_device(self):
+        self.window.remove_tool_from_device("FFmpeg")
+        self.pushButton_2.setEnabled(False)
+
+    def remove_ytdlp_from_device(self):
+        self.window.remove_tool_from_device("yt-dlp")
+        self.pushButton.setEnabled(False)
+
+    def delete_all_saved_cookies(self):
+        self.window.delete_all_cookies()
+        self.pushButton_4.setEnabled(False)
 
     def save_settings(self):
-        proxy_type = self.ComboBox.currentText()
-        proxy_host = self.LineEdit.text().strip()
-
-        port_text_raw = self.LineEdit_2.text()
-        port_text = port_text_raw.strip()
-        port_is_valid_number = port_text.isdigit()
-
-        proxy_error_message = None
-
-        if proxy_type in ["HttpProxy", "Socks5Proxy"]:
-            if not proxy_host:
-                proxy_error_message = "Proxy host cannot be empty."
-            elif port_is_valid_number and int(port_text) > 65535:
-                proxy_error_message = "Proxy port cannot exceed 65535."
-
-        if proxy_error_message:
-            self.label_5.setText(proxy_error_message)
-            self.label_5.show()
-
-            if not self.PillPushButton.isChecked():
-                self.PillPushButton.setChecked(True)
-                self.configure_tabs()
-
-            QTimer.singleShot(
-                0, lambda: self.ScrollArea.ensureWidgetVisible(self.label_5)
-            )
-            return False
-        else:
-            self.label_5.hide()
-
-        tray_error_message = None
-
-        if (
-            not QSystemTrayIcon.isSystemTrayAvailable()
-            and self.SwitchButton_12.isChecked()
-        ):
-            tray_error_message = "System tray is not available on this system."
-
-        if tray_error_message:
-            self.label_3.setText(tray_error_message)
-            self.label_3.show()
-
-            if not self.PillPushButton_4.isChecked():
-                self.PillPushButton_4.setChecked(True)
-                self.configure_tabs()
-
-            QTimer.singleShot(
-                0, lambda: self.ScrollArea.ensureWidgetVisible(self.label_3)
-            )
-            return False
-        else:
-            self.label_3.hide()
-
-        self.window.save_last_win_geometry_setting = int(self.SwitchButton.isChecked())
-        self.window.open_last_url_at_startup_setting = int(
-            self.SwitchButton_4.isChecked()
-        )
-        self.window.ad_blocker_setting = int(self.SwitchButton_3.isChecked())
-        self.window.fullscreen_mode_support_setting = int(
-            self.SwitchButton_5.isChecked()
-        )
-        self.window.support_animated_scrolling_setting = int(
-            self.SwitchButton_6.isChecked()
-        )
-        self.window.save_last_pos_of_mp_setting = int(self.SwitchButton_2.isChecked())
-        self.window.save_last_zoom_factor_setting = int(self.SwitchButton_8.isChecked())
-        self.window.discord_rpc_setting = int(self.SwitchButton_7.isChecked())
-        self.window.tray_icon_setting = int(self.SwitchButton_12.isChecked())
-        self.window.proxy_type_setting = proxy_type
-        self.window.proxy_host_name_setting = proxy_host
-        self.window.proxy_port_setting = (
-            int(port_text) if port_is_valid_number else None
-        )
-        self.window.proxy_login_setting = self.LineEdit_3.text()
-        self.window.proxy_password_setting = self.PasswordLineEdit.text()
-        self.window.hotkey_playback_control_setting = int(
-            self.SwitchButton_14.isChecked()
-        )
-        self.window.only_audio_mode_setting = int(self.SwitchButton_15.isChecked())
-        self.window.opengl_enviroment_setting = self.ComboBox_3.currentText()
-        self.window.nonstop_music_setting = int(self.SwitchButton_16.isChecked())
-        self.window.use_hd_thumbnails_setting = int(self.checkBox_2.isChecked())
-        self.window.hide_mini_player_setting = int(self.SwitchButton_17.isChecked())
-
+        self.window.save_last_win_geometry_setting = int(self.checkBox.isChecked())
         self.window.settings_.setValue(
             "save_last_win_geometry", self.window.save_last_win_geometry_setting
         )
+        self.window.open_last_url_at_startup_setting = int(self.checkBox_2.isChecked())
         self.window.settings_.setValue(
             "open_last_url_at_startup", self.window.open_last_url_at_startup_setting
         )
-        self.window.settings_.setValue("ad_blocker", self.window.ad_blocker_setting)
+        self.window.save_last_zoom_factor_setting = int(self.checkBox_3.isChecked())
+        self.window.settings_.setValue(
+            "save_last_zoom_factor", self.window.save_last_zoom_factor_setting
+        )
+        self.window.theme_setting = int(self.checkBox_7.isChecked())
+        self.window.settings_.setValue("light_theme", self.window.theme_setting)
+        self.window.icon_color_setting = int(self.comboBox_2.currentIndex())
+        self.window.settings_.setValue("icon_color", self.window.icon_color_setting)
+        self.window.win_thumbnail_buttons_setting = int(self.checkBox_14.isChecked())
+        self.window.settings_.setValue(
+            "win_thumbnail_buttons", self.window.win_thumbnail_buttons_setting
+        )
+        self.window.tray_icon_setting = int(self.checkBox_10.isChecked())
+        self.window.settings_.setValue("tray_icon", self.window.tray_icon_setting)
+        self.window.discord_rpc_setting = int(self.checkBox_11.isChecked())
+        self.window.settings_.setValue("discord_rpc", self.window.discord_rpc_setting)
+        self.window.hotkey_playback_control_setting = int(self.checkBox_13.isChecked())
+        self.window.settings_.setValue(
+            "hotkey_playback_control", self.window.hotkey_playback_control_setting
+        )
+        self.window.fullscreen_mode_support_setting = int(self.checkBox_8.isChecked())
         self.window.settings_.setValue(
             "fullscreen_mode_support", self.window.fullscreen_mode_support_setting
+        )
+        self.window.support_animated_scrolling_setting = int(
+            self.checkBox_9.isChecked()
         )
         self.window.settings_.setValue(
             "support_animated_scrolling", self.window.support_animated_scrolling_setting
         )
-        self.window.settings_.setValue(
-            "save_last_pos_of_mp", self.window.save_last_pos_of_mp_setting
-        )
-        self.window.settings_.setValue(
-            "save_last_zoom_factor", self.window.save_last_zoom_factor_setting
-        )
-        self.window.settings_.setValue("discord_rpc", self.window.discord_rpc_setting)
-        self.window.settings_.setValue("tray_icon", self.window.tray_icon_setting)
-        self.window.settings_.setValue("proxy_type", self.window.proxy_type_setting)
-        self.window.settings_.setValue(
-            "proxy_host_name", self.window.proxy_host_name_setting
-        )
-        self.window.settings_.setValue("proxy_port", self.window.proxy_port_setting)
-        self.window.settings_.setValue("proxy_login", self.window.proxy_login_setting)
-        self.window.settings_.setValue(
-            "proxy_password", self.window.proxy_password_setting
-        )
-        self.window.settings_.setValue(
-            "hotkey_playback_control", self.window.hotkey_playback_control_setting
-        )
-        self.window.settings_.setValue(
-            "only_audio_mode", self.window.only_audio_mode_setting
+        self.window.opengl_enviroment_setting = (
+            "Desktop"
+            if self.comboBox.currentIndex() == 1
+            else (
+                "Angle"
+                if self.comboBox.currentIndex() == 2
+                else "Software" if self.comboBox.currentIndex() == 3 else "Auto"
+            )
         )
         self.window.settings_.setValue(
             "opengl_enviroment", self.window.opengl_enviroment_setting
         )
+        self.window.do_not_save_cookies_setting = int(self.checkBox_15.isChecked())
         self.window.settings_.setValue(
-            "nonstop_music", self.window.nonstop_music_setting
+            "do_not_save_cookies", self.window.do_not_save_cookies_setting
         )
+        self.window.save_last_pos_of_mp_setting = int(self.checkBox_12.isChecked())
         self.window.settings_.setValue(
-            "use_hd_thumbnails", self.window.use_hd_thumbnails_setting
+            "save_last_pos_of_mp", self.window.save_last_pos_of_mp_setting
         )
+        self.window.pip_opacity_setting = float(self.doubleSpinBox.value())
+        self.window.settings_.setValue("pip_opacity", self.window.pip_opacity_setting)
+        self.window.pip_is_always_on_top_setting = int(self.checkBox_16.isChecked())
         self.window.settings_.setValue(
-            "hide_mini_player", self.window.hide_mini_player_setting
+            "pip_is_always_on_top", self.window.pip_is_always_on_top_setting
         )
+        self.window.use_cookies_setting = self.checkBox_4.isChecked()
+        self.window.settings_.setValue(
+            "use_cookies", "true" if self.window.use_cookies_setting else "false"
+        )
+        self.window.auto_update_ytdlp_setting = self.checkBox_6.isChecked()
+        self.window.settings_.setValue(
+            "auto_update_ytdlp",
+            "true" if self.window.auto_update_ytdlp_setting else "false",
+        )
+        self.window.embed_metadata_setting = int(self.checkBox_17.isChecked())
+        self.window.settings_.setValue(
+            "embed_metadata", self.window.embed_metadata_setting
+        )
+        self.window.ytdlp_format_setting = int(self.comboBox_3.currentIndex())
+        self.window.settings_.setValue("ytdlp_format", self.window.ytdlp_format_setting)
 
-        self.check_if_settings_changed()
-        return True
-
-    def configure_tabs(self):
-        self.frame.hide()
-        self.frame_2.hide()
-        self.frame_3.hide()
-        self.frame_4.hide()
-
-        icon_path = self.window.icon_folder + "/plugins.png"
-
-        if self.PillPushButton.isChecked():
-            self.frame.show()
-            self.ScrollArea.verticalScrollBar().setValue(0)
-        elif self.PillPushButton_2.isChecked():
-            self.frame_2.show()
-        elif self.PillPushButton_3.isChecked():
-            self.frame_3.show()
-        else:
-            self.frame_4.show()
-            self.ScrollArea.verticalScrollBar().setValue(0)
-            icon_path = self.window.icon_folder + "/plugins-black.png"
-
-        self.PillPushButton_4.setIcon(icon_path)
-
-    def toggle_proxy_config(self):
-        proxy_type = self.ComboBox.currentText()
-        should_show = proxy_type in ["HttpProxy", "Socks5Proxy"]
-
-        self.BodyLabel_10.setVisible(should_show)
-        self.LineEdit.setVisible(should_show)
-        self.BodyLabel_14.setVisible(should_show)
-        self.LineEdit_2.setVisible(should_show)
-        self.BodyLabel_16.setVisible(should_show)
-        self.LineEdit_3.setVisible(should_show)
-        self.BodyLabel_17.setVisible(should_show)
-        self.PasswordLineEdit.setVisible(should_show)
-
-        self.label_5.hide()
-
-    def toggle_tray_icon(self):
-        self.label_3.hide()
-
-    def check_if_settings_changed(self):
-        if (
-            self.SwitchButton.isChecked() != self.window.save_last_win_geometry_setting
-            or self.SwitchButton_4.isChecked()
-            != self.window.open_last_url_at_startup_setting
-            or self.SwitchButton_3.isChecked() != self.window.ad_blocker_setting
-            or self.SwitchButton_5.isChecked()
-            != self.window.fullscreen_mode_support_setting
-            or self.SwitchButton_6.isChecked()
-            != self.window.support_animated_scrolling_setting
-            or self.SwitchButton_2.isChecked()
-            != self.window.save_last_pos_of_mp_setting
-            or self.SwitchButton_8.isChecked()
-            != self.window.save_last_zoom_factor_setting
-            or self.SwitchButton_7.isChecked() != self.window.discord_rpc_setting
-            or self.SwitchButton_12.isChecked() != self.window.tray_icon_setting
-            or self.ComboBox.currentText() != self.window.proxy_type_setting
-            or self.LineEdit.text() != self.window.proxy_host_name_setting
-            or self.LineEdit_2.text()
-            != (
-                str(self.window.proxy_port_setting)
-                if self.window.proxy_port_setting is not None
-                else ""
-            )
-            or self.LineEdit_3.text() != self.window.proxy_login_setting
-            or self.PasswordLineEdit.text() != self.window.proxy_password_setting
-            or self.SwitchButton_14.isChecked()
-            != self.window.hotkey_playback_control_setting
-            or self.SwitchButton_15.isChecked() != self.window.only_audio_mode_setting
-            or self.ComboBox_3.currentText() != self.window.opengl_enviroment_setting
-            or self.SwitchButton_16.isChecked() != self.window.nonstop_music_setting
-            or self.checkBox_2.isChecked() != self.window.use_hd_thumbnails_setting
-            or self.SwitchButton_17.isChecked() != self.window.hide_mini_player_setting
-        ):
-
-            self.PrimaryPushButton.setEnabled(True)
-            self.PushButton_2.setText("Restart && Save")
-        else:
-            self.PrimaryPushButton.setEnabled(False)
-            self.PushButton_2.setText("Restart")
-
-    def closeEvent(self, event):
-        self.window.show()
-        event.accept()
+        self.close()
