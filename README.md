@@ -6,22 +6,32 @@ Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform 
 <img src="https://img.shields.io/badge/PyQt-5.15.11-00B16A"/> <img src="https://img.shields.io/badge/Python-3.13.7-00B16A"/> <img src="https://img.shields.io/badge/Platform-Win32%20|%20Linux-00B16A"/>
 
 ## Screenshots
-<img src="resources/images/screenshot4.png" width="100%"/>
+<table>
+  <tr>
+    <td><img src="resources/images/screenshot1.png" width="100%"/></td>
+    <td><img src="resources/images/screenshot2.png" width="100%"/></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img src="resources/images/screenshot3.png" width="100%"/>
+    </td>
+  </tr>
+</table>
 
 ## Features
-- Built-in yt-dlp - **Download**
-- Picture-in-Picture - **Multitask**
-- Windows thumbnail buttons - **Control**
-- Discord Rich Presence - **Share**
-- System tray icon - **Minimize**
-- Playback hotkeys - **Shortcut**
+- Built-in yt-dlp
+- Picture-in-Picture
+- Windows thumbnail buttons
+- Discord Rich Presence
+- System tray icon
+- Playback hotkeys
 
 ## Plugins
-- Skip video ads - **Say** goodbye to ads
-- Audio-only mode - **Save** on data usage
-- Non-stop music - **Forget** about "Video paused..."
-- Hide mini player - **Hide** what you don't need
-- I'm not a kid! - **Don't worry** about "Miniplayer is off..."
+- Skip video ads
+- Audio-only mode
+- Non-stop music
+- Hide mini player
+- I'm not a kid!
 
 ## Get App
 Just download and extract ↓
