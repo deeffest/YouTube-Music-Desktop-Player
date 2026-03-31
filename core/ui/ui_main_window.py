@@ -100,9 +100,9 @@ class Ui_MainWindow(object):
         self.home_tbutton.setToolTip(_translate("MainWindow", "Home"))
         self.reload_tbutton.setToolTip(_translate("MainWindow", "Reload"))
         self.url_label.setText(_translate("MainWindow", "🔒 music.youtube.com"))
-        self.download_ddtbutton.setToolTip(_translate("MainWindow", "Download..."))
+        self.download_ddtbutton.setToolTip(_translate("MainWindow", "Download"))
         self.watch_in_pip_tbutton.setToolTip(_translate("MainWindow", "Watch in PiP"))
         self.settings_ddtbutton.setToolTip(_translate("MainWindow", "Settings..."))
-        self.plugins_ddtbutton.setToolTip(_translate("MainWindow", "Plugins..."))
-        self.more_ddtbutton.setToolTip(_translate("MainWindow", "More..."))
+        self.plugins_ddtbutton.setToolTip(_translate("MainWindow", "Plugins"))
+        self.more_ddtbutton.setToolTip(_translate("MainWindow", "More"))
 from qfluentwidgets import BodyLabel, TransparentDropDownToolButton, TransparentToolButton, TransparentToolButtonWithMenu

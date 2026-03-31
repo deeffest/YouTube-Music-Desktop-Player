@@ -149,7 +149,7 @@ QLabel:hover {
        <item>
         <widget class="TransparentDropDownToolButton" name="download_ddtbutton">
          <property name="toolTip">
-          <string>Download...</string>
+          <string>Download</string>
          </property>
         </widget>
        </item>
@@ -170,7 +170,7 @@ QLabel:hover {
        <item>
         <widget class="TransparentDropDownToolButton" name="plugins_ddtbutton">
          <property name="toolTip">
-          <string>Plugins...</string>
+          <string>Plugins</string>
          </property>
          <property name="text">
           <string/>
@@ -180,7 +180,7 @@ QLabel:hover {
        <item>
         <widget class="TransparentToolButtonWithMenu" name="more_ddtbutton">
          <property name="toolTip">
-          <string>More...</string>
+          <string>More</string>
          </property>
         </widget>
        </item>

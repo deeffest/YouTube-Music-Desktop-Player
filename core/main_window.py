@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import base64
 import logging
 import platform
@@ -25,6 +26,7 @@ from PyQt5.QtWidgets import (
     QApplication,
     QSystemTrayIcon,
 )
+from PyQt5.QtTest import QTest
 from PyQt5.QtWebEngineWidgets import (
     QWebEnginePage,
     QWebEngineScript,
@@ -74,6 +76,7 @@ from core.ytmusic_downloader import DownloadThread
 from core.hotkey_controller import HotkeyController
 from core.text_view_msg_box import TextViewMessageBox
 from core.web_channel_backend import WebChannelBackend
+from core.music_recognizer import MusicRecognizerThread
 from core.picture_in_picture_dialog import PictureInPictureDialog
 
 if platform.system() == "Windows":
@@ -117,7 +120,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.download_thread = None
         self.update_checker_thread = None
         self.hotkey_controller_thread = None
+        self.music_recognizer_thread = None
         self.downloading_state_tool_tip = None
+        self.recognizing_state_tool_tip = None
         self.discord_rpc = None
         self.win_thumbnail_toolbar = None
 
@@ -159,10 +164,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.deno_path = os.path.join(self.home_dir, "bin", "deno")
             self.ytdlp_path = os.path.join(self.home_dir, "bin", "yt-dlp_linux")
 
-        self.cookies_txt = os.path.join(self.home_dir, "__cache__", "cookies.txt")
-        self.cookies_sqlite = os.path.join(
-            self.webview.page().profile().persistentStoragePath(), "Cookies"
-        )
+        self.cache_dir = os.path.join(self.home_dir, "__cache__")
+        os.makedirs(self.cache_dir, exist_ok=True)
 
         self.create_actions()
         self.create_submenus()
@@ -245,6 +248,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings_.setValue("embed_metadata", 1)
         if self.settings_.value("ytdlp_format") is None:
             self.settings_.setValue("ytdlp_format", 1)
+        if self.settings_.value("audd_api_token") is None:
+            self.settings_.setValue("audd_api_token", "")
+        if self.settings_.value("audd_recording_lenght") is None:
+            self.settings_.setValue("audd_recording_lenght", 5)
 
         self.ad_blocker_setting = int(self.settings_.value("ad_blocker"))
         self.save_last_win_geometry_setting = int(
@@ -305,6 +312,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pip_opacity_setting = float(self.settings_.value("pip_opacity"))
         self.embed_metadata_setting = int(self.settings_.value("embed_metadata"))
         self.ytdlp_format_setting = int(self.settings_.value("ytdlp_format"))
+        self.audd_api_token_setting = self.settings_.value("audd_api_token")
+        self.audd_recording_lenght_setting = int(
+            self.settings_.value("audd_recording_lenght")
+        )
 
     def configure_window(self):
         theme = self.theme_setting
@@ -337,7 +348,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def show_error_message(self, msg, title=None):
         text_view_dialog = TextViewMessageBox(
-            f"{title}" if title else "Unexpected Error", msg, self
+            f"{title}" if title else "Unexpected error", msg, self
         )
         text_view_dialog.cancelButton.hide()
         text_view_dialog.exec_()
@@ -365,7 +376,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.musicbrainz_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_B), self)
         self.musicbrainz_shortcut.setEnabled(False)
-        self.musicbrainz_shortcut.activated.connect(self.search_on_musicbrainz)
+        self.musicbrainz_shortcut.activated.connect(
+            lambda: self.search_on("MusicBrainz")
+        )
 
         self.download_song_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_D), self)
         self.download_song_shortcut.setEnabled(False)
@@ -378,6 +391,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.watch_in_pip_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_M), self)
         self.watch_in_pip_shortcut.setEnabled(False)
         self.watch_in_pip_shortcut.activated.connect(self.watch_in_pip)
+
+        self.audd_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_U), self)
+        self.audd_shortcut.activated.connect(lambda: self.recognize_music("AudD"))
 
         self.settings_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_S), self)
         self.settings_shortcut.activated.connect(self.open_settings)
@@ -492,7 +508,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.watch_in_pip_action.setEnabled(False)
         self.watch_in_pip_action.triggered.connect(self.watch_in_pip)
 
-        self.settings_action = Action("Settings", shortcut="Ctrl+S")
+        self.audd_action = MultiAction()
+
+        self.settings_action = Action("Settings...", shortcut="Ctrl+S")
         self.settings_action.setIcon(
             recolor_icon(f"{self.icon_folder}/settings.png", self.theme_setting)
         )
@@ -577,14 +595,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def create_submenus(self):
         self.search_on_menu = self.create_search_on_menu()
 
-        self.download_menu = RoundMenu("Download...")
+        self.download_menu = RoundMenu("Download")
         self.download_menu.setIcon(
             recolor_icon(f"{self.icon_folder}/download.png", self.theme_setting)
         )
         self.download_menu.addAction(self.download_song_action)
         self.download_menu.addAction(self.download_album_action)
 
-        self.plugins_menu = CheckableMenu("Plugins...")
+        self.recognize_music_menu = self.create_recognize_music_menu()
+
+        self.plugins_menu = CheckableMenu("Plugins")
         self.plugins_menu.setIcon(
             recolor_icon(f"{self.icon_folder}/plugins.png", self.theme_setting)
         )
@@ -613,6 +633,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.main_menu.addSeparator()
         self.main_menu.addMenu(self.download_menu)
         self.main_menu.addAction(self.watch_in_pip_action)
+        self.main_menu.addMenu(self.recognize_music_menu)
         self.main_menu.addSeparator()
         self.main_menu.addAction(self.settings_action)
         self.main_menu.addMenu(self.plugins_menu)
@@ -622,11 +643,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.main_menu.addSeparator()
         self.hide_toolbar_action.add(self.main_menu, self.create_hide_toolbar_action())
 
-        self.more_menu = RoundMenu("More...")
+        self.more_menu = RoundMenu()
         self.go_to_youtube_action.add(
             self.more_menu, self.create_go_to_youtube_action()
         )
         self.more_menu.addMenu(self.create_search_on_menu())
+        self.more_menu.addSeparator()
+        self.more_menu.addMenu(self.create_recognize_music_menu())
         self.more_menu.addSeparator()
         self.more_menu.addAction(self.bug_report_action)
         self.more_menu.addMenu(self.create_about_menu())
@@ -810,14 +833,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         copy_text(clean_up_url(self.current_url))
 
     def show_url_menu(self, pos):
-        self.url_menu.exec(self.url_label.mapToGlobal(pos))
-        QTimer.singleShot(0, self._reset_hover)
+        def reset_hover():
+            self.url_label.setAttribute(Qt.WA_UnderMouse, False)
+            self.url_label.style().unpolish(self.url_label)
+            self.url_label.style().polish(self.url_label)
+            self.url_label.update()
 
-    def _reset_hover(self):
-        self.url_label.setAttribute(Qt.WA_UnderMouse, False)
-        self.url_label.style().unpolish(self.url_label)
-        self.url_label.style().polish(self.url_label)
-        self.url_label.update()
+        self.url_menu.exec(self.url_label.mapToGlobal(pos))
+        QTimer.singleShot(0, reset_hover)
 
     def create_hide_toolbar_action(self):
         action = Action("Hide toolbar", shortcut="Ctrl+T")
@@ -827,11 +850,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         action.triggered.connect(self.hide_toolbar)
         return action
 
+    def create_audd_action(self):
+        action = Action("AudD API", shortcut="Ctrl+U")
+        action.setIcon(QIcon(f"{self.icon_folder}/audd.png"))
+        action.triggered.connect(lambda: self.recognize_music("AudD"))
+        return action
+
     def create_musicbrainz_action(self):
         action = Action("MusicBrainz", shortcut="Ctrl+B")
         action.setIcon(QIcon(f"{self.icon_folder}/musicbrainz.png"))
         action.setEnabled(False)
-        action.triggered.connect(self.search_on_musicbrainz)
+        action.triggered.connect(lambda: self.search_on("MusicBrainz"))
         return action
 
     def create_go_to_youtube_action(self):
@@ -842,14 +871,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return action
 
     def create_search_on_menu(self):
-        menu = RoundMenu("Search on...")
+        menu = RoundMenu("Search on")
         menu.setIcon(recolor_icon(f"{self.icon_folder}/search.png", self.theme_setting))
 
         self.musicbrainz_action.add(menu, self.create_musicbrainz_action())
         return menu
 
+    def create_recognize_music_menu(self):
+        menu = RoundMenu("Recognize music", self)
+        menu.setIcon(
+            recolor_icon(f"{self.icon_folder}/recognize_music.png", self.theme_setting)
+        )
+        self.audd_action.add(menu, self.create_audd_action())
+        return menu
+
     def create_about_menu(self):
-        menu = RoundMenu("About...")
+        menu = RoundMenu("About")
         menu.setIcon(recolor_icon(f"{self.icon_folder}/about.png", self.theme_setting))
 
         card = AboutCard(
@@ -867,11 +904,153 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         menu.addAction(self.by_deeffest_action)
         return menu
 
-    def search_on_musicbrainz(self):
-        open_url(
-            "https://musicbrainz.org/search?query="
-            f"{self.title}+-+{self.artist}&type=release"
+    def recognize_music(self, service):
+        self.audd_action.setEnabled(False)
+        self.audd_shortcut.setEnabled(False)
+
+        self.webpage.runJavaScript("document.querySelector('video').pause()")
+
+        self.music_recognizer_thread = MusicRecognizerThread(service, self)
+        self.music_recognizer_thread.recording_audio_from_pc.connect(
+            self.on_recording_audio_from_pc
         )
+        self.music_recognizer_thread.recording_audio_from_pc_success.connect(
+            self.on_recording_audio_from_pc_success
+        )
+        self.music_recognizer_thread.recognizing_via_audd_api.connect(
+            self.on_recognizing_via_audd_api
+        )
+        self.music_recognizer_thread.recognizing_via_audd_api_success.connect(
+            self.on_recognizing_via_audd_api_success
+        )
+        self.music_recognizer_thread.recognizing_via_audd_api_error.connect(
+            self.on_recognizing_via_audd_api_error
+        )
+        self.music_recognizer_thread.finished.connect(self.on_recognizing_finish)
+        self.music_recognizer_thread.start()
+
+    def show_recognizing_state_tooltip(self, title, content):
+        def calculate_tooltip_pos(
+            parent_widget,
+            tooltip_widget,
+            margin=20,
+            top_offset=63 if self.hide_toolbar_setting == 0 else 20,
+        ):
+            parent_width = parent_widget.width()
+            parent_height = parent_widget.height()
+
+            tooltip_width = tooltip_widget.width()
+            tooltip_height = tooltip_widget.height()
+
+            x = parent_width - tooltip_width - margin
+            y = top_offset
+
+            if x < 0:
+                x = 0
+            if y < 0:
+                y = 0
+            if x + tooltip_width > parent_width:
+                x = parent_width - tooltip_width
+            if y + tooltip_height > parent_height:
+                y = parent_height - tooltip_height
+
+            return QPoint(x, y)
+
+        self.recognizing_state_tool_tip = StateToolTip(title, content, self)
+        pos = calculate_tooltip_pos(self, self.recognizing_state_tool_tip)
+        self.recognizing_state_tool_tip.move(pos)
+        self.recognizing_state_tool_tip.show()
+
+    def hide_recognizing_state_tooltip(self):
+        if self.recognizing_state_tool_tip is not None:
+            self.recognizing_state_tool_tip.setState(True)
+            self.recognizing_state_tool_tip = None
+
+    def on_recording_audio_from_pc(self):
+        self.show_recognizing_state_tooltip("Recording audio from PC", "Please wait...")
+
+    def on_recording_audio_from_pc_success(self):
+        self.hide_recognizing_state_tooltip()
+
+    def on_recognizing_via_audd_api(self):
+        self.show_recognizing_state_tooltip(
+            "Recognizing via AudD API", "Please wait..."
+        )
+
+    def on_recognizing_via_audd_api_error(self, code, msg):
+        self.hide_recognizing_state_tooltip()
+
+        info_bar = InfoBar.error(
+            title=f"Error code: {code}",
+            content="Recognize music failed!",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.BOTTOM,
+            duration=-1,
+            parent=self,
+        )
+
+        button = PushButton(
+            recolor_icon(f"{self.icon_folder}/show.png", self.theme_setting),
+            "Show error",
+            self,
+        )
+        button.clicked.connect(lambda: self.show_recognize_error(msg, info_bar))
+        info_bar.addWidget(button)
+
+    def on_recognizing_via_audd_api_success(self, author, title):
+        self.hide_downloading_state_tooltip()
+
+        info_bar = InfoBar.success(
+            title=f"{author} - {title}",
+            content="Recognize music successfully!",
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.BOTTOM,
+            duration=-1,
+            parent=self,
+        )
+
+        button = PushButton(
+            recolor_icon(f"{self.icon_folder}/search.png", self.theme_setting),
+            "Search song",
+            self,
+        )
+        button.clicked.connect(lambda: self.search_song(f"{author} {title}", info_bar))
+        info_bar.addWidget(button)
+
+    def show_recognize_error(self, msg, info_bar):
+        info_bar.close()
+
+        QTimer.singleShot(0, lambda: self.show_error_message(msg, "AudD API error"))
+
+    def search_song(self, query, info_bar):
+        info_bar.close()
+
+        js = f"""
+        (function() {{
+            const input = document.querySelector('ytmusic-search-box input#input');
+            if (!input) return;
+            input.focus();
+            document.execCommand('selectAll');
+            document.execCommand('insertText', false, {json.dumps(query)});
+        }})();
+        """
+
+        def after_insert(_):
+            QTest.keyClick(self.webview.focusProxy(), Qt.Key_Return)
+
+        if is_valid_ytmusic_url(self.current_url):
+            self.webpage.runJavaScript(js, after_insert)
+        else:
+            self.webview.setUrl(QUrl(f"https://music.youtube.com/search?q={query}"))
+
+    def on_recognizing_finish(self):
+        self.music_recognizer_thread = None
+        self.hide_recognizing_state_tooltip()
+
+        self.audd_action.setEnabled(True)
+        self.audd_shortcut.setEnabled(True)
 
     def insert_webscripts(self):
         qtwebchannel = QWebEngineScript()
@@ -980,13 +1159,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             scripts.insert(script)
 
     def connect_actions(self):
+        def toggle_audio_only_mode(enabled):
+            self.toggle_script("AudioOnlyMode", "audio_only_mode.js", enabled=enabled)
+            self.toggle_script(
+                "BlockVideo",
+                "block_video.js",
+                injection_point=QWebEngineScript.DocumentCreation,
+                enabled=enabled,
+            )
+
         self.skip_video_ads_action.toggled.connect(
             lambda checked: self.toggle_script(
                 "SkipVideoAds", "skip_video_ads.js", enabled=checked
             )
         )
         self.audio_only_mode_action.toggled.connect(
-            lambda checked: self._toggle_audio_only_mode(checked)
+            lambda checked: toggle_audio_only_mode(checked)
         )
         self.nonstop_music_action.toggled.connect(
             lambda checked: self.toggle_script(
@@ -1002,15 +1190,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             lambda checked: self.toggle_script(
                 "ImNotAKid", "im_not_a_kid.js", enabled=checked
             )
-        )
-
-    def _toggle_audio_only_mode(self, enabled):
-        self.toggle_script("AudioOnlyMode", "audio_only_mode.js", enabled=enabled)
-        self.toggle_script(
-            "BlockVideo",
-            "block_video.js",
-            injection_point=QWebEngineScript.DocumentCreation,
-            enabled=enabled,
         )
 
     def create_win_thumbnail_toolbar(self):
@@ -1566,6 +1745,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def stop(self):
         self.webview.stop()
 
+    def search_on(self, service):
+        if service == "MusicBrainz":
+            open_url(
+                "https://musicbrainz.org/search?query="
+                f"{self.title}+-+{self.artist}&type=release"
+            )
+
     def go_to_youtube(self):
         open_url(f"https://www.youtube.com/watch?v={self.video_id}")
 
@@ -1701,7 +1887,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         button = PushButton(
             recolor_icon(f"{self.icon_folder}/show.png", self.theme_setting),
-            "Show Error",
+            "Show error",
             self,
         )
         button.clicked.connect(lambda: self.show_download_error(msg, info_bar))
@@ -1731,7 +1917,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def show_download_error(self, msg, info_bar):
         info_bar.close()
 
-        QTimer.singleShot(0, lambda: self.show_error_message(msg, "yt-dlp Error"))
+        QTimer.singleShot(0, lambda: self.show_error_message(msg, "yt-dlp error"))
 
     def open_download_folder(self, folder, info_bar):
         info_bar.close()
@@ -1888,8 +2074,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         ):
             self.update_checker_thread.stop()
 
+        if (
+            self.music_recognizer_thread is not None
+            and self.music_recognizer_thread.isRunning()
+        ):
+            self.music_recognizer_thread.stop()
+
     def app_quit(self):
         self.stop_running_threads()
+
+        app = QApplication.instance()
+        if hasattr(app, "memory") and app.memory.isAttached():
+            app.memory.detach()
+        if hasattr(app, "server"):
+            app.server.close()
 
     def closeEvent(self, event):
         self.save_settings()

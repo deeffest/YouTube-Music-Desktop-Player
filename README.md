@@ -21,6 +21,7 @@ Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform 
 ## Features
 - Built-in yt-dlp
 - Picture-in-Picture
+- Music recognizer
 - Windows thumbnail buttons
 - Discord Rich Presence
 - System tray icon

@@ -38,6 +38,26 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         self.setWindowIcon(QIcon(f"{self.window.icon_folder}/settings-titlebar.png"))
 
     def configure_ui_elements(self):
+        def preview_opacity(value):
+            self.setWindowOpacity(value)
+            preview_timer.start(2000)
+
+        def remove_deno_from_device():
+            self.window.remove_tool_from_device("Deno")
+            self.pushButton_3.setEnabled(False)
+
+        def remove_ffmpeg_from_device():
+            self.window.remove_tool_from_device("FFmpeg")
+            self.pushButton_2.setEnabled(False)
+
+        def remove_ytdlp_from_device():
+            self.window.remove_tool_from_device("yt-dlp")
+            self.pushButton.setEnabled(False)
+
+        def delete_all_saved_cookies():
+            self.window.delete_all_cookies()
+            self.pushButton_4.setEnabled(False)
+
         self.buttonBox.accepted.connect(self.save_settings)
         self.buttonBox.rejected.connect(self.close)
 
@@ -74,16 +94,16 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
                 f"{self.window.icon_folder}/delete.png", self.window.theme_setting
             )
         )
-        self.pushButton_4.clicked.connect(self.delete_all_saved_cookies)
+        self.pushButton_4.clicked.connect(delete_all_saved_cookies)
         self.checkBox_12.setChecked(self.window.save_last_pos_of_mp_setting)
         self.doubleSpinBox.setRange(0.2, 1.0)
         self.doubleSpinBox.setSingleStep(0.05)
         self.doubleSpinBox.setDecimals(2)
         self.doubleSpinBox.setValue(self.window.pip_opacity_setting)
-        self._preview_timer = QTimer(self)
-        self._preview_timer.setSingleShot(True)
-        self._preview_timer.timeout.connect(lambda: self.setWindowOpacity(1.0))
-        self.doubleSpinBox.valueChanged.connect(self.preview_opacity)
+        preview_timer = QTimer(self)
+        preview_timer.setSingleShot(True)
+        preview_timer.timeout.connect(lambda: self.setWindowOpacity(1.0))
+        self.doubleSpinBox.valueChanged.connect(preview_opacity)
         self.checkBox_16.setChecked(self.window.pip_is_always_on_top_setting)
         self.checkBox_4.setChecked(self.window.use_cookies_setting)
         self.checkBox_6.setChecked(self.window.auto_update_ytdlp_setting)
@@ -130,7 +150,7 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
                 f"{self.window.icon_folder}/remove.png", self.window.theme_setting
             )
         )
-        self.pushButton.clicked.connect(self.remove_ytdlp_from_device)
+        self.pushButton.clicked.connect(remove_ytdlp_from_device)
         if self.window.is_downloading or not self.window.check_tool_availability(
             "FFmpeg"
         ):
@@ -140,7 +160,7 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
                 f"{self.window.icon_folder}/remove.png", self.window.theme_setting
             )
         )
-        self.pushButton_2.clicked.connect(self.remove_ffmpeg_from_device)
+        self.pushButton_2.clicked.connect(remove_ffmpeg_from_device)
         if self.window.is_downloading or not self.window.check_tool_availability(
             "Deno"
         ):
@@ -150,27 +170,9 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
                 f"{self.window.icon_folder}/remove.png", self.window.theme_setting
             )
         )
-        self.pushButton_3.clicked.connect(self.remove_deno_from_device)
-
-    def preview_opacity(self, value):
-        self.setWindowOpacity(value)
-        self._preview_timer.start(2000)
-
-    def remove_deno_from_device(self):
-        self.window.remove_tool_from_device("Deno")
-        self.pushButton_3.setEnabled(False)
-
-    def remove_ffmpeg_from_device(self):
-        self.window.remove_tool_from_device("FFmpeg")
-        self.pushButton_2.setEnabled(False)
-
-    def remove_ytdlp_from_device(self):
-        self.window.remove_tool_from_device("yt-dlp")
-        self.pushButton.setEnabled(False)
-
-    def delete_all_saved_cookies(self):
-        self.window.delete_all_cookies()
-        self.pushButton_4.setEnabled(False)
+        self.pushButton_3.clicked.connect(remove_deno_from_device)
+        self.lineEdit.setText(self.window.audd_api_token_setting)
+        self.horizontalSlider.setValue(self.window.audd_recording_lenght_setting)
 
     def save_settings(self):
         self.window.save_last_win_geometry_setting = int(self.checkBox.isChecked())
@@ -252,5 +254,13 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         )
         self.window.ytdlp_format_setting = int(self.comboBox_3.currentIndex())
         self.window.settings_.setValue("ytdlp_format", self.window.ytdlp_format_setting)
+        self.window.audd_api_token_setting = self.lineEdit.text()
+        self.window.settings_.setValue(
+            "audd_api_token", self.window.audd_api_token_setting
+        )
+        self.window.audd_recording_lenght_setting = int(self.horizontalSlider.value())
+        self.window.settings_.setValue(
+            "audd_recording_lenght", self.window.audd_recording_lenght_setting
+        )
 
         self.close()

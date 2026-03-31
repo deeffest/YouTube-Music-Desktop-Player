@@ -1,3 +1,7 @@
+v1.25.0-rc2 is Here! (31.03.2026)
+- Added music recognizer using AudD API.
+- Other fixes and improvements.
+
 v1.25.0-rc1 is Here! (29.03.2026)
 - Added light theme.
 - Added "I'm not a kid!" plugin.
