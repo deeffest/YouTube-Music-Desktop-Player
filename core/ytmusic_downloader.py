@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 import sqlite3
 import logging
 import requests
@@ -58,6 +59,20 @@ class DownloadThread(QThread):
             self.export_cookies()
         self.emit_command()
 
+    def get_ffmpeg(self):
+        if self.window.prefer_system_ffmpeg_setting == 1:
+            system = shutil.which("ffmpeg")
+            if system:
+                return system
+        return self.window.ffmpeg_path
+
+    def get_deno(self):
+        if self.window.prefer_system_deno_setting == 1:
+            system = shutil.which("deno")
+            if system:
+                return system
+        return self.window.deno_path
+
     def ensure_tools(self):
         def download_binary(url, dst_path):
             tmp_path = dst_path + ".tmp"
@@ -76,15 +91,20 @@ class DownloadThread(QThread):
                 os.chmod(dst_path, 0o755)
 
         os.makedirs(os.path.join(self.window.home_dir, "bin"), exist_ok=True)
-        if not os.path.exists(self.window.ffmpeg_path):
+
+        if self.get_ffmpeg() == self.window.ffmpeg_path and not os.path.isfile(
+            self.window.ffmpeg_path
+        ):
             self.downloading_ffmpeg.emit()
             download_binary(self.window.ffmpeg_url, self.window.ffmpeg_path)
             self.downloading_ffmpeg_success.emit()
-        if not os.path.exists(self.window.deno_path):
+        if self.get_deno() == self.window.deno_path and not os.path.isfile(
+            self.window.deno_path
+        ):
             self.downloading_deno.emit()
             download_binary(self.window.deno_url, self.window.deno_path)
             self.downloading_deno_success.emit()
-        if not os.path.exists(self.window.ytdlp_path):
+        if not os.path.isfile(self.window.ytdlp_path):
             self.downloading_ytdlp.emit()
             download_binary(self.window.ytdlp_url, self.window.ytdlp_path)
             self.downloading_ytdlp_success.emit()
@@ -92,6 +112,7 @@ class DownloadThread(QThread):
     def export_cookies(self):
         if not os.path.exists(self.cookies_sqlite):
             return
+
         conn = sqlite3.connect(self.cookies_sqlite)
         cursor = conn.cursor()
 
@@ -144,14 +165,14 @@ class DownloadThread(QThread):
             "-f",
             format_selector,
             "--ffmpeg-location",
-            self.window.ffmpeg_path,
+            self.get_ffmpeg(),
             "-o",
             output_template,
             "--print-json",
             "--socket-timeout",
             "10",
             "--js-runtimes",
-            f"deno:{self.window.deno_path}",
+            f"deno:{self.get_deno()}",
         ]
 
         if is_video:

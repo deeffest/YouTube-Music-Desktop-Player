@@ -52,6 +52,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
+        </property>
         <property name="currentIndex">
          <number>0</number>
         </property>
@@ -68,6 +71,9 @@
             <layout class="QVBoxLayout" name="verticalLayout_3">
              <item>
               <widget class="QCheckBox" name="checkBox">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Restore window geometry</string>
                </property>
@@ -75,6 +81,9 @@
              </item>
              <item>
               <widget class="QCheckBox" name="checkBox_2">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Restore last URL</string>
                </property>
@@ -82,6 +91,9 @@
              </item>
              <item>
               <widget class="QCheckBox" name="checkBox_3">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Restore zoom factor</string>
                </property>
@@ -98,6 +110,9 @@
             <layout class="QVBoxLayout" name="verticalLayout_11">
              <item>
               <widget class="QCheckBox" name="checkBox_7">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Light theme</string>
                </property>
@@ -107,6 +122,9 @@
               <layout class="QHBoxLayout" name="horizontalLayout_3">
                <item>
                 <widget class="QLabel" name="label">
+                 <property name="focusPolicy">
+                  <enum>Qt::NoFocus</enum>
+                 </property>
                  <property name="text">
                   <string>Icon color</string>
                  </property>
@@ -119,6 +137,9 @@
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="focusPolicy">
+                  <enum>Qt::NoFocus</enum>
                  </property>
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting applies only to the icons in the system tray!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -153,6 +174,9 @@
             <layout class="QVBoxLayout" name="verticalLayout_14">
              <item>
               <widget class="QCheckBox" name="checkBox_14">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Windows thumbnail buttons</string>
                </property>
@@ -160,6 +184,9 @@
              </item>
              <item>
               <widget class="QCheckBox" name="checkBox_10">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>System tray icon</string>
                </property>
@@ -167,6 +194,9 @@
              </item>
              <item>
               <widget class="QCheckBox" name="checkBox_11">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Discord Rich Presence</string>
                </property>
@@ -174,13 +204,16 @@
              </item>
              <item>
               <widget class="QCheckBox" name="checkBox_13">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="toolTip">
                 <string>• Ctrl + Shift + Space: Play/Pause.
 • Ctrl + Shift + Left: Previous.
 • Ctrl + Shift + Right: Next.</string>
                </property>
                <property name="text">
-                <string>Playback hotkeys</string>
+                <string>Global playback hotkeys</string>
                </property>
               </widget>
              </item>
@@ -218,6 +251,9 @@
             <layout class="QVBoxLayout" name="verticalLayout_12">
              <item>
               <widget class="QCheckBox" name="checkBox_8">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Full-screen mode support</string>
                </property>
@@ -225,6 +261,9 @@
              </item>
              <item>
               <widget class="QCheckBox" name="checkBox_9">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Animated scrolling support</string>
                </property>
@@ -241,6 +280,9 @@
             <layout class="QVBoxLayout" name="verticalLayout_13">
              <item>
               <widget class="QComboBox" name="comboBox">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="toolTip">
                 <string>• Auto: Automatic selection based on system.
 • Desktop: Native OpenGL implementation.
@@ -280,6 +322,9 @@
             <layout class="QVBoxLayout" name="verticalLayout_7">
              <item>
               <widget class="QCheckBox" name="checkBox_15">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Do not save cookies to disk</string>
                </property>
@@ -287,6 +332,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="pushButton_4">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Delete all saved cookies</string>
                </property>
@@ -329,6 +377,9 @@
             <layout class="QVBoxLayout" name="verticalLayout_15">
              <item>
               <widget class="QCheckBox" name="checkBox_12">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Restore PiP geometry</string>
                </property>
@@ -347,6 +398,9 @@
               <layout class="QHBoxLayout" name="horizontalLayout">
                <item>
                 <widget class="QLabel" name="label_2">
+                 <property name="focusPolicy">
+                  <enum>Qt::NoFocus</enum>
+                 </property>
                  <property name="text">
                   <string>PiP opacity</string>
                  </property>
@@ -360,12 +414,18 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="focusPolicy">
+                  <enum>Qt::ClickFocus</enum>
+                 </property>
                 </widget>
                </item>
               </layout>
              </item>
              <item>
               <widget class="QCheckBox" name="checkBox_16">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>PiP is always on top</string>
                </property>
@@ -410,6 +470,9 @@
               <layout class="QHBoxLayout" name="horizontalLayout_4">
                <item>
                 <widget class="QLabel" name="label_3">
+                 <property name="focusPolicy">
+                  <enum>Qt::NoFocus</enum>
+                 </property>
                  <property name="text">
                   <string>Format</string>
                  </property>
@@ -422,6 +485,9 @@
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="focusPolicy">
+                  <enum>Qt::NoFocus</enum>
                  </property>
                  <item>
                   <property name="text">
@@ -449,6 +515,9 @@
              </item>
              <item>
               <widget class="QCheckBox" name="checkBox_4">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Use cookies</string>
                </property>
@@ -456,6 +525,9 @@
              </item>
              <item>
               <widget class="QCheckBox" name="checkBox_6">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Auto update</string>
                </property>
@@ -463,6 +535,9 @@
              </item>
              <item>
               <widget class="QCheckBox" name="checkBox_17">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Embed metadata</string>
                </property>
@@ -470,6 +545,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="pushButton">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="text">
                 <string>Remove from device</string>
                </property>
@@ -497,7 +575,26 @@
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_9">
              <item>
+              <widget class="QCheckBox" name="checkBox_5">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>The system's FFmpeg will be used, if available.</string>
+               </property>
+               <property name="text">
+                <string>Prefer system FFmpeg</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QPushButton" name="pushButton_2">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>This will not remove the system version of FFmpeg - only the built-in version!</string>
+               </property>
                <property name="text">
                 <string>Remove from device</string>
                </property>
@@ -519,7 +616,26 @@
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_10">
              <item>
+              <widget class="QCheckBox" name="checkBox_18">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>The system's Deno will be used, if available.</string>
+               </property>
+               <property name="text">
+                <string>Prefer system Deno</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QPushButton" name="pushButton_3">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>This will not remove the system version of Deno - only the built-in version!</string>
+               </property>
                <property name="text">
                 <string>Remove from device</string>
                </property>
@@ -571,6 +687,9 @@
                </item>
                <item>
                 <widget class="QLineEdit" name="lineEdit">
+                 <property name="focusPolicy">
+                  <enum>Qt::ClickFocus</enum>
+                 </property>
                  <property name="toolTip">
                   <string>Keep the input field blank to use your 10 free recognitions per day.</string>
                  </property>
@@ -585,6 +704,9 @@
               <layout class="QHBoxLayout" name="horizontalLayout_6">
                <item>
                 <widget class="QLabel" name="label_5">
+                 <property name="focusPolicy">
+                  <enum>Qt::NoFocus</enum>
+                 </property>
                  <property name="text">
                   <string>Recording lenght</string>
                  </property>
@@ -592,8 +714,11 @@
                </item>
                <item>
                 <widget class="QSlider" name="horizontalSlider">
+                 <property name="focusPolicy">
+                  <enum>Qt::NoFocus</enum>
+                 </property>
                  <property name="toolTip">
-                  <string>Measured in seconds (from 1 to 12).</string>
+                  <string/>
                  </property>
                  <property name="minimum">
                   <number>1</number>
@@ -609,6 +734,13 @@
                  </property>
                  <property name="tickPosition">
                   <enum>QSlider::TicksBelow</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="label_6">
+                 <property name="text">
+                  <string>1s</string>
                  </property>
                 </widget>
                </item>

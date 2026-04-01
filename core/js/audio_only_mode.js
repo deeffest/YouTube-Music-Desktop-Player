@@ -1,3 +1,7 @@
+// ==UserScript==
+// @match        https://music.youtube.com/*
+// ==/UserScript==
+
 (function () {
     let previousThumbnailUrl = null;
 

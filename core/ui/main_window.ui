@@ -53,6 +53,9 @@
          <property name="enabled">
           <bool>false</bool>
          </property>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
          <property name="toolTip">
           <string>Back</string>
          </property>
@@ -63,6 +66,9 @@
          <property name="enabled">
           <bool>false</bool>
          </property>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
          <property name="toolTip">
           <string>Forward</string>
          </property>
@@ -70,6 +76,9 @@
        </item>
        <item>
         <widget class="TransparentToolButton" name="home_tbutton">
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
          <property name="toolTip">
           <string>Home</string>
          </property>
@@ -77,6 +86,9 @@
        </item>
        <item>
         <widget class="TransparentToolButton" name="reload_tbutton">
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
          <property name="toolTip">
           <string>Reload</string>
          </property>
@@ -148,6 +160,9 @@ QLabel:hover {
        </item>
        <item>
         <widget class="TransparentDropDownToolButton" name="download_ddtbutton">
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
          <property name="toolTip">
           <string>Download</string>
          </property>
@@ -155,6 +170,9 @@ QLabel:hover {
        </item>
        <item>
         <widget class="TransparentToolButtonWithMenu" name="watch_in_pip_tbutton">
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
          <property name="toolTip">
           <string>Watch in PiP</string>
          </property>
@@ -162,6 +180,9 @@ QLabel:hover {
        </item>
        <item>
         <widget class="TransparentToolButtonWithMenu" name="settings_ddtbutton">
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
          <property name="toolTip">
           <string>Settings...</string>
          </property>
@@ -169,6 +190,9 @@ QLabel:hover {
        </item>
        <item>
         <widget class="TransparentDropDownToolButton" name="plugins_ddtbutton">
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
          <property name="toolTip">
           <string>Plugins</string>
          </property>
@@ -179,6 +203,9 @@ QLabel:hover {
        </item>
        <item>
         <widget class="TransparentToolButtonWithMenu" name="more_ddtbutton">
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
          <property name="toolTip">
           <string>More</string>
          </property>

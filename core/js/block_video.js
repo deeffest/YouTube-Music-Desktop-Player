@@ -1,4 +1,5 @@
 // ==UserScript==
+// @run-at       document-start
 // @match        https://music.youtube.com/*
 // ==/UserScript==
 

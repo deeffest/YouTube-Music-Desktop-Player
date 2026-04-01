@@ -1,11 +1,14 @@
-pyqt5==5.15.11
-pyqtwebengine==5.15.7
-git+https://github.com/deeffest/PyQt-Fluent-Widgets.git@a520940
-pywinstyles==1.8; sys_platform=="win32"
-requests==2.32.5
-packaging==25.0
 pynput==1.8.1
-git+https://github.com/deeffest/Discord-RPC.git@5324548
-pyinstaller==6.17.0
-black==25.12.0
 flake8==7.3.0
+pyqt5==5.15.11
+black==25.12.0
+packaging==25.0
+requests==2.32.5
+pyinstaller==6.17.0
+pyqtwebengine==5.15.7
+numpy==2.4.3; sys_platform=="win32"
+pywinstyles==1.8; sys_platform=="win32"
+soundfile==0.13.1; sys_platform=="win32"
+pyaudiowpatch==0.2.12.8; sys_platform=="win32"
+git+https://github.com/deeffest/Discord-RPC.git@5324548
+git+https://github.com/deeffest/PyQt-Fluent-Widgets.git@a520940

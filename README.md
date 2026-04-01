@@ -23,9 +23,9 @@ Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform 
 - Picture-in-Picture
 - Music recognizer
 - Windows thumbnail buttons
-- Discord Rich Presence
 - System tray icon
-- Playback hotkeys
+- Discord Rich Presence
+- Global playback hotkeys
 
 ## Plugins
 - Skip video ads
@@ -33,6 +33,8 @@ Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform 
 - Non-stop music
 - Hide mini player
 - I'm not a kid!
+
+or... add custom plugins! [Learn more](plugins/README.txt)
 
 ## Get App
 Just download and extract ↓

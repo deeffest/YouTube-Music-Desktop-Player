@@ -171,8 +171,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.create_submenus()
         self.create_context_menus()
         self.configure_ui_elements()
-        self.insert_webscripts()
         self.activate_plugins()
+        self.activate_custom_plugins()
         self.connect_actions()
         self.run_discord_rpc()
         self.show_system_tray_icon()
@@ -237,7 +237,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.settings_.value("icon_color") is None:
             self.settings_.setValue("icon_color", 0)
         if self.settings_.value("win_thumbnail_buttons") is None:
-            self.settings_.setValue("win_thumbnail_buttons", 1)
+            self.settings_.setValue(
+                "win_thumbnail_buttons", 1 if platform.system() == "Windows" else 0
+            )
         if self.settings_.value("pip_is_always_on_top") is None:
             self.settings_.setValue("pip_is_always_on_top", 1)
         if self.settings_.value("do_not_save_cookies") is None:
@@ -252,6 +254,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings_.setValue("audd_api_token", "")
         if self.settings_.value("audd_recording_lenght") is None:
             self.settings_.setValue("audd_recording_lenght", 5)
+        if self.settings_.value("prefer_system_ffmpeg") is None:
+            self.settings_.setValue("prefer_system_ffmpeg", 0)
+        if self.settings_.value("prefer_system_deno") is None:
+            self.settings_.setValue("prefer_system_deno", 0)
 
         self.ad_blocker_setting = int(self.settings_.value("ad_blocker"))
         self.save_last_win_geometry_setting = int(
@@ -300,8 +306,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         self.im_not_a_kid_setting = int(self.settings_.value("im_not_a_kid"))
         self.icon_color_setting = int(self.settings_.value("icon_color"))
-        self.win_thumbnail_buttons_setting = int(
-            self.settings_.value("win_thumbnail_buttons")
+        self.win_thumbnail_buttons_setting = (
+            int(self.settings_.value("win_thumbnail_buttons"))
+            if platform.system() == "Windows"
+            else 0
         )
         self.pip_is_always_on_top_setting = int(
             self.settings_.value("pip_is_always_on_top")
@@ -315,6 +323,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.audd_api_token_setting = self.settings_.value("audd_api_token")
         self.audd_recording_lenght_setting = int(
             self.settings_.value("audd_recording_lenght")
+        )
+        self.prefer_system_ffmpeg_setting = int(
+            self.settings_.value("prefer_system_ffmpeg")
+        )
+        self.prefer_system_deno_setting = int(
+            self.settings_.value("prefer_system_deno")
         )
 
     def configure_window(self):
@@ -510,6 +524,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.audd_action = MultiAction()
 
+        self.restart_app_action = Action("Restart app", shortcut="Ctrl+Shift+R")
+        self.restart_app_action.setIcon(
+            recolor_icon(f"{self.icon_folder}/restart.png", self.theme_setting)
+        )
+        self.restart_app_action.triggered.connect(self.restart_app)
+
         self.settings_action = Action("Settings...", shortcut="Ctrl+S")
         self.settings_action.setIcon(
             recolor_icon(f"{self.icon_folder}/settings.png", self.theme_setting)
@@ -634,6 +654,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.main_menu.addMenu(self.download_menu)
         self.main_menu.addAction(self.watch_in_pip_action)
         self.main_menu.addMenu(self.recognize_music_menu)
+        self.main_menu.addAction(self.restart_app_action)
         self.main_menu.addSeparator()
         self.main_menu.addAction(self.settings_action)
         self.main_menu.addMenu(self.plugins_menu)
@@ -650,6 +671,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.more_menu.addMenu(self.create_search_on_menu())
         self.more_menu.addSeparator()
         self.more_menu.addMenu(self.create_recognize_music_menu())
+        self.more_menu.addAction(self.restart_app_action)
         self.more_menu.addSeparator()
         self.more_menu.addAction(self.bug_report_action)
         self.more_menu.addMenu(self.create_about_menu())
@@ -1052,144 +1074,103 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.audd_action.setEnabled(True)
         self.audd_shortcut.setEnabled(True)
 
-    def insert_webscripts(self):
+    def activate_plugins(self):
         qtwebchannel = QWebEngineScript()
         file = QFile(":/qtwebchannel/qwebchannel.js")
         if file.open(QFile.ReadOnly | QFile.Text):
             stream = QTextStream(file)
-            script_code = stream.readAll()
-            qtwebchannel.setSourceCode(script_code)
+            qtwebchannel.setSourceCode(stream.readAll())
             file.close()
         qtwebchannel.setInjectionPoint(QWebEngineScript.DocumentReady)
         qtwebchannel.setWorldId(QWebEngineScript.MainWorld)
         qtwebchannel.setRunsOnSubFrames(False)
         self.webpage.profile().scripts().insert(qtwebchannel)
 
-        scrollbar_styles_script = QWebEngineScript()
-        scrollbar_styles_script.setName("ScrollbarStyles")
-        scrollbar_styles_script.setSourceCode(self.read_script("scrollbar_styles.js"))
-        scrollbar_styles_script.setInjectionPoint(QWebEngineScript.Deferred)
-        scrollbar_styles_script.setWorldId(QWebEngineScript.MainWorld)
-        scrollbar_styles_script.setRunsOnSubFrames(False)
-        self.webpage.profile().scripts().insert(scrollbar_styles_script)
-
-        ytmusic_observer_script = QWebEngineScript()
-        ytmusic_observer_script.setName("YtMusicObserver")
-        ytmusic_observer_script.setSourceCode(self.read_script("ytmusic_observer.js"))
-        ytmusic_observer_script.setInjectionPoint(QWebEngineScript.Deferred)
-        ytmusic_observer_script.setWorldId(QWebEngineScript.MainWorld)
-        ytmusic_observer_script.setRunsOnSubFrames(False)
-        self.webpage.profile().scripts().insert(ytmusic_observer_script)
-
-    def activate_plugins(self):
-        if self.ad_blocker_setting == 1:
-            skip_video_ads_script = QWebEngineScript()
-            skip_video_ads_script.setName("SkipVideoAds")
-            skip_video_ads_script.setSourceCode(self.read_script("skip_video_ads.js"))
-            skip_video_ads_script.setInjectionPoint(QWebEngineScript.Deferred)
-            skip_video_ads_script.setWorldId(QWebEngineScript.MainWorld)
-            skip_video_ads_script.setRunsOnSubFrames(False)
-            self.webpage.profile().scripts().insert(skip_video_ads_script)
-
-        if self.only_audio_mode_setting == 1:
-            audio_only_mode_script = QWebEngineScript()
-            audio_only_mode_script.setName("AudioOnlyMode")
-            audio_only_mode_script.setSourceCode(self.read_script("audio_only_mode.js"))
-            audio_only_mode_script.setInjectionPoint(QWebEngineScript.Deferred)
-            audio_only_mode_script.setWorldId(QWebEngineScript.MainWorld)
-            audio_only_mode_script.setRunsOnSubFrames(False)
-            self.webpage.profile().scripts().insert(audio_only_mode_script)
-
-            block_video_script = QWebEngineScript()
-            block_video_script.setName("BlockVideo")
-            block_video_script.setSourceCode(self.read_script("block_video.js"))
-            block_video_script.setInjectionPoint(QWebEngineScript.DocumentCreation)
-            block_video_script.setWorldId(QWebEngineScript.MainWorld)
-            block_video_script.setRunsOnSubFrames(False)
-            self.webpage.profile().scripts().insert(block_video_script)
-
-        if self.nonstop_music_setting == 1:
-            non_stop_music_script = QWebEngineScript()
-            non_stop_music_script.setName("NonStopMusic")
-            non_stop_music_script.setSourceCode(self.read_script("non_stop_music.js"))
-            non_stop_music_script.setInjectionPoint(QWebEngineScript.Deferred)
-            non_stop_music_script.setWorldId(QWebEngineScript.MainWorld)
-            non_stop_music_script.setRunsOnSubFrames(False)
-            self.webpage.profile().scripts().insert(non_stop_music_script)
-
-        if self.hide_mini_player_setting == 1:
-            hide_mini_player_script = QWebEngineScript()
-            hide_mini_player_script.setName("HideMiniPlayer")
-            hide_mini_player_script.setSourceCode(
-                self.read_script("hide_mini_player.js")
-            )
-            hide_mini_player_script.setInjectionPoint(QWebEngineScript.Deferred)
-            hide_mini_player_script.setWorldId(QWebEngineScript.MainWorld)
-            hide_mini_player_script.setRunsOnSubFrames(False)
-            self.webpage.profile().scripts().insert(hide_mini_player_script)
-
-        if self.im_not_a_kid_setting == 1:
-            im_not_a_kid_script = QWebEngineScript()
-            im_not_a_kid_script.setName("ImNotAKid")
-            im_not_a_kid_script.setSourceCode(self.read_script("im_not_a_kid.js"))
-            im_not_a_kid_script.setInjectionPoint(QWebEngineScript.Deferred)
-            im_not_a_kid_script.setWorldId(QWebEngineScript.MainWorld)
-            im_not_a_kid_script.setRunsOnSubFrames(False)
-            self.webpage.profile().scripts().insert(im_not_a_kid_script)
-
-    def toggle_script(
-        self,
-        script_name,
-        script_file,
-        injection_point=QWebEngineScript.Deferred,
-        enabled=None,
-    ):
-        scripts = self.webpage.profile().scripts()
-        existing = scripts.findScript(script_name)
-        if not existing.isNull():
-            scripts.remove(existing)
-
-        if enabled:
+        def insert_script(filename):
             script = QWebEngineScript()
-            script.setName(script_name)
-            script.setSourceCode(self.read_script(script_file))
-            script.setInjectionPoint(injection_point)
+            script.setName(filename)
+            script.setSourceCode(self.read_script(filename))
             script.setWorldId(QWebEngineScript.MainWorld)
             script.setRunsOnSubFrames(False)
-            scripts.insert(script)
+            self.webpage.profile().scripts().insert(script)
+
+        insert_script("scrollbar_styles.js")
+        insert_script("ytmusic_observer.js")
+        if self.ad_blocker_setting == 1:
+            insert_script("skip_video_ads.js")
+        if self.only_audio_mode_setting == 1:
+            insert_script("audio_only_mode.js")
+            insert_script("block_video.js")
+        if self.nonstop_music_setting == 1:
+            insert_script("non_stop_music.js")
+        if self.hide_mini_player_setting == 1:
+            insert_script("hide_mini_player.js")
+        if self.im_not_a_kid_setting == 1:
+            insert_script("im_not_a_kid.js")
+
+    def activate_custom_plugins(self):
+        plugins_dir = os.path.join(self.current_dir, "plugins")
+
+        if not os.path.isdir(plugins_dir):
+            return
+
+        js_files = sorted(f for f in os.listdir(plugins_dir) if f.endswith(".js"))
+        if not js_files:
+            return
+
+        for filename in js_files:
+            filepath = os.path.join(plugins_dir, filename)
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    source = f.read()
+            except Exception as e:
+                logging.error(f"Failed to load custom plugin '{filename}': {str(e)}")
+                continue
+
+            script = QWebEngineScript()
+            script.setName(f"custom_{filename}")
+            script.setSourceCode(source)
+            script.setWorldId(QWebEngineScript.MainWorld)
+            script.setRunsOnSubFrames(False)
+            self.webpage.profile().scripts().insert(script)
+
+            action = Action(filename)
+            action.setEnabled(False)
+            self.plugins_menu.addAction(action)
 
     def connect_actions(self):
         def toggle_audio_only_mode(enabled):
-            self.toggle_script("AudioOnlyMode", "audio_only_mode.js", enabled=enabled)
-            self.toggle_script(
-                "BlockVideo",
-                "block_video.js",
-                injection_point=QWebEngineScript.DocumentCreation,
-                enabled=enabled,
-            )
+            toggle_script("audio_only_mode.js", enabled=enabled)
+            toggle_script("block_video.js", enabled=enabled)
+
+        def toggle_script(filename, enabled=None):
+            scripts = self.webpage.profile().scripts()
+            existing = scripts.findScript(filename)
+            if not existing.isNull():
+                scripts.remove(existing)
+
+            if enabled:
+                script = QWebEngineScript()
+                script.setName(filename)
+                script.setSourceCode(self.read_script(filename))
+                script.setWorldId(QWebEngineScript.MainWorld)
+                script.setRunsOnSubFrames(False)
+                scripts.insert(script)
 
         self.skip_video_ads_action.toggled.connect(
-            lambda checked: self.toggle_script(
-                "SkipVideoAds", "skip_video_ads.js", enabled=checked
-            )
+            lambda checked: toggle_script("skip_video_ads.js", enabled=checked)
         )
         self.audio_only_mode_action.toggled.connect(
             lambda checked: toggle_audio_only_mode(checked)
         )
         self.nonstop_music_action.toggled.connect(
-            lambda checked: self.toggle_script(
-                "NonStopMusic", "non_stop_music.js", enabled=checked
-            )
+            lambda checked: toggle_script("non_stop_music.js", enabled=checked)
         )
         self.hide_mini_player_action.toggled.connect(
-            lambda checked: self.toggle_script(
-                "HideMiniPlayer", "hide_mini_player.js", enabled=checked
-            )
+            lambda checked: toggle_script("hide_mini_player.js", enabled=checked)
         )
         self.im_not_a_kid_action.toggled.connect(
-            lambda checked: self.toggle_script(
-                "ImNotAKid", "im_not_a_kid.js", enabled=checked
-            )
+            lambda checked: toggle_script("im_not_a_kid.js", enabled=checked)
         )
 
     def create_win_thumbnail_toolbar(self):
@@ -1709,22 +1690,45 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.win_thumbnail_toolbar.addButton(self.tool_btn_next)
 
     def dislike(self):
-        self.run_js_script("dislike.js")
+        js = """
+        document
+            .querySelector(
+                "ytmusic-player-bar ytmusic-like-button-renderer " +
+                "yt-button-shape.dislike button"
+            )
+            ?.click();
+        """
+        self.webpage.runJavaScript(js)
 
     def previous(self):
-        self.run_js_script("previous.js")
+        js = """
+        document.querySelector(".previous-button")?.click();
+        """
+        self.webpage.runJavaScript(js)
 
     def play_pause(self):
-        self.run_js_script("play_pause.js")
+        js = """
+        var v = document.querySelector("video");
+        v && (v.paused ? v.play() : v.pause());
+        """
+        self.webpage.runJavaScript(js)
 
     def next(self):
-        self.run_js_script("next.js")
+        js = """
+        document.querySelector(".next-button")?.click();
+        """
+        self.webpage.runJavaScript(js)
 
     def like(self):
-        self.run_js_script("like.js")
-
-    def run_js_script(self, script_name):
-        self.webpage.runJavaScript(self.read_script(script_name))
+        js = """
+        document
+            .querySelector(
+                "ytmusic-player-bar ytmusic-like-button-renderer " +
+                "yt-button-shape.like button"
+            )
+            ?.click();
+        """
+        self.webpage.runJavaScript(js)
 
     def read_script(self, filename):
         with open(f"{self.current_dir}/core/js/{filename}", "r", encoding="utf-8") as f:

@@ -4,7 +4,7 @@ import platform
 import subprocess
 
 SHORT_NAME = "YTMDPlayer"
-VERSION = "v1.25.0-rc2"
+VERSION = "v1.25.0-rc3"
 
 
 def main():
@@ -27,12 +27,14 @@ def main():
     )
 
     core_folder = os.path.abspath("core")
+    plugins_folder = os.path.abspath("plugins")
     resources_folder = os.path.abspath("resources")
 
     sep = ";" if sys_platform == "Windows" else ":"
 
     add_data = [
         f"{core_folder}{sep}core",
+        f"{plugins_folder}{sep}plugins",
         f"{resources_folder}{sep}resources",
     ]
 

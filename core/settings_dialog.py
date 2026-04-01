@@ -71,6 +71,9 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
             else 2 if self.window.icon_color_setting == 2 else 0
         )
         self.checkBox_14.setChecked(self.window.win_thumbnail_buttons_setting)
+        if not platform.system() == "Windows":
+            self.checkBox_14.setEnabled(False)
+            self.checkBox_14.setToolTip("Works only on Windows.")
         self.checkBox_10.setChecked(self.window.tray_icon_setting)
         if not QSystemTrayIcon.isSystemTrayAvailable():
             self.checkBox_10.setEnabled(False)
@@ -172,7 +175,13 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         )
         self.pushButton_3.clicked.connect(remove_deno_from_device)
         self.lineEdit.setText(self.window.audd_api_token_setting)
+        self.label_6.setText(f"{self.window.audd_recording_lenght_setting}s")
         self.horizontalSlider.setValue(self.window.audd_recording_lenght_setting)
+        self.horizontalSlider.valueChanged.connect(
+            lambda value: self.label_6.setText(f"{value}s")
+        )
+        self.checkBox_5.setChecked(self.window.prefer_system_ffmpeg_setting)
+        self.checkBox_18.setChecked(self.window.prefer_system_deno_setting)
 
     def save_settings(self):
         self.window.save_last_win_geometry_setting = int(self.checkBox.isChecked())
@@ -262,5 +271,16 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         self.window.settings_.setValue(
             "audd_recording_lenght", self.window.audd_recording_lenght_setting
         )
+        self.window.prefer_system_ffmpeg_setting = int(self.checkBox_5.isChecked())
+        self.window.settings_.setValue(
+            "prefer_system_ffmpeg", self.window.prefer_system_ffmpeg_setting
+        )
+        self.window.prefer_system_deno_setting = int(self.checkBox_18.isChecked())
+        self.window.settings_.setValue(
+            "prefer_system_deno", self.window.prefer_system_deno_setting
+        )
 
         self.close()
+
+    def focusNextPrevChild(self, next):
+        return False
