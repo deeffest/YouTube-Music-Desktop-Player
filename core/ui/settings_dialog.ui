@@ -691,7 +691,7 @@
                   <enum>Qt::ClickFocus</enum>
                  </property>
                  <property name="toolTip">
-                  <string>Keep the input field blank to use your 10 free recognitions per day.</string>
+                  <string>To get more than 10 recognitions, obtain a token from the AudD API dashboard.</string>
                  </property>
                  <property name="placeholderText">
                   <string>Enter your AudD token here</string>

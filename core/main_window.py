@@ -423,6 +423,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def show_splash_screen(self):
         self.splash_screen = SplashScreen(self.windowIcon(), self, enableTitleBar=False)
         self.splash_screen.setIconSize(QSize(102, 102))
+        self.update_splash_screen()
+
+    def update_splash_screen(self):
+        if hasattr(self, "splash_screen") and self.splash_screen is not None:
+            self.splash_screen.resize(self.size())
+            self.splash_screen.raise_()
+            self.splash_screen.show()
 
     def setup_web_engine(self):
         if self.do_not_save_cookies_setting:
@@ -1109,34 +1116,45 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             insert_script("im_not_a_kid.js")
 
     def activate_custom_plugins(self):
-        plugins_dir = os.path.join(self.current_dir, "plugins")
+        plugin_locations = [
+            os.path.join(self.current_dir, "plugins"),
+            os.path.join(self.home_dir, "plugins"),
+        ]
 
-        if not os.path.isdir(plugins_dir):
-            return
+        seen_plugins = set()
 
-        js_files = sorted(f for f in os.listdir(plugins_dir) if f.endswith(".js"))
-        if not js_files:
-            return
-
-        for filename in js_files:
-            filepath = os.path.join(plugins_dir, filename)
-            try:
-                with open(filepath, "r", encoding="utf-8") as f:
-                    source = f.read()
-            except Exception as e:
-                logging.error(f"Failed to load custom plugin '{filename}': {str(e)}")
+        for plugins_dir in plugin_locations:
+            if not os.path.isdir(plugins_dir):
                 continue
 
-            script = QWebEngineScript()
-            script.setName(f"custom_{filename}")
-            script.setSourceCode(source)
-            script.setWorldId(QWebEngineScript.MainWorld)
-            script.setRunsOnSubFrames(False)
-            self.webpage.profile().scripts().insert(script)
+            js_files = sorted(f for f in os.listdir(plugins_dir) if f.endswith(".js"))
 
-            action = Action(filename)
-            action.setEnabled(False)
-            self.plugins_menu.addAction(action)
+            for filename in js_files:
+                if filename in seen_plugins:
+                    continue
+
+                filepath = os.path.join(plugins_dir, filename)
+                try:
+                    with open(filepath, "r", encoding="utf-8") as f:
+                        source = f.read()
+                except Exception as e:
+                    logging.error(
+                        f"Failed to load custom plugin '{filename}': {str(e)}"
+                    )
+                    continue
+
+                script = QWebEngineScript()
+                script.setName(f"custom_{filename}")
+                script.setSourceCode(source)
+                script.setWorldId(QWebEngineScript.MainWorld)
+                script.setRunsOnSubFrames(False)
+                self.webpage.profile().scripts().insert(script)
+
+                action = Action(filename)
+                action.setEnabled(False)
+                self.plugins_menu.addAction(action)
+
+                seen_plugins.add(filename)
 
     def connect_actions(self):
         def toggle_audio_only_mode(enabled):
@@ -2124,3 +2142,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return
 
         event.accept()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.update_splash_screen()

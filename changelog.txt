@@ -1,3 +1,8 @@
+v1.25.0-rc4 is Here! (03.04.2026)
+- Fixed splash screen rendering in maximized window state.
+- Fixed compatibility with system FFmpeg and Deno on some Linux distributions.
+- Other fixes and improvements.
+
 v1.25.0-rc3 is Here! (02.04.2026)
 - Added "Prefer system FFmpeg" and "Prefer system Deno" settings.
 - Added "Restart app" action to main context menu.

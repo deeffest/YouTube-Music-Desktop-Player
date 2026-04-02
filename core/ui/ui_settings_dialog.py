@@ -398,7 +398,7 @@ class Ui_SettingsDialog(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), _translate("SettingsDialog", "Tools"))
         self.groupBox_12.setTitle(_translate("SettingsDialog", "AudD API"))
         self.label_4.setText(_translate("SettingsDialog", "Token"))
-        self.lineEdit.setToolTip(_translate("SettingsDialog", "Keep the input field blank to use your 10 free recognitions per day."))
+        self.lineEdit.setToolTip(_translate("SettingsDialog", "To get more than 10 recognitions, obtain a token from the AudD API dashboard."))
         self.lineEdit.setPlaceholderText(_translate("SettingsDialog", "Enter your AudD token here"))
         self.label_5.setText(_translate("SettingsDialog", "Recording lenght"))
         self.label_6.setText(_translate("SettingsDialog", "1s"))

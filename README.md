@@ -36,7 +36,7 @@ Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform 
 
 or... add custom plugins! [Learn more](plugins/README.txt)
 
-## Get App
+## Get app
 Just download and extract ↓
 
 ### Linux

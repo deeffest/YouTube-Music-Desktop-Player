@@ -1,6 +1,5 @@
 import os
 import json
-import shutil
 import sqlite3
 import logging
 import requests
@@ -59,28 +58,10 @@ class DownloadThread(QThread):
             self.export_cookies()
         self.emit_command()
 
-    def get_ffmpeg(self):
-        if self.window.prefer_system_ffmpeg_setting == 1:
-            system = shutil.which("ffmpeg")
-            if system:
-                return system
-        return self.window.ffmpeg_path
-
-    def get_deno(self):
-        if self.window.prefer_system_deno_setting == 1:
-            system = shutil.which("deno")
-            if system:
-                return system
-        return self.window.deno_path
-
     def ensure_tools(self):
         def download_binary(url, dst_path):
             tmp_path = dst_path + ".tmp"
-            r = requests.get(
-                url,
-                stream=True,
-                timeout=10,
-            )
+            r = requests.get(url, stream=True, timeout=10)
             r.raise_for_status()
             with open(tmp_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
@@ -92,18 +73,20 @@ class DownloadThread(QThread):
 
         os.makedirs(os.path.join(self.window.home_dir, "bin"), exist_ok=True)
 
-        if self.get_ffmpeg() == self.window.ffmpeg_path and not os.path.isfile(
+        if self.window.prefer_system_ffmpeg_setting != 1 and not os.path.isfile(
             self.window.ffmpeg_path
         ):
             self.downloading_ffmpeg.emit()
             download_binary(self.window.ffmpeg_url, self.window.ffmpeg_path)
             self.downloading_ffmpeg_success.emit()
-        if self.get_deno() == self.window.deno_path and not os.path.isfile(
+
+        if self.window.prefer_system_deno_setting != 1 and not os.path.isfile(
             self.window.deno_path
         ):
             self.downloading_deno.emit()
             download_binary(self.window.deno_url, self.window.deno_path)
             self.downloading_deno_success.emit()
+
         if not os.path.isfile(self.window.ytdlp_path):
             self.downloading_ytdlp.emit()
             download_binary(self.window.ytdlp_url, self.window.ytdlp_path)
@@ -138,7 +121,6 @@ class DownloadThread(QThread):
     def emit_command(self):
         url = self.url.replace("music.youtube.com", "www.youtube.com")
         is_playlist = "list=" in url and "watch" not in url
-
         output_template = (
             "%(playlist_title).80B/%(title).150B.%(ext)s"
             if is_playlist
@@ -147,33 +129,28 @@ class DownloadThread(QThread):
 
         is_video = self.ytdlp_format in (2, 3)
 
-        if self.ytdlp_format == 1:
-            format_selector = "ba[ext=m4a]/ba/best"
-        elif self.ytdlp_format == 2:
-            format_selector = (
-                "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best"
-            )
-        elif self.ytdlp_format == 3:
-            format_selector = (
-                "bestvideo[ext=webm]+bestaudio[ext=webm]/bestvideo+bestaudio/best"
-            )
-        else:
-            format_selector = "ba/best"
+        format_map = {
+            0: "ba/best",
+            1: "ba[ext=m4a]/ba/best",
+            2: "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best",
+            3: "bestvideo[ext=webm]+bestaudio[ext=webm]/bestvideo+bestaudio/best",
+        }
+        format_selector = format_map.get(self.ytdlp_format, "ba/best")
 
-        command = [
-            self.window.ytdlp_path,
-            "-f",
-            format_selector,
-            "--ffmpeg-location",
-            self.get_ffmpeg(),
-            "-o",
-            output_template,
-            "--print-json",
-            "--socket-timeout",
-            "10",
-            "--js-runtimes",
-            f"deno:{self.get_deno()}",
-        ]
+        use_sys_ffmpeg = self.window.prefer_system_ffmpeg_setting == 1
+        use_sys_deno = self.window.prefer_system_deno_setting == 1
+
+        command = [self.window.ytdlp_path, "-f", format_selector]
+
+        if not use_sys_ffmpeg:
+            command += ["--ffmpeg-location", self.window.ffmpeg_path]
+
+        command += ["-o", output_template, "--print-json", "--socket-timeout", "10"]
+
+        if use_sys_deno:
+            command += ["--js-runtimes", "deno"]
+        else:
+            command += ["--js-runtimes", f"deno:{self.window.deno_path}"]
 
         if is_video:
             command += ["--merge-output-format", self.format_name[self.ytdlp_format]]
@@ -202,17 +179,21 @@ class DownloadThread(QThread):
             command += ["--cookies", self.cookies_txt]
 
         command.append(url)
-        self.start_ytdlp(command)
+        self.start_ytdlp(command, use_sys_ffmpeg or use_sys_deno)
 
-    def start_ytdlp(self, command):
+    def start_ytdlp(self, command, use_clean_env):
         self.downloading_audio.emit()
+
+        env = os.environ.copy()
+        if platform.system() != "Windows" and use_clean_env:
+            for var in ("LD_LIBRARY_PATH", "LD_PRELOAD", "PYTHONHOME", "PYTHONPATH"):
+                env.pop(var, None)
 
         if self.auto_update:
             try:
-                cflags = 0
-                if platform.system() == "Windows":
-                    cflags = subprocess.CREATE_NO_WINDOW
-
+                cflags = (
+                    subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0
+                )
                 subprocess.run(
                     [self.window.ytdlp_path, "--update"],
                     check=False,
@@ -223,11 +204,12 @@ class DownloadThread(QThread):
             except Exception as e:
                 logging.error(f"Failed to update yt-dlp: {e}")
 
-        kwargs = dict(
-            cwd=self.download_folder,
-            capture_output=True,
-            text=False,
-        )
+        kwargs = {
+            "cwd": self.download_folder,
+            "capture_output": True,
+            "text": False,
+            "env": env,
+        }
 
         if platform.system() == "Windows":
             kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
@@ -241,21 +223,18 @@ class DownloadThread(QThread):
             result.stderr.decode("utf-8", errors="ignore") if result.stderr else ""
         )
 
-        lines = stdout_decoded.strip().splitlines()
         titles = []
         playlist_title = None
-        for line in lines:
+        for line in stdout_decoded.strip().splitlines():
             try:
                 data = json.loads(line)
                 titles.append(data.get("title", "Unknown"))
-                if not playlist_title and "playlist_title" in data:
-                    playlist_title = data["playlist_title"]
-            except Exception:
-                titles.append("Unknown")
+                if not playlist_title:
+                    playlist_title = data.get("playlist_title")
+            except json.JSONDecodeError:
+                continue
 
-        title = (
-            playlist_title if playlist_title else (titles[0] if titles else "Unknown")
-        )
+        title = playlist_title or (titles[0] if titles else "Unknown")
 
         if result.returncode == 0:
             self.downloading_audio_success.emit(self.download_folder, title)
