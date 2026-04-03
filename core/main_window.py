@@ -2059,10 +2059,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
         else:
             if self.picture_in_picture_dialog.isMinimized():
-                if self.isMaximized():
-                    self.picture_in_picture_dialog.showMaximized()
-                else:
-                    self.picture_in_picture_dialog.showNormal()
+                self.picture_in_picture_dialog.showNormal()
 
     def eventFilter(self, obj, event):
         if obj == self.ToolBar:

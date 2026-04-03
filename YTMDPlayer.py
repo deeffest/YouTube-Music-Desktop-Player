@@ -14,7 +14,7 @@ from core.main_window import MainWindow
 
 NAME = "Youtube-Music-Desktop-Player"
 DISPLAY_NAME = "YouTube Music Desktop Player"
-VERSION = "1.25.0-rc4"
+VERSION = "1.25.0"
 AUTHOR = "deeffest"
 WEBSITE = "deeffest.pythonanywhere.com"
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -235,7 +235,7 @@ def check_glx():
 
 
 if __name__ == "__main__":
-    if not check_glx():
+    if not platform.system() == "Windows" and not check_glx():
         os.environ["QT_XCB_GL_INTEGRATION"] = "none"
 
     main()

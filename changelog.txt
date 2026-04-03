@@ -1,3 +1,23 @@
+v1.25.0 is Here! (04.04.2026)
+- Added light theme.
+- Added "I'm not a kid!" plugin.
+- Added custom plugins support.
+- Added music recognizer using AudD API.
+- Added PiP opacity and always-on-top settings.
+- Added yt-dlp format settings (audio: Opus, M4A; video: MP4, WebM). 
+- Added yt-dlp "Embed metadata" setting.
+- Added icon color setting (system tray). 
+- Added "Delete from device" button for yt-dlp, ffmpeg and deno.
+- Added "Prefer system FFmpeg" and "Prefer system Deno" settings.
+- Added "Restart app" action to main context menu.
+- Changed toolbar style.
+- Changed main context menu.
+- Changed settings dialog.
+- Removed proxy server functionality.
+- Removed "Convert to MP3" setting for yt-dlp.
+- Fixed splash screen rendering in maximized window state.
+- Other fixes and improvements.
+
 v1.25.0-rc4 is Here! (03.04.2026)
 - Fixed splash screen rendering in maximized window state.
 - Fixed compatibility with system FFmpeg and Deno on some Linux distributions.
