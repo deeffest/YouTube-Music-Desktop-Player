@@ -1,3 +1,7 @@
+v1.26.0 is Here! (06.04.2026)
+- Added "Spotify" and "Genius" actions to "Search on" menu.
+- Other fixes and improvements.
+
 v1.25.0 is Here! (04.04.2026)
 - Added light theme.
 - Added "I'm not a kid!" plugin.

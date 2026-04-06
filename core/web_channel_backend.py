@@ -34,6 +34,10 @@ class WebChannelBackend(QObject):
             self.window.go_to_youtube_shortcut.setEnabled(False)
             self.window.musicbrainz_action.setEnabled(False)
             self.window.musicbrainz_shortcut.setEnabled(False)
+            self.window.spotify_action.setEnabled(False)
+            self.window.spotify_shortcut.setEnabled(False)
+            self.window.genius_action.setEnabled(False)
+            self.window.genius_shortcut.setEnabled(False)
         else:
             window_title = f"{self.window.title} - {self.window.display_name}"
             self.window.update_picture_in_picture_song_info()
@@ -42,6 +46,10 @@ class WebChannelBackend(QObject):
             self.window.go_to_youtube_shortcut.setEnabled(True)
             self.window.musicbrainz_action.setEnabled(True)
             self.window.musicbrainz_shortcut.setEnabled(True)
+            self.window.spotify_action.setEnabled(True)
+            self.window.spotify_shortcut.setEnabled(True)
+            self.window.genius_action.setEnabled(True)
+            self.window.genius_shortcut.setEnabled(True)
 
         self.window.update_download_buttons_state()
         self.window.setWindowTitle(window_title)

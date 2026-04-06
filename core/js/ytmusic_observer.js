@@ -47,7 +47,9 @@ if (typeof qt !== "undefined" && qt.webChannelTransport) {
                 const artist =
                     document
                         .querySelector(".byline.style-scope.ytmusic-player-bar")
-                        ?.textContent.trim() || "";
+                        ?.textContent.trim()
+                        .split("•")[0]
+                        .trim() || "";
                 const artwork = getArtwork();
                 const videoId = link?.href
                     ? new URL(link.href).searchParams.get("v") || ""

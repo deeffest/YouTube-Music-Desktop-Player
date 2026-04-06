@@ -394,6 +394,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             lambda: self.search_on("MusicBrainz")
         )
 
+        self.spotify_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_O), self)
+        self.spotify_shortcut.setEnabled(False)
+        self.spotify_shortcut.activated.connect(lambda: self.search_on("Spotify"))
+
+        self.genius_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_G), self)
+        self.genius_shortcut.setEnabled(False)
+        self.genius_shortcut.activated.connect(lambda: self.search_on("Genius"))
+
         self.download_song_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_D), self)
         self.download_song_shortcut.setEnabled(False)
         self.download_song_shortcut.activated.connect(self.download_song)
@@ -505,6 +513,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.go_to_youtube_action = MultiAction()
 
         self.musicbrainz_action = MultiAction()
+
+        self.spotify_action = MultiAction()
+
+        self.genius_action = MultiAction()
 
         self.download_song_action = Action("Song", shortcut="Ctrl+D")
         self.download_song_action.setIcon(
@@ -885,6 +897,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         action.triggered.connect(lambda: self.recognize_music("AudD"))
         return action
 
+    def create_genius_action(self):
+        action = Action("Genius", shortcut="Ctrl+G")
+        action.setIcon(QIcon(f"{self.icon_folder}/genius.png"))
+        action.triggered.connect(lambda: self.search_on("Genius"))
+        return action
+
+    def create_spotify_action(self):
+        action = Action("Spotify", shortcut="Ctrl+O")
+        action.setIcon(QIcon(f"{self.icon_folder}/spotify.png"))
+        action.triggered.connect(lambda: self.search_on("Spotify"))
+        return action
+
     def create_musicbrainz_action(self):
         action = Action("MusicBrainz", shortcut="Ctrl+B")
         action.setIcon(QIcon(f"{self.icon_folder}/musicbrainz.png"))
@@ -904,6 +928,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         menu.setIcon(recolor_icon(f"{self.icon_folder}/search.png", self.theme_setting))
 
         self.musicbrainz_action.add(menu, self.create_musicbrainz_action())
+        self.spotify_action.add(menu, self.create_spotify_action())
+        self.genius_action.add(menu, self.create_genius_action())
         return menu
 
     def create_recognize_music_menu(self):
@@ -1370,7 +1396,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             details = (
                 self.title + "\u200b" if len(self.title) == 1 else self.title[:128]
             )
-            state = self.artist[:128]
+            state = (
+                self.artist + "\u200b" if len(self.artist) == 1 else self.artist[:128]
+            )
             large_image = self.artwork
             small_image = (
                 "https://cdn.discordapp.com/app-icons/1254202610781655050/"
@@ -1768,11 +1796,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.webview.stop()
 
     def search_on(self, service):
+        query = f"{self.title}+-+{self.artist}"
         if service == "MusicBrainz":
-            open_url(
-                "https://musicbrainz.org/search?query="
-                f"{self.title}+-+{self.artist}&type=release"
-            )
+            open_url(f"https://musicbrainz.org/search?query={query}&type=release")
+        elif service == "Spotify":
+            open_url(f"https://open.spotify.com/search/{query}/tracks")
+        elif service == "Genius":
+            open_url(f"https://genius.com/search?q={query}")
 
     def go_to_youtube(self):
         open_url(f"https://www.youtube.com/watch?v={self.video_id}")
