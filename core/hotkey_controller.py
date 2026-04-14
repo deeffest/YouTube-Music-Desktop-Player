@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 from pynput import keyboard
 
 if TYPE_CHECKING:
@@ -9,9 +9,9 @@ if TYPE_CHECKING:
 
 
 class HotkeyController(QThread):
-    play_pause = pyqtSignal()
-    previous = pyqtSignal()
-    next = pyqtSignal()
+    play_pause = Signal()
+    previous = Signal()
+    next = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -35,7 +35,6 @@ class HotkeyController(QThread):
                     self.previous.emit()
                 elif key == keyboard.Key.right:
                     self.next.emit()
-
         except AttributeError as e:
             logging.error(f"Failed to handle hotkey: {str(e)}")
 

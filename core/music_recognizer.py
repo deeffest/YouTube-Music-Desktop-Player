@@ -5,21 +5,19 @@ import platform
 import subprocess
 from typing import TYPE_CHECKING
 
-import numpy
 import requests
-import soundfile
-from PyQt5.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 
 if TYPE_CHECKING:
     from core.main_window import MainWindow
 
 
 class MusicRecognizerThread(QThread):
-    recording_audio_from_pc = pyqtSignal()
-    recording_audio_from_pc_success = pyqtSignal()
-    recognizing_via_audd_api = pyqtSignal()
-    recognizing_via_audd_api_success = pyqtSignal(str, str)
-    recognizing_via_audd_api_error = pyqtSignal(int, str)
+    recording_audio_from_pc = Signal()
+    recording_audio_from_pc_success = Signal()
+    recognizing_via_audd_api = Signal()
+    recognizing_via_audd_api_success = Signal(str, str)
+    recognizing_via_audd_api_error = Signal(int, str)
 
     def __init__(self, service, parent=None):
         super().__init__(parent)
@@ -32,6 +30,8 @@ class MusicRecognizerThread(QThread):
         self.recording_audio_from_pc.emit()
 
         if platform.system() == "Windows":
+            import numpy
+            import soundfile
             import pyaudiowpatch as pyaudio
 
             pa = pyaudio.PyAudio()

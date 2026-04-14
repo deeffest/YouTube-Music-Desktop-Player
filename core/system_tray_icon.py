@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QSystemTrayIcon
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QSystemTrayIcon
 from qfluentwidgets import SystemTrayMenu, Action
 
 from core.helpers import recolor_icon
@@ -147,7 +147,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.setContextMenu(self.sytem_tray_menu)
 
     def on_system_tray_icon_activated(self, reason):
-        if reason == QSystemTrayIcon.Trigger:
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
             self.window.show_window(self.last_win_geo)
 
     def close_window(self):

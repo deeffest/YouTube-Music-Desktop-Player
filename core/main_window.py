@@ -6,7 +6,7 @@ import logging
 import platform
 from urllib.parse import urlparse
 
-from PyQt5.QtCore import (
+from PySide6.QtCore import (
     Qt,
     QUrl,
     QSize,
@@ -16,25 +16,24 @@ from PyQt5.QtCore import (
     QTimer,
     QEvent,
     QProcess,
+    QIODevice,
     QTextStream,
 )
-from PyQt5.QtWidgets import (
-    QAction,
-    QShortcut,
+from PySide6.QtWidgets import (
     QFileDialog,
     QMainWindow,
     QApplication,
     QSystemTrayIcon,
 )
-from PyQt5.QtTest import QTest
-from PyQt5.QtWebEngineWidgets import (
+from PySide6.QtTest import QTest
+from PySide6.QtWebEngineCore import (
     QWebEnginePage,
     QWebEngineScript,
     QWebEngineProfile,
     QWebEngineSettings,
 )
-from PyQt5.QtWebChannel import QWebChannel
-from PyQt5.QtGui import QIcon, QKeySequence
+from PySide6.QtWebChannel import QWebChannel
+from PySide6.QtGui import QIcon, QKeySequence, QAction, QShortcut
 from qfluentwidgets import (
     Theme,
     Action,
@@ -60,8 +59,8 @@ from core.helpers import (
     str_to_bool,
     clean_up_url,
     recolor_icon,
+    get_geometry,
     is_valid_ytmusic_url,
-    get_centered_geometry,
 )
 from core.about_card import AboutCard
 from core.signal_bus import signal_bus
@@ -79,21 +78,11 @@ from core.web_channel_backend import WebChannelBackend
 from core.music_recognizer import MusicRecognizerThread
 from core.picture_in_picture_dialog import PictureInPictureDialog
 
-if platform.system() == "Windows":
-    from PyQt5.QtWinExtras import (  # type: ignore
-        QWinThumbnailToolBar,
-        QWinThumbnailToolButton,
-    )
-    from pywinstyles import apply_style  # type: ignore
-
 
 class MainWindow(QMainWindow, Ui_MainWindow):
-    def __init__(
-        self, app_settings, opengl_enviroment_setting, theme_setting, app_info
-    ):
+    def __init__(self, app_settings, theme_setting, app_info):
         super().__init__()
         self.settings_ = app_settings
-        self.opengl_enviroment_setting = opengl_enviroment_setting
         self.theme_setting = theme_setting
         self.name = app_info[0]
         self.display_name = app_info[1]
@@ -114,6 +103,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.song_status = "Indifferent"
         self.icon_folder = f"{self.current_dir}/resources/icons"
         self.force_exit = False
+        self.is_restarting = False
         self.is_downloading = False
         self.current_url = None
         self.picture_in_picture_dialog = None
@@ -124,7 +114,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.downloading_state_tool_tip = None
         self.recognizing_state_tool_tip = None
         self.discord_rpc = None
-        self.win_thumbnail_toolbar = None
 
         self.load_settings()
         self.configure_window()
@@ -177,7 +166,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.run_discord_rpc()
         self.show_system_tray_icon()
         self.start_playback_control()
-        self.create_win_thumbnail_toolbar()
 
     def load_settings(self):
         if self.settings_.value("ad_blocker") is None:
@@ -195,9 +183,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.settings_.value("save_last_pos_of_mp") is None:
             self.settings_.setValue("save_last_pos_of_mp", 0)
         if self.settings_.value("last_win_geometry") is None:
-            self.settings_.setValue(
-                "last_win_geometry", QRect(get_centered_geometry(1000, 799))
-            )
+            self.settings_.setValue("last_win_geometry", QRect(get_geometry(1000, 799)))
         if self.settings_.value("save_last_zoom_factor") is None:
             self.settings_.setValue("save_last_zoom_factor", 1)
         if self.settings_.value("last_zoom_factor") is None:
@@ -207,9 +193,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.settings_.value("discord_rpc") is None:
             self.settings_.setValue("discord_rpc", 0)
         if self.settings_.value("geometry_of_mp") is None:
-            self.settings_.setValue(
-                "geometry_of_mp", QRect(get_centered_geometry(360, 150))
-            )
+            self.settings_.setValue("geometry_of_mp", QRect(get_geometry(360, 150)))
         if self.settings_.value("tray_icon") is None:
             self.settings_.setValue(
                 "tray_icon", 1 if QSystemTrayIcon.isSystemTrayAvailable() else 0
@@ -236,10 +220,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings_.setValue("im_not_a_kid", 1)
         if self.settings_.value("icon_color") is None:
             self.settings_.setValue("icon_color", 0)
-        if self.settings_.value("win_thumbnail_buttons") is None:
-            self.settings_.setValue(
-                "win_thumbnail_buttons", 1 if platform.system() == "Windows" else 0
-            )
         if self.settings_.value("pip_is_always_on_top") is None:
             self.settings_.setValue("pip_is_always_on_top", 1)
         if self.settings_.value("do_not_save_cookies") is None:
@@ -258,6 +238,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings_.setValue("prefer_system_ffmpeg", 0)
         if self.settings_.value("prefer_system_deno") is None:
             self.settings_.setValue("prefer_system_deno", 0)
+        if self.settings_.value("the_light_please") is None:
+            self.settings_.setValue("the_light_please", 0)
 
         self.ad_blocker_setting = int(self.settings_.value("ad_blocker"))
         self.save_last_win_geometry_setting = int(
@@ -306,11 +288,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         self.im_not_a_kid_setting = int(self.settings_.value("im_not_a_kid"))
         self.icon_color_setting = int(self.settings_.value("icon_color"))
-        self.win_thumbnail_buttons_setting = (
-            int(self.settings_.value("win_thumbnail_buttons"))
-            if platform.system() == "Windows"
-            else 0
-        )
         self.pip_is_always_on_top_setting = int(
             self.settings_.value("pip_is_always_on_top")
         )
@@ -330,31 +307,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.prefer_system_deno_setting = int(
             self.settings_.value("prefer_system_deno")
         )
+        self.the_light_please_setting = int(self.settings_.value("the_light_please"))
 
     def configure_window(self):
-        theme = self.theme_setting
-        if theme == 0:
-            color = "dark"
-            setTheme(Theme.DARK)
-        else:
-            color = "light"
-            setTheme(Theme.LIGHT)
+        setTheme(Theme.DARK) if self.theme_setting == 0 else setTheme(Theme.LIGHT)
         setThemeColor("red")
-
-        if platform.system() == "Windows":
-            try:
-                apply_style(self, color)
-            except Exception as e:
-                logging.error(f"Failed to apply dark style: + {str(e)}")
 
         self.setupUi(self)
         self.setWindowIcon(QIcon(f"{self.icon_folder}/icon.ico"))
         if self.save_last_win_geometry_setting == 1:
             self.setGeometry(self.last_win_geometry_setting)
             if self.maximized_state_setting == 1:
-                self.showMaximized()
+                self.setWindowState(Qt.WindowState.WindowMaximized)
         else:
-            self.setGeometry(get_centered_geometry(1000, 799))
+            self.setGeometry(get_geometry(1000, 799))
 
     def connect_signals(self):
         signal_bus.show_window_sig.connect(self.show_window_or_picture_in_picture)
@@ -365,67 +331,65 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             f"{title}" if title else "Unexpected error", msg, self
         )
         text_view_dialog.cancelButton.hide()
-        text_view_dialog.exec_()
+        text_view_dialog.exec()
 
     def connect_shortcuts(self):
-        self.back_shortcut = QShortcut(QKeySequence(Qt.ALT + Qt.Key_Left), self)
+        self.back_shortcut = QShortcut(QKeySequence("Alt+Left"), self)
         self.back_shortcut.activated.connect(self.back)
 
-        self.forward_shortcut = QShortcut(QKeySequence(Qt.ALT + Qt.Key_Right), self)
+        self.forward_shortcut = QShortcut(QKeySequence("Alt+Right"), self)
         self.forward_shortcut.activated.connect(self.forward)
 
-        self.home_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_H), self)
+        self.home_shortcut = QShortcut(QKeySequence("Ctrl+H"), self)
         self.home_shortcut.activated.connect(self.home)
 
-        self.reload_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_R), self)
+        self.reload_shortcut = QShortcut(QKeySequence("Ctrl+R"), self)
         self.reload_shortcut.activated.connect(self.reload)
 
-        self.stop_shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+        self.stop_shortcut = QShortcut(QKeySequence("Esc"), self)
         self.stop_shortcut.setEnabled(False)
         self.stop_shortcut.activated.connect(self.stop)
 
-        self.go_to_youtube_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Y), self)
+        self.go_to_youtube_shortcut = QShortcut(QKeySequence("Ctrl+Y"), self)
         self.go_to_youtube_shortcut.setEnabled(False)
         self.go_to_youtube_shortcut.activated.connect(self.go_to_youtube)
 
-        self.musicbrainz_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_B), self)
+        self.musicbrainz_shortcut = QShortcut(QKeySequence("Ctrl+B"), self)
         self.musicbrainz_shortcut.setEnabled(False)
         self.musicbrainz_shortcut.activated.connect(
             lambda: self.search_on("MusicBrainz")
         )
 
-        self.spotify_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_O), self)
+        self.spotify_shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
         self.spotify_shortcut.setEnabled(False)
         self.spotify_shortcut.activated.connect(lambda: self.search_on("Spotify"))
 
-        self.genius_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_G), self)
+        self.genius_shortcut = QShortcut(QKeySequence("Ctrl+G"), self)
         self.genius_shortcut.setEnabled(False)
         self.genius_shortcut.activated.connect(lambda: self.search_on("Genius"))
 
-        self.download_song_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_D), self)
+        self.download_song_shortcut = QShortcut(QKeySequence("Ctrl+D"), self)
         self.download_song_shortcut.setEnabled(False)
         self.download_song_shortcut.activated.connect(self.download_song)
 
-        self.download_album_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_P), self)
+        self.download_album_shortcut = QShortcut(QKeySequence("Ctrl+P"), self)
         self.download_album_shortcut.setEnabled(False)
         self.download_album_shortcut.activated.connect(self.download_album)
 
-        self.watch_in_pip_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_M), self)
+        self.watch_in_pip_shortcut = QShortcut(QKeySequence("Ctrl+M"), self)
         self.watch_in_pip_shortcut.setEnabled(False)
         self.watch_in_pip_shortcut.activated.connect(self.watch_in_pip)
 
-        self.audd_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_U), self)
+        self.audd_shortcut = QShortcut(QKeySequence("Ctrl+U"), self)
         self.audd_shortcut.activated.connect(lambda: self.recognize_music("AudD"))
 
-        self.settings_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_S), self)
+        self.settings_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
         self.settings_shortcut.activated.connect(self.open_settings)
 
-        self.hide_toolbar_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_T), self)
+        self.hide_toolbar_shortcut = QShortcut(QKeySequence("Ctrl+T"), self)
         self.hide_toolbar_shortcut.activated.connect(self.hide_toolbar)
 
-        self.restart_app_shortcut = QShortcut(
-            QKeySequence(Qt.CTRL + Qt.SHIFT + Qt.Key_R), self
-        )
+        self.restart_app_shortcut = QShortcut(QKeySequence("Ctrl+Shift+R"), self)
         self.restart_app_shortcut.activated.connect(self.restart_app)
 
     def show_splash_screen(self):
@@ -443,7 +407,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.do_not_save_cookies_setting:
             self.webprofile = QWebEngineProfile(self)
         else:
-            self.webprofile = QWebEngineProfile.defaultProfile()
+            self.webprofile = QWebEngineProfile("Default", self)
 
         self.webchannel_backend = WebChannelBackend(self)
         self.webchannel = QWebChannel()
@@ -453,13 +417,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.webpage.setWebChannel(self.webchannel)
         self.webpage.fullScreenRequested.connect(self.on_fullscreen_requested)
 
-        self.websettings = QWebEngineSettings.globalSettings()
+        self.websettings = self.webprofile.settings()
         self.websettings.setAttribute(
-            QWebEngineSettings.FullScreenSupportEnabled,
+            QWebEngineSettings.WebAttribute.FullScreenSupportEnabled,
             self.fullscreen_mode_support_setting,
         )
         self.websettings.setAttribute(
-            QWebEngineSettings.ScrollAnimatorEnabled,
+            QWebEngineSettings.WebAttribute.ScrollAnimatorEnabled,
             self.support_animated_scrolling_setting,
         )
 
@@ -626,10 +590,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.hide_mini_player_action.setCheckable(True)
         self.hide_mini_player_action.setChecked(bool(self.hide_mini_player_setting))
 
-        self.im_not_a_kid_action = Action("I'm not a kid!", self)
+        self.im_not_a_kid_action = Action("I'm not a kid!")
         self.im_not_a_kid_action.setIcon(QIcon(f"{self.icon_folder}/im_not_a_kid.png"))
         self.im_not_a_kid_action.setCheckable(True)
         self.im_not_a_kid_action.setChecked(bool(self.im_not_a_kid_setting))
+
+        self.the_light_please_action = Action("The light, please")
+        self.the_light_please_action.setIcon(
+            QIcon(f"{self.icon_folder}/the_light_please.png")
+        )
+        self.the_light_please_action.setCheckable(True)
+        self.the_light_please_action.setChecked(bool(self.the_light_please_setting))
 
     def create_submenus(self):
         self.search_on_menu = self.create_search_on_menu()
@@ -652,6 +623,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.plugins_menu.addAction(self.nonstop_music_action)
         self.plugins_menu.addAction(self.hide_mini_player_action)
         self.plugins_menu.addAction(self.im_not_a_kid_action)
+        self.plugins_menu.addAction(self.the_light_please_action)
 
         self.about_menu = self.create_about_menu()
 
@@ -752,7 +724,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
         self.update_url_label(self.current_url)
         self.url_label.customContextMenuRequested.disconnect()
-        self.url_label.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.url_label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.url_label.customContextMenuRequested.connect(
             lambda pos: self.show_url_menu(pos)
         )
@@ -841,8 +813,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self,
             )
             msg_box.yesButton.setText("Restart")
-        if not msg_box or msg_box.exec_():
-            self.save_settings()
+        if not msg_box or msg_box.exec():
+            self.is_restarting = True
 
             QProcess.startDetached(sys.executable, sys.argv)
             QApplication.quit()
@@ -875,7 +847,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def show_url_menu(self, pos):
         def reset_hover():
-            self.url_label.setAttribute(Qt.WA_UnderMouse, False)
+            self.url_label.setAttribute(Qt.WidgetAttribute.WA_UnderMouse, False)
             self.url_label.style().unpolish(self.url_label)
             self.url_label.style().polish(self.url_label)
             self.url_label.update()
@@ -1038,7 +1010,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         info_bar = InfoBar.error(
             title=f"Error code: {code}",
             content="Recognize music failed!",
-            orient=Qt.Horizontal,
+            orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.BOTTOM,
             duration=-1,
@@ -1059,7 +1031,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         info_bar = InfoBar.success(
             title=f"{author} - {title}",
             content="Recognize music successfully!",
-            orient=Qt.Horizontal,
+            orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.BOTTOM,
             duration=-1,
@@ -1093,7 +1065,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
 
         def after_insert(_):
-            QTest.keyClick(self.webview.focusProxy(), Qt.Key_Return)
+            QTest.keyClick(self.webview.focusProxy(), Qt.Key.Key_Return)
 
         if is_valid_ytmusic_url(self.current_url):
             self.webpage.runJavaScript(js, after_insert)
@@ -1110,12 +1082,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def activate_plugins(self):
         qtwebchannel = QWebEngineScript()
         file = QFile(":/qtwebchannel/qwebchannel.js")
-        if file.open(QFile.ReadOnly | QFile.Text):
+        if file.open(QIODevice.OpenModeFlag.ReadOnly | QIODevice.OpenModeFlag.Text):
             stream = QTextStream(file)
             qtwebchannel.setSourceCode(stream.readAll())
             file.close()
-        qtwebchannel.setInjectionPoint(QWebEngineScript.DocumentReady)
-        qtwebchannel.setWorldId(QWebEngineScript.MainWorld)
+        qtwebchannel.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentReady)
+        qtwebchannel.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
         qtwebchannel.setRunsOnSubFrames(False)
         self.webpage.profile().scripts().insert(qtwebchannel)
 
@@ -1123,11 +1095,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             script = QWebEngineScript()
             script.setName(filename)
             script.setSourceCode(self.read_script(filename))
-            script.setWorldId(QWebEngineScript.MainWorld)
+            script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
             script.setRunsOnSubFrames(False)
             self.webpage.profile().scripts().insert(script)
 
-        insert_script("scrollbar_styles.js")
         insert_script("ytmusic_observer.js")
         if self.ad_blocker_setting == 1:
             insert_script("skip_video_ads.js")
@@ -1140,6 +1111,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             insert_script("hide_mini_player.js")
         if self.im_not_a_kid_setting == 1:
             insert_script("im_not_a_kid.js")
+        if self.the_light_please_setting == 1:
+            insert_script("the_light_please.js")
 
     def activate_custom_plugins(self):
         plugin_locations = [
@@ -1172,7 +1145,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 script = QWebEngineScript()
                 script.setName(f"custom_{filename}")
                 script.setSourceCode(source)
-                script.setWorldId(QWebEngineScript.MainWorld)
+                script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
                 script.setRunsOnSubFrames(False)
                 self.webpage.profile().scripts().insert(script)
 
@@ -1189,15 +1162,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         def toggle_script(filename, enabled=None):
             scripts = self.webpage.profile().scripts()
-            existing = scripts.findScript(filename)
-            if not existing.isNull():
-                scripts.remove(existing)
+            existing_scripts = scripts.find(filename)
+            for script in existing_scripts:
+                scripts.remove(script)
 
             if enabled:
                 script = QWebEngineScript()
                 script.setName(filename)
                 script.setSourceCode(self.read_script(filename))
-                script.setWorldId(QWebEngineScript.MainWorld)
+                script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
                 script.setRunsOnSubFrames(False)
                 scripts.insert(script)
 
@@ -1216,14 +1189,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.im_not_a_kid_action.toggled.connect(
             lambda checked: toggle_script("im_not_a_kid.js", enabled=checked)
         )
-
-    def create_win_thumbnail_toolbar(self):
-        if platform.system() == "Windows" and self.win_thumbnail_buttons_setting == 1:
-            self.win_thumbnail_toolbar = QWinThumbnailToolBar(self)
-            self.create_previous_button()
-            self.create_play_pause_button()
-            self.create_next_button()
-            self.win_thumbnail_toolbar.setWindow(self.windowHandle())
+        self.the_light_please_action.toggled.connect(
+            lambda checked: toggle_script("the_light_please.js", enabled=checked)
+        )
 
     def on_load_progress(self, progress):
         if progress > 70:
@@ -1282,7 +1250,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             msg_box = MessageBox(title, whats_new, self)
             msg_box.yesButton.setText("Download")
             msg_box.cancelButton.setText("Later")
-            if msg_box.exec_():
+            if msg_box.exec():
                 open_url(last_release_url)
                 self.force_exit = True
                 self.close()
@@ -1372,7 +1340,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             parts_html.append(f'<span style="color: {gray};">{rest}</span>')
 
         self.url_label.setText("".join(parts_html))
-        self.url_label.setTextFormat(Qt.RichText)
+        self.url_label.setTextFormat(Qt.TextFormat.RichText)
         self.url_label.setToolTip(url)
 
     def run_discord_rpc(self):
@@ -1600,30 +1568,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     )
                 )
 
-    def update_win_thumbnail_buttons_song_state(self):
-        if self.win_thumbnail_toolbar:
-            if self.song_state == "Playing":
-                self.tool_btn_previous.setEnabled(True)
-                self.tool_btn_play_pause.setIcon(
-                    QIcon(f"{self.icon_folder}/pause-taskbar.png")
-                )
-                self.tool_btn_play_pause.setEnabled(True)
-                self.tool_btn_next.setEnabled(True)
-            elif self.song_state == "Paused":
-                self.tool_btn_previous.setEnabled(True)
-                self.tool_btn_play_pause.setIcon(
-                    QIcon(f"{self.icon_folder}/play-taskbar.png")
-                )
-                self.tool_btn_play_pause.setEnabled(True)
-                self.tool_btn_next.setEnabled(True)
-            else:
-                self.tool_btn_previous.setEnabled(False)
-                self.tool_btn_play_pause.setIcon(
-                    QIcon(f"{self.icon_folder}/play-taskbar.png")
-                )
-                self.tool_btn_play_pause.setEnabled(False)
-                self.tool_btn_next.setEnabled(False)
-
     def update_picture_in_picture_song_info(self):
         if self.picture_in_picture_dialog:
             self.picture_in_picture_dialog.title_label.setText(self.title)
@@ -1708,32 +1652,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.hotkey_controller_thread.previous.connect(self.previous)
             self.hotkey_controller_thread.next.connect(self.next)
             self.hotkey_controller_thread.start()
-
-    def create_previous_button(self):
-        self.tool_btn_previous = QWinThumbnailToolButton(self.win_thumbnail_toolbar)
-        self.tool_btn_previous.setToolTip("Previous")
-        self.tool_btn_previous.setEnabled(False)
-        self.tool_btn_previous.setIcon(
-            QIcon(f"{self.icon_folder}/previous-taskbar.png")
-        )
-        self.tool_btn_previous.clicked.connect(self.previous)
-        self.win_thumbnail_toolbar.addButton(self.tool_btn_previous)
-
-    def create_play_pause_button(self):
-        self.tool_btn_play_pause = QWinThumbnailToolButton(self.win_thumbnail_toolbar)
-        self.tool_btn_play_pause.setToolTip("Play/Pause")
-        self.tool_btn_play_pause.setEnabled(False)
-        self.tool_btn_play_pause.setIcon(QIcon(f"{self.icon_folder}/play-taskbar.png"))
-        self.tool_btn_play_pause.clicked.connect(self.play_pause)
-        self.win_thumbnail_toolbar.addButton(self.tool_btn_play_pause)
-
-    def create_next_button(self):
-        self.tool_btn_next = QWinThumbnailToolButton(self.win_thumbnail_toolbar)
-        self.tool_btn_next.setToolTip("Next")
-        self.tool_btn_next.setEnabled(False)
-        self.tool_btn_next.setIcon(QIcon(f"{self.icon_folder}/next-taskbar.png"))
-        self.tool_btn_next.clicked.connect(self.next)
-        self.win_thumbnail_toolbar.addButton(self.tool_btn_next)
 
     def dislike(self):
         js = """
@@ -1960,7 +1878,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         button = PushButton(
             recolor_icon(f"{self.icon_folder}/open_folder.png", self.theme_setting),
-            "Open Folder",
+            "Open folder",
             self,
         )
         button.clicked.connect(lambda: self.open_download_folder(folder, info_bar))
@@ -2031,13 +1949,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.hide_toolbar_setting = 1
 
     def cut(self):
-        self.webpage.triggerAction(QWebEnginePage.Cut)
+        self.webpage.triggerAction(QWebEnginePage.WebAction.Cut)
 
     def copy(self):
-        self.webpage.triggerAction(QWebEnginePage.Copy)
+        self.webpage.triggerAction(QWebEnginePage.WebAction.Copy)
 
     def paste(self):
-        self.webpage.triggerAction(QWebEnginePage.Paste)
+        self.webpage.triggerAction(QWebEnginePage.WebAction.Paste)
 
     def save_settings(self):
         if self.save_last_win_geometry_setting == 1:
@@ -2067,6 +1985,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.settings_.setValue(
             "im_not_a_kid", int(self.im_not_a_kid_action.isChecked())
         )
+        self.settings_.setValue(
+            "the_light_please", int(self.the_light_please_action.isChecked())
+        )
 
     def show_window(self, last_win_geo=None):
         if self.isMinimized() or self.isHidden():
@@ -2093,14 +2014,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def eventFilter(self, obj, event):
         if obj == self.ToolBar:
-            if event.type() == QEvent.Show:
+            if event.type() == QEvent.Type.Show:
                 self.hide_toolbar_action.setText("Hide toolbar")
                 self.hide_toolbar_action.setIcon(
                     recolor_icon(
                         f"{self.icon_folder}/hide_toolbar.png", self.theme_setting
                     )
                 )
-            elif event.type() == QEvent.Hide:
+            elif event.type() == QEvent.Type.Hide:
                 self.hide_toolbar_action.setText("Show toolbar")
                 self.hide_toolbar_action.setIcon(
                     recolor_icon(f"{self.icon_folder}/toolbar.png", self.theme_setting)
@@ -2130,6 +2051,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.music_recognizer_thread.stop()
 
     def app_quit(self):
+        self.save_settings()
+        self.webpage.deleteLater()
         self.stop_running_threads()
 
         app = QApplication.instance()
@@ -2139,7 +2062,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             app.server.close()
 
     def closeEvent(self, event):
-        self.save_settings()
+        if self.is_restarting:
+            event.accept()
+            return
 
         if self.tray_icon_setting == 1 and self.system_tray_icon is not None:
             if not self.force_exit:
@@ -2163,7 +2088,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self,
             )
             msg_box.yesButton.setText("Exit")
-            if not msg_box.exec_():
+            if not msg_box.exec():
                 self.force_exit = False
                 event.ignore()
                 return

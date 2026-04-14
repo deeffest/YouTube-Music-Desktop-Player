@@ -3,13 +3,9 @@ import platform
 import subprocess
 from urllib.parse import urlparse
 
-from PyQt5.QtCore import QRect, Qt
-from PyQt5.QtGui import QColor, QIcon, QPixmap, QPainter
-from PyQt5.QtWidgets import QDesktopWidget, QApplication
-
-if platform.system() == "Windows":
-    import win32api  # type: ignore
-    import win32gui  # type: ignore
+from PySide6.QtCore import QRect, Qt
+from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QColor, QIcon, QPixmap, QPainter
 
 
 def str_to_bool(value):
@@ -23,13 +19,6 @@ def copy_text(text):
 def is_valid_ytmusic_url(url):
     parsed = urlparse(str(url))
     return parsed.scheme == "https" and parsed.netloc == "music.youtube.com"
-
-
-def get_centered_geometry(width, height):
-    screen_geometry = QDesktopWidget().screenGeometry()
-    x = (screen_geometry.width() - width) // 2
-    y = (screen_geometry.height() - height) // 2
-    return QRect(x, y, width, height)
 
 
 def open_url(url):
@@ -49,10 +38,10 @@ def recolor_icon(icon, color):
 
     if color == 1:
         result = QPixmap(pixmap.size())
-        result.fill(Qt.transparent)
+        result.fill(Qt.GlobalColor.transparent)
         painter = QPainter(result)
         painter.drawPixmap(0, 0, pixmap)
-        painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
+        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
         painter.fillRect(result.rect(), QColor(0, 0, 0))
         painter.end()
         pixmap = result
@@ -78,33 +67,19 @@ def clean_up_url(url):
     return f"https://{parsed.netloc}{parsed.path}"
 
 
-def get_taskbar_position():
-    position = "Unknown"
+def get_geometry(width, height, position="center", margin=0):
+    rect = QApplication.primaryScreen().availableGeometry()
 
-    if platform.system() == "Windows":
-        screen_width = win32api.GetSystemMetrics(0)
-        screen_height = win32api.GetSystemMetrics(1)
+    positions = {
+        "center": (rect.center().x() - width // 2, rect.center().y() - height // 2),
+        "bottom_right": (
+            rect.right() - width - margin,
+            rect.bottom() - height - margin,
+        ),
+        "bottom_left": (rect.left() + margin, rect.bottom() - height - margin),
+        "top_right": (rect.right() - width - margin, rect.top() + margin),
+        "top_left": (rect.left() + margin, rect.top() + margin),
+    }
 
-        taskbar = win32gui.FindWindow("Shell_TrayWnd", None)
-        rect = win32gui.GetWindowRect(taskbar)
-
-        taskbar_left, taskbar_top, taskbar_right, taskbar_bottom = rect
-
-        if taskbar_top == 0 and taskbar_left == 0 and taskbar_right == screen_width:
-            position = "Top"
-        elif (
-            taskbar_bottom == screen_height
-            and taskbar_left == 0
-            and taskbar_right == screen_width
-        ):
-            position = "Bottom"
-        elif taskbar_left == 0 and taskbar_top == 0 and taskbar_bottom == screen_height:
-            position = "Left"
-        elif (
-            taskbar_right == screen_width
-            and taskbar_top == 0
-            and taskbar_bottom == screen_height
-        ):
-            position = "Right"
-
-    return position
+    x, y = positions[position]
+    return QRect(x, y, width, height)

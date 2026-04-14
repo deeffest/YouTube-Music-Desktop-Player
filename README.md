@@ -3,7 +3,7 @@
 # YouTube Music Desktop Player
 Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform desktop application for Windows and Linux using [QtWebEngine](https://wiki.qt.io/QtWebEngine).
 
-<img src="https://img.shields.io/badge/PyQt-5.15.11-00B16A"/> <img src="https://img.shields.io/badge/Python-3.13.7-00B16A"/> <img src="https://img.shields.io/badge/Platform-Win32%20|%20Linux-00B16A"/>
+<img src="https://img.shields.io/badge/PySide-6.9.3-00B16A"/> <img src="https://img.shields.io/badge/Python-3.13.7-00B16A"/> <img src="https://img.shields.io/badge/Platform-Win32%20|%20Linux-00B16A"/>
 
 ## Screenshots
 <table>
@@ -22,7 +22,6 @@ Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform 
 - Built-in yt-dlp
 - Picture-in-Picture
 - Music recognizer
-- Windows thumbnail buttons
 - System tray icon
 - Discord Rich Presence
 - Global playback hotkeys
@@ -33,6 +32,7 @@ Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform 
 - Non-stop music
 - Hide mini player
 - I'm not a kid!
+- The light, please
 
 or... add custom plugins! [Learn more](plugins/README.txt)
 

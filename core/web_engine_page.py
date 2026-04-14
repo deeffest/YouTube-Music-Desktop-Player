@@ -2,7 +2,7 @@ import re
 import logging
 from typing import TYPE_CHECKING
 
-from PyQt5.QtWebEngineWidgets import QWebEnginePage
+from PySide6.QtWebEngineCore import QWebEnginePage
 from qfluentwidgets import MessageBox
 
 from core.input_msg_box import InputMessageBox
@@ -42,33 +42,33 @@ class WebEnginePage(QWebEnginePage):
             f"JavaScript alert - {securityOrigin.toString()}", msg, self.window
         )
         msg_box.cancelButton.hide()
-        msg_box.exec_()
+        msg_box.exec()
 
     def javaScriptConfirm(self, securityOrigin, msg):
         msg_box = MessageBox(
             f"JavaScript confirm - {securityOrigin.toString()}", msg, self.window
         )
-        return msg_box.exec_()
+        return msg_box.exec()
 
     def javaScriptPrompt(self, securityOrigin, msg, defaultValue):
         input_dialog = InputMessageBox(msg, defaultValue, self.window)
-        if input_dialog.exec_():
+        if input_dialog.exec():
             return (True, input_dialog.line_edit.text())
         else:
             return (False, "")
 
     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
-        if level == QWebEnginePage.InfoMessageLevel:
+        if level == QWebEnginePage.JavaScriptConsoleMessageLevel.InfoMessageLevel:
             logging.info(
                 f"JavaScript Console Info: {message} (Level: {level}, "
                 f"Line: {lineNumber}, Source: {sourceID})"
             )
-        elif level == QWebEnginePage.WarningMessageLevel:
+        elif level == QWebEnginePage.JavaScriptConsoleMessageLevel.WarningMessageLevel:
             logging.warning(
                 f"JavaScript Console Warning: {message} (Level: {level}, "
                 f"Line: {lineNumber}, Source: {sourceID})"
             )
-        elif level == QWebEnginePage.ErrorMessageLevel:
+        elif level == QWebEnginePage.JavaScriptConsoleMessageLevel.ErrorMessageLevel:
             logging.error(
                 f"JavaScript Console Error: {message} (Level: {level}, "
                 f"Line: {lineNumber}, Source: {sourceID})"

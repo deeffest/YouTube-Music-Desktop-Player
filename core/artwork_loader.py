@@ -2,15 +2,15 @@ import logging
 from typing import TYPE_CHECKING
 
 import requests
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import QThread, pyqtSignal, Qt
+from PySide6.QtGui import QPixmap
+from PySide6.QtCore import QThread, Signal, Qt
 
 if TYPE_CHECKING:
     from core.main_window import MainWindow
 
 
 class ArtworkLoader(QThread):
-    artwork_loaded = pyqtSignal(QPixmap)
+    artwork_loaded = Signal(QPixmap)
 
     def __init__(self, url, parent=None):
         super().__init__(parent)
@@ -28,7 +28,10 @@ class ArtworkLoader(QThread):
             pixmap = QPixmap()
             pixmap.loadFromData(response.content)
             resized_pixmap = pixmap.scaled(
-                60, 60, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                60,
+                60,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
             )
 
             self.artwork_loaded.emit(resized_pixmap)

@@ -1,7 +1,6 @@
 [tool.black]
 exclude = '''
 /(
-    .*/ui_about_dialog\.py|
     .*/ui_main_window\.py|
     .*/ui_picture_in_picture_dialog\.py|
     .*/ui_settings_dialog\.py

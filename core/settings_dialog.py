@@ -1,10 +1,8 @@
-import logging
-import platform
 from typing import TYPE_CHECKING
 
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import QDialog, QSystemTrayIcon
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QDialog, QSystemTrayIcon
 
 from core.helpers import recolor_icon
 from core.ui.ui_settings_dialog import Ui_SettingsDialog
@@ -22,19 +20,7 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         self.configure_ui_elements()
 
     def configure_window(self):
-        if platform.system() == "Windows":
-            from pywinstyles import apply_style  # type: ignore
-
-            theme = self.window.theme_setting
-            color = "dark" if theme == 0 else "light"
-
-            try:
-                apply_style(self, color)
-            except Exception as e:
-                logging.error(f"Failed to apply dark style: + {str(e)}")
-
         self.setupUi(self)
-        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.setWindowIcon(QIcon(f"{self.window.icon_folder}/settings-titlebar.png"))
 
     def configure_ui_elements(self):
@@ -70,10 +56,6 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
             if self.window.icon_color_setting == 1
             else 2 if self.window.icon_color_setting == 2 else 0
         )
-        self.checkBox_14.setChecked(self.window.win_thumbnail_buttons_setting)
-        if not platform.system() == "Windows":
-            self.checkBox_14.setEnabled(False)
-            self.checkBox_14.setToolTip("Works only on Windows.")
         self.checkBox_10.setChecked(self.window.tray_icon_setting)
         if not QSystemTrayIcon.isSystemTrayAvailable():
             self.checkBox_10.setEnabled(False)
@@ -82,15 +64,6 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         self.checkBox_13.setChecked(self.window.hotkey_playback_control_setting)
         self.checkBox_8.setChecked(self.window.fullscreen_mode_support_setting)
         self.checkBox_9.setChecked(self.window.support_animated_scrolling_setting)
-        self.comboBox.setCurrentIndex(
-            1
-            if self.window.opengl_enviroment_setting == "Desktop"
-            else (
-                2
-                if self.window.opengl_enviroment_setting == "Angle"
-                else 3 if self.window.opengl_enviroment_setting == "Software" else 0
-            )
-        )
         self.checkBox_15.setChecked(self.window.do_not_save_cookies_setting)
         self.pushButton_4.setIcon(
             recolor_icon(
@@ -200,10 +173,6 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         self.window.settings_.setValue("light_theme", self.window.theme_setting)
         self.window.icon_color_setting = int(self.comboBox_2.currentIndex())
         self.window.settings_.setValue("icon_color", self.window.icon_color_setting)
-        self.window.win_thumbnail_buttons_setting = int(self.checkBox_14.isChecked())
-        self.window.settings_.setValue(
-            "win_thumbnail_buttons", self.window.win_thumbnail_buttons_setting
-        )
         self.window.tray_icon_setting = int(self.checkBox_10.isChecked())
         self.window.settings_.setValue("tray_icon", self.window.tray_icon_setting)
         self.window.discord_rpc_setting = int(self.checkBox_11.isChecked())
@@ -221,18 +190,6 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         )
         self.window.settings_.setValue(
             "support_animated_scrolling", self.window.support_animated_scrolling_setting
-        )
-        self.window.opengl_enviroment_setting = (
-            "Desktop"
-            if self.comboBox.currentIndex() == 1
-            else (
-                "Angle"
-                if self.comboBox.currentIndex() == 2
-                else "Software" if self.comboBox.currentIndex() == 3 else "Auto"
-            )
-        )
-        self.window.settings_.setValue(
-            "opengl_enviroment", self.window.opengl_enviroment_setting
         )
         self.window.do_not_save_cookies_setting = int(self.checkBox_15.isChecked())
         self.window.settings_.setValue(
@@ -284,3 +241,8 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
 
     def focusNextPrevChild(self, next):
         return False
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.adjustSize()
+        self.setMinimumSize(self.size())

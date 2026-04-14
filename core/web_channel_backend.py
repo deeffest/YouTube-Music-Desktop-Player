@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import QObject, pyqtSlot
+from PySide6.QtCore import QObject, Slot
 
 if TYPE_CHECKING:
     from core.main_window import MainWindow
@@ -11,7 +11,7 @@ class WebChannelBackend(QObject):
         super().__init__(parent)
         self.window: "MainWindow" = parent
 
-    @pyqtSlot(str, str, str, str, int)
+    @Slot(str, str, str, str, int)
     def song_info_changed(self, title, artist, artwork, video_id, duration):
         self.window.title = title
         self.window.artist = artist
@@ -56,7 +56,7 @@ class WebChannelBackend(QObject):
         if self.window.system_tray_icon is not None:
             self.window.system_tray_icon.setToolTip(window_title)
 
-    @pyqtSlot(str)
+    @Slot(str)
     def song_state_changed(self, state):
         self.window.song_state = state
 
@@ -70,17 +70,16 @@ class WebChannelBackend(QObject):
             self.window.watch_in_pip_shortcut.setEnabled(False)
 
         self.window.update_picture_in_picture_song_state()
-        self.window.update_win_thumbnail_buttons_song_state()
         self.window.update_system_tray_icon_song_state()
 
-    @pyqtSlot(str, str)
+    @Slot(str, str)
     def song_progress_changed(self, current_time, total_time):
         self.window.current_time = current_time
         self.window.total_time = total_time
 
         self.window.update_picture_in_picture_song_progress()
 
-    @pyqtSlot(str)
+    @Slot(str)
     def song_status_changed(self, status):
         if status != "":
             self.window.song_status = status

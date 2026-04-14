@@ -1,14 +1,12 @@
-import logging
-import platform
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QDialog, QDesktopWidget
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QDialog
 from qfluentwidgets import ToolTipFilter, ToolTipPosition
 
 from core.artwork_loader import ArtworkLoader
-from core.helpers import get_taskbar_position, recolor_icon
+from core.helpers import recolor_icon, get_geometry
 from core.ui.ui_picture_in_picture_dialog import Ui_PictureInPictureDialog
 
 if TYPE_CHECKING:
@@ -26,21 +24,10 @@ class PictureInPictureDialog(QDialog, Ui_PictureInPictureDialog):
         self.configure_ui_elements()
 
     def configure_window(self):
-        if platform.system() == "Windows":
-            from pywinstyles import apply_style  # type: ignore
-
-            theme = self.window.theme_setting
-            color = "dark" if theme == 0 else "light"
-
-            try:
-                apply_style(self, color)
-            except Exception as e:
-                logging.error(f"Failed to apply dark style: + {str(e)}")
-
         self.setupUi(self)
-        flags = Qt.Window | Qt.WindowCloseButtonHint
+        flags = Qt.WindowType.Window | Qt.WindowType.WindowCloseButtonHint
         if self.window.pip_is_always_on_top_setting == 1:
-            flags |= Qt.WindowStaysOnTopHint
+            flags |= Qt.WindowType.WindowStaysOnTopHint
         self.setWindowFlags(flags)
         self.setWindowIcon(
             QIcon(f"{self.window.icon_folder}/picture_in_picture-titlebar.png")
@@ -48,15 +35,9 @@ class PictureInPictureDialog(QDialog, Ui_PictureInPictureDialog):
         if self.window.save_last_pos_of_mp_setting == 1:
             self.setGeometry(self.window.geometry_of_mp_setting)
         else:
-            screen_geometry = QDesktopWidget().screenGeometry()
-            taskbar_position = get_taskbar_position()
-            x = screen_geometry.width() - self.width() - 30
-            y = screen_geometry.height() - self.height() - 30
-            if taskbar_position == "Right":
-                x = screen_geometry.width() - self.width() - 93
-            elif taskbar_position == "Bottom":
-                y = screen_geometry.height() - self.height() - 71
-            self.setGeometry(x, y, self.width(), self.height())
+            self.setGeometry(
+                get_geometry(self.width(), self.height(), "bottom_right", 30)
+            )
         self.setFixedSize(self.size())
         self.setWindowOpacity(self.window.pip_opacity_setting)
 
@@ -141,7 +122,7 @@ class PictureInPictureDialog(QDialog, Ui_PictureInPictureDialog):
             self.artwork_loader_thread.stop()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape:
+        if event.key() == Qt.Key.Key_Escape:
             self.close()
         else:
             super().keyPressEvent(event)

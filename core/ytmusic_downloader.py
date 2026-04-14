@@ -2,30 +2,30 @@ import os
 import json
 import sqlite3
 import logging
-import requests
 import platform
 import subprocess
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import QThread, pyqtSignal
+import requests
+from PySide6.QtCore import QThread, Signal
 
 if TYPE_CHECKING:
     from core.main_window import MainWindow
 
 
 class DownloadThread(QThread):
-    downloading_ffmpeg = pyqtSignal()
-    downloading_ffmpeg_success = pyqtSignal()
+    downloading_ffmpeg = Signal()
+    downloading_ffmpeg_success = Signal()
 
-    downloading_deno = pyqtSignal()
-    downloading_deno_success = pyqtSignal()
+    downloading_deno = Signal()
+    downloading_deno_success = Signal()
 
-    downloading_ytdlp = pyqtSignal()
-    downloading_ytdlp_success = pyqtSignal()
+    downloading_ytdlp = Signal()
+    downloading_ytdlp_success = Signal()
 
-    downloading_audio = pyqtSignal()
-    downloading_audio_error = pyqtSignal(str, str)
-    downloading_audio_success = pyqtSignal(str, str)
+    downloading_audio = Signal()
+    downloading_audio_error = Signal(str, str)
+    downloading_audio_success = Signal(str, str)
 
     def __init__(
         self,
