@@ -4,7 +4,7 @@ import json
 import base64
 import logging
 import platform
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote_plus
 
 from PySide6.QtCore import (
     Qt,
@@ -1679,7 +1679,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.webview.stop()
 
     def search_on(self, service):
-        query = f"{self.title}+-+{self.artist}"
+        query = quote_plus(f"{self.title}+-+{self.artist}")
         if service == "MusicBrainz":
             open_url(f"https://musicbrainz.org/search?query={query}&type=release")
         elif service == "Spotify":
