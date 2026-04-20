@@ -47,7 +47,6 @@ class DownloadThread(QThread):
         self.ytdlp_format = ytdlp_format
 
         self.format_name = {0: "opus", 1: "m4a", 2: "mp4", 3: "webm"}
-        self.cookies_txt = os.path.join(self.window.cache_dir, "cookies.txt")
         self.cookies_sqlite = os.path.join(
             self.window.webview.page().profile().persistentStoragePath(), "Cookies"
         )
@@ -102,7 +101,7 @@ class DownloadThread(QThread):
         def chrome_time_to_unix(chrome_time):
             return int(chrome_time / 1_000_000 - 11644473600) if chrome_time else 0
 
-        with open(self.cookies_txt, "w", encoding="utf-8") as f:
+        with open(self.window.cookies_txt, "w", encoding="utf-8") as f:
             f.write("# Netscape HTTP Cookie File\n")
             for row in cursor.execute(
                 "SELECT host_key, path, is_secure, expires_utc, name, value "
@@ -175,8 +174,8 @@ class DownloadThread(QThread):
         if "watch" in url and "list=" in url:
             command.append("--no-playlist")
 
-        if self.use_cookies and os.path.exists(self.cookies_txt):
-            command += ["--cookies", self.cookies_txt]
+        if self.use_cookies and os.path.exists(self.window.cookies_txt):
+            command += ["--cookies", self.window.cookies_txt]
 
         command.append(url)
         self.start_ytdlp(command, use_sys_ffmpeg or use_sys_deno)

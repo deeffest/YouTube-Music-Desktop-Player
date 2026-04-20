@@ -5,6 +5,7 @@ pyside6==6.9.3
 packaging==25.0
 requests==2.32.5
 pyinstaller==6.17.0
+youtube_comment_downloader==0.1.78
 numpy==2.4.3; sys_platform=="win32"
 soundfile==0.13.1; sys_platform=="win32"
 pyaudiowpatch==0.2.12.8; sys_platform=="win32"

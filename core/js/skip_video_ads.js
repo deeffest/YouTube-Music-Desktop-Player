@@ -1,9 +1,5 @@
-// ==UserScript==
-// @match        https://music.youtube.com/*
-// ==/UserScript==
-
 (function () {
-    "use strict";
+    if (!location.href.startsWith("https://music.youtube.com/")) return;
 
     const AD_SELECTORS = [
         ".ad-showing",

@@ -12,7 +12,7 @@ from core.application import SingletonApplication
 
 NAME = "Youtube-Music-Desktop-Player"
 DISPLAY_NAME = "YouTube Music Desktop Player"
-VERSION = "1.27.0-beta1"
+VERSION = "1.27.0-beta2"
 AUTHOR = "deeffest"
 WEBSITE = "deeffest.pythonanywhere.com"
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,12 +20,15 @@ HOME_DIR = os.path.join(os.path.expanduser("~"), NAME)
 
 UNIQUE_KEY = f"{AUTHOR}.{NAME}"
 ACCENT_COLOR = QColor(255, 41, 41)
+DEBUG = not getattr(sys, "frozen", False)
 
 
 def init_app_settings():
     app_settings = QSettings(AUTHOR, NAME)
     if app_settings.value("light_theme") is None:
         app_settings.setValue("light_theme", 0)
+    if app_settings.value("disable_frame_rate_limit") is None:
+        app_settings.setValue("disable_frame_rate_limit", 0)
     return app_settings
 
 
@@ -216,7 +219,17 @@ def main():
     init_logging()
 
     app_settings = init_app_settings()
-    theme_setting = int(app_settings.value("light_theme"))
+    light_theme_setting = int(app_settings.value("light_theme"))
+    disable_frame_rate_limit_setting = int(
+        app_settings.value("disable_frame_rate_limit")
+    )
+
+    if disable_frame_rate_limit_setting == 1:
+        os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-frame-rate-limit"
+
+    if DEBUG:
+        # http://localhost:9222/
+        os.environ["QTWEBENGINE_REMOTE_DEBUGGING"] = "9222"
 
     app = SingletonApplication(sys.argv, UNIQUE_KEY)
     app.setApplicationName(NAME)
@@ -226,11 +239,12 @@ def main():
     app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
     app.setStyle("Fusion")
 
-    set_app_palette(app, theme_setting)
+    set_app_palette(app, light_theme_setting)
 
     window = MainWindow(
         app_settings,
-        theme_setting,
+        light_theme_setting,
+        disable_frame_rate_limit_setting,
         app_info=[NAME, DISPLAY_NAME, VERSION, AUTHOR, WEBSITE, CURRENT_DIR, HOME_DIR],
     )
     app.aboutToQuit.connect(window.app_quit)

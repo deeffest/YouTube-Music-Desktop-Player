@@ -16,10 +16,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QCheckBox, QComboBox,
-    QDialog, QDialogButtonBox, QDoubleSpinBox, QFrame,
-    QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QSizePolicy, QSlider, QSpacerItem,
-    QTabWidget, QVBoxLayout, QWidget)
+    QDialog, QDialogButtonBox, QFrame, QGroupBox,
+    QHBoxLayout, QLabel, QLineEdit, QPushButton,
+    QSizePolicy, QSlider, QSpacerItem, QTabWidget,
+    QVBoxLayout, QWidget)
 
 class Ui_SettingsDialog(object):
     def setupUi(self, SettingsDialog):
@@ -165,6 +165,18 @@ class Ui_SettingsDialog(object):
 
         self.verticalLayout_4.addWidget(self.groupBox_2)
 
+        self.groupBox_4 = QGroupBox(self.tab_2)
+        self.groupBox_4.setObjectName(u"groupBox_4")
+        self.verticalLayout_6 = QVBoxLayout(self.groupBox_4)
+        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
+        self.checkBox_12 = QCheckBox(self.groupBox_4)
+        self.checkBox_12.setObjectName(u"checkBox_12")
+
+        self.verticalLayout_6.addWidget(self.checkBox_12)
+
+
+        self.verticalLayout_4.addWidget(self.groupBox_4)
+
         self.groupBox_5 = QGroupBox(self.tab_2)
         self.groupBox_5.setObjectName(u"groupBox_5")
         self.verticalLayout_7 = QVBoxLayout(self.groupBox_5)
@@ -190,60 +202,6 @@ class Ui_SettingsDialog(object):
         self.verticalLayout_4.addItem(self.verticalSpacer_2)
 
         self.tabWidget.addTab(self.tab_2, "")
-        self.tab_3 = QWidget()
-        self.tab_3.setObjectName(u"tab_3")
-        self.verticalLayout_6 = QVBoxLayout(self.tab_3)
-        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
-        self.groupBox_4 = QGroupBox(self.tab_3)
-        self.groupBox_4.setObjectName(u"groupBox_4")
-        self.verticalLayout_15 = QVBoxLayout(self.groupBox_4)
-        self.verticalLayout_15.setObjectName(u"verticalLayout_15")
-        self.checkBox_12 = QCheckBox(self.groupBox_4)
-        self.checkBox_12.setObjectName(u"checkBox_12")
-        self.checkBox_12.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-
-        self.verticalLayout_15.addWidget(self.checkBox_12)
-
-
-        self.verticalLayout_6.addWidget(self.groupBox_4)
-
-        self.groupBox_11 = QGroupBox(self.tab_3)
-        self.groupBox_11.setObjectName(u"groupBox_11")
-        self.verticalLayout_16 = QVBoxLayout(self.groupBox_11)
-        self.verticalLayout_16.setObjectName(u"verticalLayout_16")
-        self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.label_2 = QLabel(self.groupBox_11)
-        self.label_2.setObjectName(u"label_2")
-        self.label_2.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-
-        self.horizontalLayout.addWidget(self.label_2)
-
-        self.doubleSpinBox = QDoubleSpinBox(self.groupBox_11)
-        self.doubleSpinBox.setObjectName(u"doubleSpinBox")
-        sizePolicy1.setHeightForWidth(self.doubleSpinBox.sizePolicy().hasHeightForWidth())
-        self.doubleSpinBox.setSizePolicy(sizePolicy1)
-        self.doubleSpinBox.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
-
-        self.horizontalLayout.addWidget(self.doubleSpinBox)
-
-
-        self.verticalLayout_16.addLayout(self.horizontalLayout)
-
-        self.checkBox_16 = QCheckBox(self.groupBox_11)
-        self.checkBox_16.setObjectName(u"checkBox_16")
-        self.checkBox_16.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-
-        self.verticalLayout_16.addWidget(self.checkBox_16)
-
-
-        self.verticalLayout_6.addWidget(self.groupBox_11)
-
-        self.verticalSpacer_3 = QSpacerItem(20, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding)
-
-        self.verticalLayout_6.addItem(self.verticalSpacer_3)
-
-        self.tabWidget.addTab(self.tab_3, "")
         self.tab_4 = QWidget()
         self.tab_4.setObjectName(u"tab_4")
         self.verticalLayout_5 = QVBoxLayout(self.tab_4)
@@ -462,16 +420,20 @@ class Ui_SettingsDialog(object):
         self.groupBox_2.setTitle(QCoreApplication.translate("SettingsDialog", u"Features", None))
         self.checkBox_8.setText(QCoreApplication.translate("SettingsDialog", u"Full-screen mode support", None))
         self.checkBox_9.setText(QCoreApplication.translate("SettingsDialog", u"Animated scrolling support", None))
+        self.groupBox_4.setTitle(QCoreApplication.translate("SettingsDialog", u"Rendering", None))
+#if QT_CONFIG(tooltip)
+        self.checkBox_12.setToolTip(QCoreApplication.translate("SettingsDialog", u"This setting removes the 60 fps limit,\n"
+"but puts a heavy load on the CPU\n"
+"during video playback (even in the background).\n"
+"\n"
+"Recommended to use only with\n"
+"the Audio-only mode plugin!", None))
+#endif // QT_CONFIG(tooltip)
+        self.checkBox_12.setText(QCoreApplication.translate("SettingsDialog", u"Disable frame rate limit", None))
         self.groupBox_5.setTitle(QCoreApplication.translate("SettingsDialog", u"Cookies", None))
         self.checkBox_15.setText(QCoreApplication.translate("SettingsDialog", u"Do not save cookies to disk", None))
         self.pushButton_4.setText(QCoreApplication.translate("SettingsDialog", u"Delete all saved cookies", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), QCoreApplication.translate("SettingsDialog", u"Web engine", None))
-        self.groupBox_4.setTitle(QCoreApplication.translate("SettingsDialog", u"Startup", None))
-        self.checkBox_12.setText(QCoreApplication.translate("SettingsDialog", u"Restore PiP geometry", None))
-        self.groupBox_11.setTitle(QCoreApplication.translate("SettingsDialog", u"Features", None))
-        self.label_2.setText(QCoreApplication.translate("SettingsDialog", u"PiP opacity", None))
-        self.checkBox_16.setText(QCoreApplication.translate("SettingsDialog", u"PiP is always on top", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), QCoreApplication.translate("SettingsDialog", u"PiP mode", None))
         self.groupBox_3.setTitle(QCoreApplication.translate("SettingsDialog", u"yt-dlp", None))
         self.label_3.setText(QCoreApplication.translate("SettingsDialog", u"Format", None))
         self.comboBox_3.setItemText(0, QCoreApplication.translate("SettingsDialog", u"Opus", None))

@@ -21,7 +21,7 @@ class SingletonApplication(QApplication):
         self.memory.setKey(key)
         if self.memory.attach():
             self.is_running = True
-            logging.info("Application is already running")
+            print("Application is already running")
             self.show_existing_instance()
             sys.exit(0)
 
@@ -58,7 +58,7 @@ class SingletonApplication(QApplication):
 
 def exception_hook(type, value, tb):
     if issubclass(type, KeyboardInterrupt):
-        sys.__excepthook__(type, value, tb)
+        QApplication.quit()
         return
     logging.error("".join(traceback.format_exception(type, value, tb)))
     error_msg = "".join(traceback.format_exception(type, value, tb))

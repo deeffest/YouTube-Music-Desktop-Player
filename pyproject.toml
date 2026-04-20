@@ -2,7 +2,8 @@
 exclude = '''
 /(
     .*/ui_main_window\.py|
-    .*/ui_picture_in_picture_dialog\.py|
-    .*/ui_settings_dialog\.py
+    .*/ui_settings_dialog\.py|
+    .*/ui_lyrics_dialog\.py|
+    .*/ui_comments_dialog\.py
 )$
 '''

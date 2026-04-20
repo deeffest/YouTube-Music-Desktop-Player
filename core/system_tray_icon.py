@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QSystemTrayIcon
+from PySide6.QtWidgets import QSystemTrayIcon, QApplication
 from qfluentwidgets import SystemTrayMenu, Action
 
 from core.helpers import recolor_icon
@@ -14,7 +14,9 @@ class SystemTrayIcon(QSystemTrayIcon):
     def __init__(self, icon, parent=None):
         super().__init__(icon, parent)
         self.window: "MainWindow" = parent
+
         self.last_win_geo = None
+        self.maximized_state = None
 
         self.activated.connect(self.on_system_tray_icon_activated)
         self.create_context_menu()
@@ -23,7 +25,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.show_action = Action("YTMDPlayer", self)
         self.show_action.setIcon(QIcon(f"{self.window.icon_folder}/logo.png"))
         self.show_action.triggered.connect(
-            lambda: self.window.show_window(self.last_win_geo)
+            lambda: self.window.show_window(self.last_win_geo, self.maximized_state)
         )
 
         self.play_pause_action = Action("Play/Pause", self)
@@ -36,7 +38,7 @@ class SystemTrayIcon(QSystemTrayIcon):
                     else (
                         2
                         if self.window.icon_color_setting == 2
-                        else self.window.theme_setting
+                        else self.window.light_theme_setting
                     )
                 ),
             )
@@ -54,7 +56,7 @@ class SystemTrayIcon(QSystemTrayIcon):
                     else (
                         2
                         if self.window.icon_color_setting == 2
-                        else self.window.theme_setting
+                        else self.window.light_theme_setting
                     )
                 ),
             )
@@ -72,7 +74,7 @@ class SystemTrayIcon(QSystemTrayIcon):
                     else (
                         2
                         if self.window.icon_color_setting == 2
-                        else self.window.theme_setting
+                        else self.window.light_theme_setting
                     )
                 ),
             )
@@ -90,7 +92,7 @@ class SystemTrayIcon(QSystemTrayIcon):
                     else (
                         2
                         if self.window.icon_color_setting == 2
-                        else self.window.theme_setting
+                        else self.window.light_theme_setting
                     )
                 ),
             )
@@ -108,7 +110,7 @@ class SystemTrayIcon(QSystemTrayIcon):
                     else (
                         2
                         if self.window.icon_color_setting == 2
-                        else self.window.theme_setting
+                        else self.window.light_theme_setting
                     )
                 ),
             )
@@ -126,7 +128,7 @@ class SystemTrayIcon(QSystemTrayIcon):
                     else (
                         2
                         if self.window.icon_color_setting == 2
-                        else self.window.theme_setting
+                        else self.window.light_theme_setting
                     )
                 ),
             )
@@ -148,8 +150,10 @@ class SystemTrayIcon(QSystemTrayIcon):
 
     def on_system_tray_icon_activated(self, reason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
-            self.window.show_window(self.last_win_geo)
+            self.window.show_window(self.last_win_geo, self.maximized_state)
 
     def close_window(self):
         self.window.force_exit = True
         self.window.close()
+        if self.window.isHidden():
+            QApplication.quit()

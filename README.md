@@ -20,8 +20,9 @@ Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform 
 
 ## Features
 - Built-in yt-dlp
-- Picture-in-Picture
-- Music recognizer
+- Synchronized lyrics
+- View/add comments
+- Music recognition
 - System tray icon
 - Discord Rich Presence
 - Global playback hotkeys
@@ -32,7 +33,8 @@ Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform 
 - Non-stop music
 - Hide mini player
 - I'm not a kid!
-- The light, please
+- Invert to light theme
+- Clean share link
 
 or... add custom plugins! [Learn more](plugins/README.txt)
 

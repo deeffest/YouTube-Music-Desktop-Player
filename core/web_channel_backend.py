@@ -38,9 +38,14 @@ class WebChannelBackend(QObject):
             self.window.spotify_shortcut.setEnabled(False)
             self.window.genius_action.setEnabled(False)
             self.window.genius_shortcut.setEnabled(False)
+            self.window.lyrics_action.setEnabled(False)
+            self.window.lyrics_tbutton.setEnabled(False)
+            self.window.lyrics_shortcut.setEnabled(False)
+            self.window.comments_action.setEnabled(False)
+            self.window.comments_tbutton.setEnabled(False)
+            self.window.comments_shortcut.setEnabled(False)
         else:
             window_title = f"{self.window.title} - {self.window.display_name}"
-            self.window.update_picture_in_picture_song_info()
             self.window.update_discord_rpc()
             self.window.go_to_youtube_action.setEnabled(True)
             self.window.go_to_youtube_shortcut.setEnabled(True)
@@ -50,6 +55,12 @@ class WebChannelBackend(QObject):
             self.window.spotify_shortcut.setEnabled(True)
             self.window.genius_action.setEnabled(True)
             self.window.genius_shortcut.setEnabled(True)
+            self.window.lyrics_action.setEnabled(True)
+            self.window.lyrics_tbutton.setEnabled(True)
+            self.window.lyrics_shortcut.setEnabled(True)
+            self.window.comments_action.setEnabled(True)
+            self.window.comments_tbutton.setEnabled(True)
+            self.window.comments_shortcut.setEnabled(True)
 
         self.window.update_download_buttons_state()
         self.window.setWindowTitle(window_title)
@@ -59,17 +70,6 @@ class WebChannelBackend(QObject):
     @Slot(str)
     def song_state_changed(self, state):
         self.window.song_state = state
-
-        if self.window.song_state == "Playing" or self.window.song_state == "Paused":
-            self.window.watch_in_pip_action.setEnabled(True)
-            self.window.watch_in_pip_tbutton.setEnabled(True)
-            self.window.watch_in_pip_shortcut.setEnabled(True)
-        else:
-            self.window.watch_in_pip_action.setEnabled(False)
-            self.window.watch_in_pip_tbutton.setEnabled(False)
-            self.window.watch_in_pip_shortcut.setEnabled(False)
-
-        self.window.update_picture_in_picture_song_state()
         self.window.update_system_tray_icon_song_state()
 
     @Slot(str, str)
@@ -77,14 +77,10 @@ class WebChannelBackend(QObject):
         self.window.current_time = current_time
         self.window.total_time = total_time
 
-        self.window.update_picture_in_picture_song_progress()
-
     @Slot(str)
     def song_status_changed(self, status):
         if status != "":
             self.window.song_status = status
         else:
             self.window.song_status = "Indifferent"
-
-        self.window.update_picture_in_picture_song_status()
         self.window.update_system_tray_icon_song_status()

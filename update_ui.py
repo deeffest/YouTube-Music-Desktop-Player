@@ -2,8 +2,9 @@ import subprocess
 
 ui_files = [
     "main_window",
-    "picture_in_picture_dialog",
     "settings_dialog",
+    "lyrics_dialog",
+    "comments_dialog",
 ]
 
 for ui_file in ui_files:

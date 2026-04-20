@@ -1,10 +1,5 @@
-// ==UserScript==
-// @run-at       document-start
-// @match        https://music.youtube.com/*
-// ==/UserScript==
-
 (function () {
-    "use strict";
+    if (!location.href.startsWith("https://music.youtube.com/")) return;
 
     const origAddSourceBuffer = MediaSource.prototype.addSourceBuffer;
     MediaSource.prototype.addSourceBuffer = function (mime) {

@@ -51,12 +51,6 @@ class Ui_MainWindow(object):
 
         self.toolbar_layout.addWidget(self.forward_tbutton)
 
-        self.home_tbutton = TransparentToolButton(self.ToolBar)
-        self.home_tbutton.setObjectName(u"home_tbutton")
-        self.home_tbutton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-
-        self.toolbar_layout.addWidget(self.home_tbutton)
-
         self.reload_tbutton = TransparentToolButton(self.ToolBar)
         self.reload_tbutton.setObjectName(u"reload_tbutton")
         self.reload_tbutton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -99,11 +93,15 @@ class Ui_MainWindow(object):
 
         self.toolbar_layout.addWidget(self.download_ddtbutton)
 
-        self.watch_in_pip_tbutton = TransparentToolButtonWithMenu(self.ToolBar)
-        self.watch_in_pip_tbutton.setObjectName(u"watch_in_pip_tbutton")
-        self.watch_in_pip_tbutton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.lyrics_tbutton = TransparentToolButton(self.ToolBar)
+        self.lyrics_tbutton.setObjectName(u"lyrics_tbutton")
 
-        self.toolbar_layout.addWidget(self.watch_in_pip_tbutton)
+        self.toolbar_layout.addWidget(self.lyrics_tbutton)
+
+        self.comments_tbutton = TransparentToolButton(self.ToolBar)
+        self.comments_tbutton.setObjectName(u"comments_tbutton")
+
+        self.toolbar_layout.addWidget(self.comments_tbutton)
 
         self.settings_ddtbutton = TransparentToolButtonWithMenu(self.ToolBar)
         self.settings_ddtbutton.setObjectName(u"settings_ddtbutton")
@@ -151,9 +149,6 @@ class Ui_MainWindow(object):
         self.forward_tbutton.setToolTip(QCoreApplication.translate("MainWindow", u"Forward", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
-        self.home_tbutton.setToolTip(QCoreApplication.translate("MainWindow", u"Home", None))
-#endif // QT_CONFIG(tooltip)
-#if QT_CONFIG(tooltip)
         self.reload_tbutton.setToolTip(QCoreApplication.translate("MainWindow", u"Reload", None))
 #endif // QT_CONFIG(tooltip)
         self.url_label.setText(QCoreApplication.translate("MainWindow", u"\U0001f512 music.youtube.com", None))
@@ -161,8 +156,13 @@ class Ui_MainWindow(object):
         self.download_ddtbutton.setToolTip(QCoreApplication.translate("MainWindow", u"Download", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
-        self.watch_in_pip_tbutton.setToolTip(QCoreApplication.translate("MainWindow", u"Watch in PiP", None))
+        self.lyrics_tbutton.setToolTip(QCoreApplication.translate("MainWindow", u"Lyrics...", None))
 #endif // QT_CONFIG(tooltip)
+        self.lyrics_tbutton.setText("")
+#if QT_CONFIG(tooltip)
+        self.comments_tbutton.setToolTip(QCoreApplication.translate("MainWindow", u"Comments...", None))
+#endif // QT_CONFIG(tooltip)
+        self.comments_tbutton.setText("")
 #if QT_CONFIG(tooltip)
         self.settings_ddtbutton.setToolTip(QCoreApplication.translate("MainWindow", u"Settings...", None))
 #endif // QT_CONFIG(tooltip)

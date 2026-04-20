@@ -1,8 +1,6 @@
-// ==UserScript==
-// @match        https://music.youtube.com/*
-// ==/UserScript==
-
 (function () {
+    if (!location.href.startsWith("https://music.youtube.com/")) return;
+
     const container = document.querySelector("ytmusic-popup-container");
     if (!container) return;
 

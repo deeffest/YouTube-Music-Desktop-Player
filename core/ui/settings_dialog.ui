@@ -263,6 +263,30 @@
            </widget>
           </item>
           <item>
+           <widget class="QGroupBox" name="groupBox_4">
+            <property name="title">
+             <string>Rendering</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_6">
+             <item>
+              <widget class="QCheckBox" name="checkBox_12">
+               <property name="toolTip">
+                <string>This setting removes the 60 fps limit,
+but puts a heavy load on the CPU
+during video playback (even in the background).
+
+Recommended to use only with
+the Audio-only mode plugin!</string>
+               </property>
+               <property name="text">
+                <string>Disable frame rate limit</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
            <widget class="QGroupBox" name="groupBox_5">
             <property name="title">
              <string>Cookies</string>
@@ -296,94 +320,6 @@
           </item>
           <item>
            <spacer name="verticalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Policy::MinimumExpanding</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>0</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </widget>
-        <widget class="QWidget" name="tab_3">
-         <attribute name="title">
-          <string>PiP mode</string>
-         </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_6">
-          <item>
-           <widget class="QGroupBox" name="groupBox_4">
-            <property name="title">
-             <string>Startup</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_15">
-             <item>
-              <widget class="QCheckBox" name="checkBox_12">
-               <property name="focusPolicy">
-                <enum>Qt::FocusPolicy::NoFocus</enum>
-               </property>
-               <property name="text">
-                <string>Restore PiP geometry</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="groupBox_11">
-            <property name="title">
-             <string>Features</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_16">
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout">
-               <item>
-                <widget class="QLabel" name="label_2">
-                 <property name="focusPolicy">
-                  <enum>Qt::FocusPolicy::NoFocus</enum>
-                 </property>
-                 <property name="text">
-                  <string>PiP opacity</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QDoubleSpinBox" name="doubleSpinBox">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="focusPolicy">
-                  <enum>Qt::FocusPolicy::ClickFocus</enum>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <widget class="QCheckBox" name="checkBox_16">
-               <property name="focusPolicy">
-                <enum>Qt::FocusPolicy::NoFocus</enum>
-               </property>
-               <property name="text">
-                <string>PiP is always on top</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <spacer name="verticalSpacer_3">
             <property name="orientation">
              <enum>Qt::Orientation::Vertical</enum>
             </property>

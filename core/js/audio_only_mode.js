@@ -1,8 +1,6 @@
-// ==UserScript==
-// @match        https://music.youtube.com/*
-// ==/UserScript==
-
 (function () {
+    if (!location.href.startsWith("https://music.youtube.com/")) return;
+
     let previousThumbnailUrl = null;
 
     function getThumbnailUrl(src) {

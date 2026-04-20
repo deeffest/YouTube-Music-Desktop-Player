@@ -1,8 +1,6 @@
-// ==UserScript==
-// @match        https://music.youtube.com/*
-// ==/UserScript==
-
 (function () {
+    if (!location.href.startsWith("https://music.youtube.com/")) return;
+
     const isDialogActive = (d) =>
         d?.closest("tp-yt-paper-dialog") &&
         !d.closest("tp-yt-paper-dialog").hasAttribute("aria-hidden");

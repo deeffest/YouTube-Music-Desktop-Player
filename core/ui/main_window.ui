@@ -75,16 +75,6 @@
         </widget>
        </item>
        <item>
-        <widget class="TransparentToolButton" name="home_tbutton">
-         <property name="focusPolicy">
-          <enum>Qt::FocusPolicy::NoFocus</enum>
-         </property>
-         <property name="toolTip">
-          <string>Home</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="TransparentToolButton" name="reload_tbutton">
          <property name="focusPolicy">
           <enum>Qt::FocusPolicy::NoFocus</enum>
@@ -169,12 +159,22 @@ QLabel:hover {
         </widget>
        </item>
        <item>
-        <widget class="TransparentToolButtonWithMenu" name="watch_in_pip_tbutton">
-         <property name="focusPolicy">
-          <enum>Qt::FocusPolicy::NoFocus</enum>
-         </property>
+        <widget class="TransparentToolButton" name="lyrics_tbutton">
          <property name="toolTip">
-          <string>Watch in PiP</string>
+          <string>Lyrics...</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="TransparentToolButton" name="comments_tbutton">
+         <property name="toolTip">
+          <string>Comments...</string>
+         </property>
+         <property name="text">
+          <string/>
          </property>
         </widget>
        </item>
