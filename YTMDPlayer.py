@@ -1,5 +1,6 @@
 import os
 import sys
+import socket
 import logging
 import platform
 from logging.handlers import RotatingFileHandler
@@ -21,6 +22,12 @@ HOME_DIR = os.path.join(os.path.expanduser("~"), NAME)
 UNIQUE_KEY = f"{AUTHOR}.{NAME}"
 ACCENT_COLOR = QColor(255, 41, 41)
 DEBUG = not getattr(sys, "frozen", False)
+
+
+def find_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("localhost", 0))
+        return s.getsockname()[1]
 
 
 def init_app_settings():
@@ -224,12 +231,13 @@ def main():
         app_settings.value("disable_frame_rate_limit")
     )
 
+    os.environ.pop("QTWEBENGINE_CHROMIUM_FLAGS", None)
+    os.environ.pop("QTWEBENGINE_REMOTE_DEBUGGING", None)
+
     if disable_frame_rate_limit_setting == 1:
         os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-frame-rate-limit"
-
     if DEBUG:
-        # http://localhost:9222/
-        os.environ["QTWEBENGINE_REMOTE_DEBUGGING"] = "9222"
+        os.environ["QTWEBENGINE_REMOTE_DEBUGGING"] = str(find_free_port())
 
     app = SingletonApplication(sys.argv, UNIQUE_KEY)
     app.setApplicationName(NAME)

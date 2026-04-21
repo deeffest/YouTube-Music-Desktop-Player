@@ -1,4 +1,5 @@
 import re
+import logging
 from typing import TYPE_CHECKING
 
 from PySide6.QtGui import QIcon
@@ -23,6 +24,18 @@ class WebEnginePage(QWebEnginePage):
         if re.match(r"^https://m\.youtube\.com/watch\?v=", url_str):
             return True
         return False
+
+    def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
+        if level == QWebEnginePage.JavaScriptConsoleMessageLevel.ErrorMessageLevel:
+            logging.error(
+                f"JavaScript Console Error: {message} "
+                f"(Line: {lineNumber}, Source: {sourceID})"
+            )
+        else:
+            print(
+                f"JavaScript Console Message: {message} "
+                f"(Line: {lineNumber}, Source: {sourceID})"
+            )
 
 
 class WebEngineView(QWebEngineView):

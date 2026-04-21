@@ -6,17 +6,7 @@ Turns the [YouTube Music](https://music.youtube.com) site into a cross-platform 
 <img src="https://img.shields.io/badge/PySide-6.9.3-00B16A"/> <img src="https://img.shields.io/badge/Python-3.13.7-00B16A"/> <img src="https://img.shields.io/badge/Platform-Win32%20|%20Linux-00B16A"/>
 
 ## Screenshots
-<table>
-  <tr>
-    <td><img src="resources/images/screenshot1.png" width="100%"/></td>
-    <td><img src="resources/images/screenshot2.png" width="100%"/></td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center">
-      <img src="resources/images/screenshot3.png" width="100%"/>
-    </td>
-  </tr>
-</table>
+<img src="resources/images/screenshot.png" width="100%"/>
 
 ## Features
 - Built-in yt-dlp
