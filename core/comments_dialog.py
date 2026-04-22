@@ -61,7 +61,6 @@ class CommentsDialog(QDialog, Ui_CommentsDialog):
         self.setupUi(self)
         self.setWindowTitle(f"Comments │ {self.window.title}")
         self.setWindowIcon(QIcon(f"{self.window.icon_folder}/comments-colored.png"))
-        self.setMaximumWidth(548)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
     def setup_web_engine(self):
