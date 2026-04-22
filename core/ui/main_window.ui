@@ -128,7 +128,7 @@ QLabel:hover {
 </string>
          </property>
          <property name="text">
-          <string>🔒 music.youtube.com</string>
+          <string>music.youtube.com</string>
          </property>
         </widget>
        </item>

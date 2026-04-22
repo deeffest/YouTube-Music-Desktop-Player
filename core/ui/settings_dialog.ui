@@ -142,7 +142,7 @@
                   <enum>Qt::FocusPolicy::NoFocus</enum>
                  </property>
                  <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting applies only to the icons in the system tray!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting applies only to the icons in the system tray.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <item>
                   <property name="text">
@@ -276,7 +276,7 @@ but puts a heavy load on the CPU
 during video playback (even in the background).
 
 Recommended to use only with
-the Audio-only mode plugin!</string>
+the Audio-only mode plugin.</string>
                </property>
                <property name="text">
                 <string>Disable frame rate limit</string>
@@ -477,7 +477,7 @@ the Audio-only mode plugin!</string>
                 <enum>Qt::FocusPolicy::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>This will not remove the system version of FFmpeg - only the built-in version!</string>
+                <string>This will not remove the system version of FFmpeg - only the built-in version.</string>
                </property>
                <property name="text">
                 <string>Remove from device</string>
@@ -518,7 +518,7 @@ the Audio-only mode plugin!</string>
                 <enum>Qt::FocusPolicy::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>This will not remove the system version of Deno - only the built-in version!</string>
+                <string>This will not remove the system version of Deno - only the built-in version.</string>
                </property>
                <property name="text">
                 <string>Remove from device</string>

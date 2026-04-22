@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'settings_dialog.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.3
+## Created by: Qt User Interface Compiler version 6.8.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -405,7 +405,7 @@ class Ui_SettingsDialog(object):
         self.comboBox_2.setItemText(2, QCoreApplication.translate("SettingsDialog", u"Light", None))
 
 #if QT_CONFIG(tooltip)
-        self.comboBox_2.setToolTip(QCoreApplication.translate("SettingsDialog", u"<html><head/><body><p>This setting applies only to the icons in the system tray!</p></body></html>", None))
+        self.comboBox_2.setToolTip(QCoreApplication.translate("SettingsDialog", u"<html><head/><body><p>This setting applies only to the icons in the system tray.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.groupBox_10.setTitle(QCoreApplication.translate("SettingsDialog", u"Features", None))
         self.checkBox_10.setText(QCoreApplication.translate("SettingsDialog", u"System tray icon", None))
@@ -427,7 +427,7 @@ class Ui_SettingsDialog(object):
 "during video playback (even in the background).\n"
 "\n"
 "Recommended to use only with\n"
-"the Audio-only mode plugin!", None))
+"the Audio-only mode plugin.", None))
 #endif // QT_CONFIG(tooltip)
         self.checkBox_12.setText(QCoreApplication.translate("SettingsDialog", u"Disable frame rate limit", None))
         self.groupBox_5.setTitle(QCoreApplication.translate("SettingsDialog", u"Cookies", None))
@@ -451,7 +451,7 @@ class Ui_SettingsDialog(object):
 #endif // QT_CONFIG(tooltip)
         self.checkBox_5.setText(QCoreApplication.translate("SettingsDialog", u"Prefer system FFmpeg", None))
 #if QT_CONFIG(tooltip)
-        self.pushButton_2.setToolTip(QCoreApplication.translate("SettingsDialog", u"This will not remove the system version of FFmpeg - only the built-in version!", None))
+        self.pushButton_2.setToolTip(QCoreApplication.translate("SettingsDialog", u"This will not remove the system version of FFmpeg - only the built-in version.", None))
 #endif // QT_CONFIG(tooltip)
         self.pushButton_2.setText(QCoreApplication.translate("SettingsDialog", u"Remove from device", None))
         self.groupBox_7.setTitle(QCoreApplication.translate("SettingsDialog", u"Deno", None))
@@ -460,7 +460,7 @@ class Ui_SettingsDialog(object):
 #endif // QT_CONFIG(tooltip)
         self.checkBox_18.setText(QCoreApplication.translate("SettingsDialog", u"Prefer system Deno", None))
 #if QT_CONFIG(tooltip)
-        self.pushButton_3.setToolTip(QCoreApplication.translate("SettingsDialog", u"This will not remove the system version of Deno - only the built-in version!", None))
+        self.pushButton_3.setToolTip(QCoreApplication.translate("SettingsDialog", u"This will not remove the system version of Deno - only the built-in version.", None))
 #endif // QT_CONFIG(tooltip)
         self.pushButton_3.setText(QCoreApplication.translate("SettingsDialog", u"Remove from device", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), QCoreApplication.translate("SettingsDialog", u"Tools", None))

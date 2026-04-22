@@ -13,7 +13,7 @@ from core.application import SingletonApplication
 
 NAME = "Youtube-Music-Desktop-Player"
 DISPLAY_NAME = "YouTube Music Desktop Player"
-VERSION = "1.27.0-beta2"
+VERSION = "1.27.0-beta3"
 AUTHOR = "deeffest"
 WEBSITE = "deeffest.pythonanywhere.com"
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -256,7 +256,7 @@ def main():
         app_info=[NAME, DISPLAY_NAME, VERSION, AUTHOR, WEBSITE, CURRENT_DIR, HOME_DIR],
     )
     app.aboutToQuit.connect(window.app_quit)
-    window.show()
+    window.show_window()
 
     sys.exit(app.exec())
 

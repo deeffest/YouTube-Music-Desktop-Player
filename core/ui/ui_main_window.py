@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main_window.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.3
+## Created by: Qt User Interface Compiler version 6.8.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -151,7 +151,7 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.reload_tbutton.setToolTip(QCoreApplication.translate("MainWindow", u"Reload", None))
 #endif // QT_CONFIG(tooltip)
-        self.url_label.setText(QCoreApplication.translate("MainWindow", u"\U0001f512 music.youtube.com", None))
+        self.url_label.setText(QCoreApplication.translate("MainWindow", u"music.youtube.com", None))
 #if QT_CONFIG(tooltip)
         self.download_ddtbutton.setToolTip(QCoreApplication.translate("MainWindow", u"Download", None))
 #endif // QT_CONFIG(tooltip)

@@ -18,6 +18,7 @@ from PySide6.QtCore import (
     QProcess,
     QIODevice,
     QTextStream,
+    QStandardPaths,
 )
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -123,6 +124,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.discord_rpc = None
         self.default_geometry = QRect(get_geometry(1000, 799))
         self.default_home_url = "https://music.youtube.com/"
+        self.system_tray_icon = None
+        local_data = QStandardPaths.writableLocation(
+            QStandardPaths.StandardLocation.AppLocalDataLocation
+        )
+        self.default_cookies_path = f"{local_data}/QtWebEngine/Default"
 
         self.load_settings()
         self.configure_window()
@@ -410,6 +416,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.webprofile = QWebEngineProfile(self)
         else:
             self.webprofile = QWebEngineProfile("Default", self)
+            self.webprofile.setPersistentStoragePath(self.default_cookies_path)
 
         self.webinterceptor = WebEngineUrlRequestInterceptor()
         self.webprofile.setUrlRequestInterceptor(self.webinterceptor)
@@ -1457,8 +1464,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.system_tray_icon = SystemTrayIcon(self.windowIcon(), self)
             self.system_tray_icon.setToolTip(self.display_name)
             self.system_tray_icon.show()
-        else:
-            self.system_tray_icon = None
 
     def update_system_tray_icon_song_state(self):
         if self.tray_icon_setting == 1 and self.system_tray_icon:
