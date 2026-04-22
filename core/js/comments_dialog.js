@@ -2,11 +2,12 @@
     if (!location.href.startsWith("https://m.youtube.com/")) return;
 
     const REMOVE = [
+        "ytm-mobile-topbar-renderer",
         ".player-size",
-        "#header-bar",
-        ".related-chips-slot-wrapper > ytm-slim-video-metadata-section-renderer:nth-child(2)",
-        ".watch-content > ytm-item-section-renderer:nth-child(2)",
-        "#watch7-content",
+        "ytm-slim-video-information-renderer",
+        "ytm-slim-owner-renderer",
+        "ytm-slim-video-action-bar-renderer",
+        "ytm-item-section-renderer[section-identifier='related-items']",
     ];
 
     const setTheme = () => {

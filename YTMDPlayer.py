@@ -13,7 +13,7 @@ from core.application import SingletonApplication
 
 NAME = "Youtube-Music-Desktop-Player"
 DISPLAY_NAME = "YouTube Music Desktop Player"
-VERSION = "1.27.0-beta3"
+VERSION = "1.27.0-beta4"
 AUTHOR = "deeffest"
 WEBSITE = "deeffest.pythonanywhere.com"
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -85,6 +85,32 @@ def init_logging():
     logging.basicConfig(
         level=logging.INFO, handlers=[rotating_handler, logging.StreamHandler()]
     )
+
+
+def ensure_desktop_icon():
+    if platform.system() == "Linux":
+        try:
+            icon_path = os.path.join(CURRENT_DIR, "resources", "icons", "logo.png")
+            content = (
+                f"[Desktop Entry]\nType=Application\nName={NAME}"
+                f"\nIcon={icon_path}\nNoDisplay=true\nStartupWMClass={NAME}\n"
+            )
+            desktop_path = os.path.expanduser(
+                f"~/.local/share/applications/{NAME}.desktop"
+            )
+
+            if os.path.exists(desktop_path):
+                with open(desktop_path, "r") as f:
+                    if f.read() == content:
+                        return
+
+            os.makedirs(os.path.dirname(desktop_path), exist_ok=True)
+            with open(desktop_path, "w") as f:
+                f.write(content)
+
+            os.system("update-desktop-database ~/.local/share/applications 2>/dev/null")
+        except Exception as e:
+            print(f"Failed to ensure desktop icon: {e}")
 
 
 def set_app_palette(app, theme_setting):
@@ -224,6 +250,7 @@ def set_app_palette(app, theme_setting):
 def main():
     hide_home_folder()
     init_logging()
+    ensure_desktop_icon()
 
     app_settings = init_app_settings()
     light_theme_setting = int(app_settings.value("light_theme"))
@@ -246,6 +273,7 @@ def main():
     app.setOrganizationDomain(WEBSITE)
     app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
     app.setStyle("Fusion")
+    app.setDesktopFileName(NAME)
 
     set_app_palette(app, light_theme_setting)
 
