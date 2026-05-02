@@ -129,6 +129,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QStandardPaths.StandardLocation.AppLocalDataLocation
         )
         self.default_cookies_path = f"{local_data}/QtWebEngine/Default"
+        self.comments_dialogs = {}
 
         self.load_settings()
         self.configure_window()
@@ -826,17 +827,31 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.lyrics_dialog.show()
 
     def comments(self):
-        self.toggle_script(
-            "comments_dialog.js",
-            True,
-            run_at=1,
-            config={"light_theme": self.light_theme_setting, "video_id": self.video_id},
-        )
-        self.comments_dialog = CommentsDialog(self.video_id, self)
-        self.comments_dialog.finished.connect(
-            lambda: self.toggle_script("comments_dialog.js", False)
-        )
-        self.comments_dialog.show()
+        if self.video_id in self.comments_dialogs:
+            dialog = self.comments_dialogs[self.video_id]
+            dialog.activateWindow()
+        else:
+            if not self.comments_dialogs:
+                self.toggle_script(
+                    "comments_dialog.js",
+                    True,
+                    run_at=1,
+                    config={
+                        "light_theme": self.light_theme_setting,
+                        "video_id": self.video_id,
+                    },
+                )
+            self.comments_dialog = CommentsDialog(self.video_id, self)
+            self.comments_dialogs[self.video_id] = self.comments_dialog
+            self.comments_dialog.destroyed.connect(
+                lambda obj, vid=self.video_id: self.on_comments_destroyed(vid)
+            )
+            self.comments_dialog.show()
+
+    def on_comments_destroyed(self, video_id: str):
+        self.comments_dialogs.pop(video_id, None)
+        if not self.comments_dialogs:
+            self.toggle_script("comments_dialog.js", False)
 
     def settings(self):
         self.settings_dialog = SettingsDialog(self)
