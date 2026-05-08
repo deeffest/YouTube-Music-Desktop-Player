@@ -1,3 +1,4 @@
+import platform
 from typing import TYPE_CHECKING
 
 from PySide6.QtGui import QIcon
@@ -141,6 +142,10 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         )
         self.checkBox_5.setChecked(self.window.prefer_system_ffmpeg_setting)
         self.checkBox_18.setChecked(self.window.prefer_system_deno_setting)
+        self.checkBox_14.setChecked(self.window.win_thumbnail_buttons_setting)
+        if not platform.system() == "Windows":
+            self.checkBox_14.setEnabled(False)
+            self.checkBox_14.setToolTip("Works only on Windows.")
 
     def save_settings(self):
         self.window.save_last_win_geometry_setting = int(self.checkBox.isChecked())
@@ -216,6 +221,10 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         self.window.settings_.setValue(
             "prefer_system_deno", self.window.prefer_system_deno_setting
         )
+        self.window.win_thumbnail_buttons_setting = int(self.checkBox_14.isChecked())
+        self.window.settings_.setValue(
+            "win_thumbnail_buttons", self.window.win_thumbnail_buttons_setting
+        )
 
         self.close()
 
@@ -226,3 +235,7 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         super().showEvent(event)
         self.adjustSize()
         self.setMinimumSize(self.size())
+
+    def closeEvent(self, event):
+        self.window.settings_dialog = None
+        event.accept()

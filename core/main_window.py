@@ -80,6 +80,9 @@ from core.web_channel_backend import WebChannelBackend
 from core.music_recognizer import MusicRecognizerThread
 from core.web_engine_url_request_interceptor import WebEngineUrlRequestInterceptor
 
+if platform.system() == "Windows":
+    from core.taskbar_api import TaskbarAPI, THBF_ENABLED, THBF_DISABLED  # type: ignore
+
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(
@@ -130,6 +133,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         self.default_cookies_path = f"{local_data}/QtWebEngine/Default"
         self.comments_dialogs = {}
+        self.lyrics_dialog = None
+        self.settings_dialog = None
+        self.taskbar = None
 
         self.load_settings()
         self.configure_window()
@@ -180,8 +186,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.activate_plugins()
         self.activate_custom_plugins()
         self.connect_actions()
-        self.run_discord_rpc()
+        self.create_win_thumbnail_buttons()
         self.show_system_tray_icon()
+        self.run_discord_rpc()
         self.start_playback_control()
 
     def load_settings(self):
@@ -251,6 +258,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings_.setValue("invert_to_light_theme", 0)
         if self.settings_.value("clean_share_link") is None:
             self.settings_.setValue("clean_share_link", 1)
+        if self.settings_.value("win_thumbnail_buttons") is None:
+            self.settings_.setValue(
+                "win_thumbnail_buttons", 1 if platform.system() == "Windows" else 0
+            )
+        if self.settings_.value("last_save_lyrics_path") is None:
+            self.settings_.setValue("last_save_lyrics_path", os.path.expanduser("~"))
 
         self.ad_blocker_setting = int(self.settings_.value("ad_blocker"))
         self.save_last_win_geometry_setting = int(
@@ -314,6 +327,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings_.value("invert_to_light_theme")
         )
         self.clean_share_link_setting = int(self.settings_.value("clean_share_link"))
+        self.win_thumbnail_buttons_setting = int(
+            self.settings_.value("win_thumbnail_buttons")
+        )
+        self.last_save_lyrics_path_setting = self.settings_.value(
+            "last_save_lyrics_path"
+        )
 
     def configure_window(self):
         setTheme(Theme.DARK) if self.light_theme_setting == 0 else setTheme(Theme.LIGHT)
@@ -684,19 +703,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.main_menu.addSeparator()
         self.hide_toolbar_action.add(self.main_menu, self.create_hide_toolbar_action())
 
-        self.more_menu = RoundMenu()
+        self.see_more_menu = RoundMenu()
         self.go_to_youtube_action.add(
-            self.more_menu, self.create_go_to_youtube_action()
+            self.see_more_menu, self.create_go_to_youtube_action()
         )
-        self.more_menu.addMenu(self.create_search_on_menu())
-        self.more_menu.addSeparator()
-        self.more_menu.addMenu(self.create_recognize_music_menu())
-        self.more_menu.addAction(self.restart_app_action)
-        self.more_menu.addSeparator()
-        self.more_menu.addAction(self.bug_report_action)
-        self.more_menu.addMenu(self.create_about_menu())
-        self.more_menu.addSeparator()
-        self.hide_toolbar_action.add(self.more_menu, self.create_hide_toolbar_action())
+        self.see_more_menu.addMenu(self.create_search_on_menu())
+        self.see_more_menu.addSeparator()
+        self.see_more_menu.addMenu(self.create_recognize_music_menu())
+        self.see_more_menu.addAction(self.restart_app_action)
+        self.see_more_menu.addSeparator()
+        self.see_more_menu.addAction(self.bug_report_action)
+        self.see_more_menu.addMenu(self.create_about_menu())
+        self.see_more_menu.addSeparator()
+        self.hide_toolbar_action.add(
+            self.see_more_menu, self.create_hide_toolbar_action()
+        )
 
         self.edit_menu = RoundMenu()
         self.edit_menu.addAction(self.cut_action)
@@ -779,10 +800,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         self.settings_ddtbutton.clicked.connect(self.settings)
 
-        self.more_ddtbutton.setIcon(
-            recolor_icon(f"{self.icon_folder}/more.png", self.light_theme_setting)
+        self.see_more_ddtbutton.setIcon(
+            recolor_icon(f"{self.icon_folder}/see_more.png", self.light_theme_setting)
         )
-        self.more_ddtbutton.setMenu(self.more_menu)
+        self.see_more_ddtbutton.setMenu(self.see_more_menu)
 
         self.back_tbutton.installEventFilter(
             ToolTipFilter(self.back_tbutton, 300, ToolTipPosition.TOP)
@@ -808,8 +829,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.plugins_ddtbutton.installEventFilter(
             ToolTipFilter(self.plugins_ddtbutton, 300, ToolTipPosition.TOP)
         )
-        self.more_ddtbutton.installEventFilter(
-            ToolTipFilter(self.more_ddtbutton, 300, ToolTipPosition.TOP)
+        self.see_more_ddtbutton.installEventFilter(
+            ToolTipFilter(self.see_more_ddtbutton, 300, ToolTipPosition.TOP)
         )
 
         self.ToolBar.installEventFilter(self)
@@ -823,8 +844,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         cookie_store.deleteAllCookies()
 
     def lyrics(self):
-        self.lyrics_dialog = LyricsDialog(self)
-        self.lyrics_dialog.show()
+        if self.lyrics_dialog is not None:
+            self.lyrics_dialog.activateWindow()
+        else:
+            self.lyrics_dialog = LyricsDialog(self)
+            self.lyrics_dialog.show()
 
     def comments(self):
         if self.video_id in self.comments_dialogs:
@@ -854,8 +878,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.toggle_script("comments_dialog.js", False)
 
     def settings(self):
-        self.settings_dialog = SettingsDialog(self)
-        self.settings_dialog.show()
+        if self.settings_dialog is not None:
+            self.settings_dialog.activateWindow()
+        else:
+            self.settings_dialog = SettingsDialog(self)
+            self.settings_dialog.show()
 
     def restart_app(self):
         msg_box = None
@@ -1260,6 +1287,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             lambda checked: self.toggle_script("invert_to_light_theme.js", checked)
         )
 
+    def create_win_thumbnail_buttons(self):
+        if platform.system() == "Windows" and self.win_thumbnail_buttons_setting == 1:
+            self.taskbar = TaskbarAPI()
+
     def on_load_progress(self, progress):
         if progress > 70:
             self.reload_tbutton.setToolTip("Reload")
@@ -1410,69 +1441,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.url_label.setTextFormat(Qt.TextFormat.RichText)
         self.url_label.setToolTip(url)
 
-    def run_discord_rpc(self):
-        if self.discord_rpc_setting == 1:
-            try:
-                self.discord_rpc = RPC(
-                    app_id="1254202610781655050",
-                    output=False,
-                    exit_if_discord_close=False,
-                    exit_on_disconnect=False,
+    def update_win_thumbnail_buttons_song_state(self):
+        if self.taskbar is not None:
+            if self.song_state == "Playing":
+                self.taskbar.update_button(1, flags=THBF_ENABLED)
+                self.taskbar.update_button(
+                    2, icon=f"{self.icon_folder}/pause-taskbar.png", flags=THBF_ENABLED
                 )
-            except Exception as e:
-                self.discord_rpc = None
-                logging.error(f"Failed to activate Discord RPC: {str(e)}")
-
-    def update_discord_rpc(self):
-        if not self.discord_rpc:
-            self.run_discord_rpc()
-
-        if self.discord_rpc:
-            details = (
-                self.title + "\u200b" if len(self.title) == 1 else self.title[:128]
-            )
-            state = (
-                self.artist + "\u200b" if len(self.artist) == 1 else self.artist[:128]
-            )
-            large_image = self.artwork
-            small_image = (
-                "https://cdn.discordapp.com/app-icons/1254202610781655050/"
-                "b4ede41d663f6caa7e45c6a042e447c9.png?size=32"
-            )
-            duration = self.duration
-            project_url = f"https://github.com/{self.author}/{self.name}"
-            video_url = f"https://music.youtube.com/watch?v={self.video_id}"
-
-            try:
-                self.discord_rpc.set_activity(
-                    details=details,
-                    state=state,
-                    large_image=large_image,
-                    small_image=small_image,
-                    act_type=Activity.Listening,
-                    **ProgressBar(0, duration),
-                    buttons=[
-                        Button("Play in Browser", video_url),
-                        Button("Get App on GitHub", project_url),
-                    ],
+                self.taskbar.update_button(3, flags=THBF_ENABLED)
+            elif self.song_state == "Paused":
+                self.taskbar.update_button(1, flags=THBF_ENABLED)
+                self.taskbar.update_button(
+                    2, icon=f"{self.icon_folder}/play-taskbar.png", flags=THBF_ENABLED
                 )
-            except Exception as e:
-                if "[Errno 22]" in str(e) or "[Errno 32]" in str(e):
-                    self.reconnect_discord_rpc()
-                else:
-                    logging.error(f"Failed to update Discord RPC: {str(e)}")
-
-    def clear_discord_rpc(self):
-        if self.discord_rpc:
-            try:
-                self.discord_rpc.clear()
-            except Exception as e:
-                logging.error(f"Failed to clear Discord RPC: {str(e)}")
-
-    def reconnect_discord_rpc(self):
-        if self.discord_rpc:
-            self.run_discord_rpc()
-            self.update_discord_rpc()
+                self.taskbar.update_button(3, flags=THBF_ENABLED)
+            else:
+                self.taskbar.update_button(1, flags=THBF_DISABLED)
+                self.taskbar.update_button(
+                    2, icon=f"{self.icon_folder}/play-taskbar.png", flags=THBF_DISABLED
+                )
+                self.taskbar.update_button(3, flags=THBF_DISABLED)
 
     def show_system_tray_icon(self):
         if self.tray_icon_setting == 1:
@@ -1632,6 +1620,70 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         ),
                     )
                 )
+
+    def run_discord_rpc(self):
+        if self.discord_rpc_setting == 1:
+            try:
+                self.discord_rpc = RPC(
+                    app_id="1254202610781655050",
+                    output=False,
+                    exit_if_discord_close=False,
+                    exit_on_disconnect=False,
+                )
+            except Exception as e:
+                self.discord_rpc = None
+                logging.error(f"Failed to activate Discord RPC: {str(e)}")
+
+    def update_discord_rpc(self):
+        if not self.discord_rpc:
+            self.run_discord_rpc()
+
+        if self.discord_rpc:
+            details = (
+                self.title + "\u200b" if len(self.title) == 1 else self.title[:128]
+            )
+            state = (
+                self.artist + "\u200b" if len(self.artist) == 1 else self.artist[:128]
+            )
+            large_image = self.artwork
+            small_image = (
+                "https://cdn.discordapp.com/app-icons/1254202610781655050/"
+                "b4ede41d663f6caa7e45c6a042e447c9.png?size=32"
+            )
+            duration = self.duration
+            project_url = f"https://github.com/{self.author}/{self.name}"
+            video_url = f"https://music.youtube.com/watch?v={self.video_id}"
+
+            try:
+                self.discord_rpc.set_activity(
+                    details=details,
+                    state=state,
+                    large_image=large_image,
+                    small_image=small_image,
+                    act_type=Activity.Listening,
+                    **ProgressBar(0, duration),
+                    buttons=[
+                        Button("Play in Browser", video_url),
+                        Button("Get App on GitHub", project_url),
+                    ],
+                )
+            except Exception as e:
+                if "[Errno 22]" in str(e) or "[Errno 32]" in str(e):
+                    self.reconnect_discord_rpc()
+                else:
+                    logging.error(f"Failed to update Discord RPC: {str(e)}")
+
+    def clear_discord_rpc(self):
+        if self.discord_rpc:
+            try:
+                self.discord_rpc.clear()
+            except Exception as e:
+                logging.error(f"Failed to clear Discord RPC: {str(e)}")
+
+    def reconnect_discord_rpc(self):
+        if self.discord_rpc:
+            self.run_discord_rpc()
+            self.update_discord_rpc()
 
     def start_playback_control(self):
         if self.hotkey_playback_control_setting == 1:
@@ -1988,30 +2040,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.system_tray_icon.last_win_geo = None
             self.system_tray_icon.maximized_state = None
 
-    def eventFilter(self, obj, event):
-        if obj == self.ToolBar:
-            if event.type() == QEvent.Type.Show:
-                self.hide_toolbar_action.setText("Hide toolbar")
-                self.hide_toolbar_action.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/hide_toolbar.png", self.light_theme_setting
-                    )
-                )
-            elif event.type() == QEvent.Type.Hide:
-                self.hide_toolbar_action.setText("Show toolbar")
-                self.hide_toolbar_action.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/toolbar.png", self.light_theme_setting
-                    )
-                )
-        elif obj == self.url_label:
-            if event.type() == QEvent.Type.MouseButtonPress:
-                if event.button() == Qt.MouseButton.MiddleButton:
-                    self.webview.setUrl(QUrl(self.default_home_url))
-                    return True
-
-        return super().eventFilter(obj, event)
-
     def stop_running_threads(self):
         if (
             self.hotkey_controller_thread is not None
@@ -2045,6 +2073,67 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if hasattr(app, "server"):
             app.server.close()
 
+    def nativeEvent(self, eventType, message):
+        if self.taskbar is not None:
+            event = self.taskbar.handle_message(int(message))
+            if event:
+                if event["type"] == "created":
+                    self.taskbar.register(int(self.winId()))
+                    self.taskbar.add_buttons(
+                        [
+                            {
+                                "id": 1,
+                                "icon": f"{self.icon_folder}/previous-taskbar.png",
+                                "tooltip": "Previous",
+                            },
+                            {
+                                "id": 2,
+                                "icon": f"{self.icon_folder}/play-taskbar.png",
+                                "tooltip": "Play/Pause",
+                            },
+                            {
+                                "id": 3,
+                                "icon": f"{self.icon_folder}/next-taskbar.png",
+                                "tooltip": "Next",
+                            },
+                        ]
+                    )
+                elif event["type"] == "click" and event["id"] == 1:
+                    self.previous()
+                elif event["type"] == "click" and event["id"] == 2:
+                    self.play_pause()
+                elif event["type"] == "click" and event["id"] == 3:
+                    self.next()
+            return False, 0
+
+    def eventFilter(self, obj, event):
+        if obj == self.ToolBar:
+            if event.type() == QEvent.Type.Show:
+                self.hide_toolbar_action.setText("Hide toolbar")
+                self.hide_toolbar_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/hide_toolbar.png", self.light_theme_setting
+                    )
+                )
+            elif event.type() == QEvent.Type.Hide:
+                self.hide_toolbar_action.setText("Show toolbar")
+                self.hide_toolbar_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/toolbar.png", self.light_theme_setting
+                    )
+                )
+        elif obj == self.url_label:
+            if event.type() == QEvent.Type.MouseButtonPress:
+                if event.button() == Qt.MouseButton.MiddleButton:
+                    self.webview.setUrl(QUrl(self.default_home_url))
+                    return True
+
+        return super().eventFilter(obj, event)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.update_splash_screen()
+
     def closeEvent(self, event):
         if self.is_restarting:
             event.accept()
@@ -2077,7 +2166,3 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return
 
         event.accept()
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.update_splash_screen()

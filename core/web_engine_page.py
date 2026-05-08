@@ -35,7 +35,7 @@ class WebEnginePage(QWebEnginePage):
             if re.match(pattern, url_str):
                 return True
 
-        return True
+        return False
 
     def javaScriptAlert(self, securityOrigin, msg):
         msg_box = MessageBox(

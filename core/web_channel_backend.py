@@ -66,16 +66,23 @@ class WebChannelBackend(QObject):
         self.window.setWindowTitle(window_title)
         if self.window.system_tray_icon is not None:
             self.window.system_tray_icon.setToolTip(window_title)
+        if self.window.lyrics_dialog is not None:
+            self.window.lyrics_dialog.load_lyrics()
 
     @Slot(str)
     def song_state_changed(self, state):
         self.window.song_state = state
+
+        self.window.update_win_thumbnail_buttons_song_state()
         self.window.update_system_tray_icon_song_state()
 
     @Slot(str, str)
     def song_progress_changed(self, current_time, total_time):
         self.window.current_time = current_time
         self.window.total_time = total_time
+
+        if self.window.lyrics_dialog is not None:
+            self.window.lyrics_dialog.sync_lyrics_to_time(current_time)
 
     @Slot(str)
     def song_status_changed(self, status):

@@ -132,3 +132,7 @@ class MusicRecognizerThread(QThread):
                 code = e.get("error_code", "Unknown code")
                 logging.error(resp_json)
                 self.recognizing_via_audd_api_error.emit(code, msg)
+
+    def stop(self):
+        self.terminate()
+        self.wait()

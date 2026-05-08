@@ -173,6 +173,13 @@
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_14">
              <item>
+              <widget class="QCheckBox" name="checkBox_14">
+               <property name="text">
+                <string>Windows thumbnail buttons</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QCheckBox" name="checkBox_10">
                <property name="focusPolicy">
                 <enum>Qt::FocusPolicy::NoFocus</enum>

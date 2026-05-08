@@ -115,11 +115,11 @@ class Ui_MainWindow(object):
 
         self.toolbar_layout.addWidget(self.plugins_ddtbutton)
 
-        self.more_ddtbutton = TransparentToolButtonWithMenu(self.ToolBar)
-        self.more_ddtbutton.setObjectName(u"more_ddtbutton")
-        self.more_ddtbutton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.see_more_ddtbutton = TransparentToolButtonWithMenu(self.ToolBar)
+        self.see_more_ddtbutton.setObjectName(u"see_more_ddtbutton")
+        self.see_more_ddtbutton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
-        self.toolbar_layout.addWidget(self.more_ddtbutton)
+        self.toolbar_layout.addWidget(self.see_more_ddtbutton)
 
 
         self.verticalLayout.addWidget(self.ToolBar)
@@ -171,7 +171,7 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.plugins_ddtbutton.setText("")
 #if QT_CONFIG(tooltip)
-        self.more_ddtbutton.setToolTip(QCoreApplication.translate("MainWindow", u"More", None))
+        self.see_more_ddtbutton.setToolTip(QCoreApplication.translate("MainWindow", u"See more", None))
 #endif // QT_CONFIG(tooltip)
     # retranslateUi
 

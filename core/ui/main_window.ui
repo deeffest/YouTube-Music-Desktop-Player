@@ -202,12 +202,12 @@ QLabel:hover {
         </widget>
        </item>
        <item>
-        <widget class="TransparentToolButtonWithMenu" name="more_ddtbutton">
+        <widget class="TransparentToolButtonWithMenu" name="see_more_ddtbutton">
          <property name="focusPolicy">
           <enum>Qt::FocusPolicy::NoFocus</enum>
          </property>
          <property name="toolTip">
-          <string>More</string>
+          <string>See more</string>
          </property>
         </widget>
        </item>

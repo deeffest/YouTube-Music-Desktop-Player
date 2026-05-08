@@ -13,7 +13,7 @@ from core.application import SingletonApplication
 
 NAME = "Youtube-Music-Desktop-Player"
 DISPLAY_NAME = "YouTube Music Desktop Player"
-VERSION = "1.27.0-beta5"
+VERSION = "1.27.0-rc1"
 AUTHOR = "deeffest"
 WEBSITE = "deeffest.pythonanywhere.com"
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -272,9 +272,13 @@ def main():
     app.setOrganizationName(AUTHOR)
     app.setOrganizationDomain(WEBSITE)
     app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
-    app.setStyle("Fusion")
     app.setDesktopFileName(NAME)
 
+    app.setStyle("Fusion")
+    if light_theme_setting == 0:
+        app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
+    else:
+        app.styleHints().setColorScheme(Qt.ColorScheme.Light)
     set_app_palette(app, light_theme_setting)
 
     window = MainWindow(

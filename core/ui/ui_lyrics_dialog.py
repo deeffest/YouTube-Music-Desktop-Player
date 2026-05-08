@@ -15,18 +15,44 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDialog, QSizePolicy, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QScrollArea,
+    QSizePolicy, QVBoxLayout, QWidget)
 
 class Ui_LyricsDialog(object):
     def setupUi(self, LyricsDialog):
         if not LyricsDialog.objectName():
             LyricsDialog.setObjectName(u"LyricsDialog")
-        LyricsDialog.resize(380, 580)
+        LyricsDialog.resize(410, 680)
         self.verticalLayout_2 = QVBoxLayout(LyricsDialog)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.scrollArea = QScrollArea(LyricsDialog)
+        self.scrollArea.setObjectName(u"scrollArea")
+        self.scrollArea.setFrameShape(QFrame.Shape.NoFrame)
+        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollAreaWidgetContents = QWidget()
+        self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 408, 678))
+        self.verticalLayout_3 = QVBoxLayout(self.scrollAreaWidgetContents)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.verticalLayout_3.setContentsMargins(16, 16, 16, 16)
+        self.widget = QWidget(self.scrollAreaWidgetContents)
+        self.widget.setObjectName(u"widget")
+        self.verticalLayout_4 = QVBoxLayout(self.widget)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
+
+        self.verticalLayout_3.addWidget(self.widget)
+
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
+
+        self.verticalLayout.addWidget(self.scrollArea)
+
 
         self.verticalLayout_2.addLayout(self.verticalLayout)
 

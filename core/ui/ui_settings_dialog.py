@@ -116,6 +116,11 @@ class Ui_SettingsDialog(object):
         self.groupBox_10.setObjectName(u"groupBox_10")
         self.verticalLayout_14 = QVBoxLayout(self.groupBox_10)
         self.verticalLayout_14.setObjectName(u"verticalLayout_14")
+        self.checkBox_14 = QCheckBox(self.groupBox_10)
+        self.checkBox_14.setObjectName(u"checkBox_14")
+
+        self.verticalLayout_14.addWidget(self.checkBox_14)
+
         self.checkBox_10 = QCheckBox(self.groupBox_10)
         self.checkBox_10.setObjectName(u"checkBox_10")
         self.checkBox_10.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -408,6 +413,7 @@ class Ui_SettingsDialog(object):
         self.comboBox_2.setToolTip(QCoreApplication.translate("SettingsDialog", u"<html><head/><body><p>This setting applies only to the icons in the system tray.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.groupBox_10.setTitle(QCoreApplication.translate("SettingsDialog", u"Features", None))
+        self.checkBox_14.setText(QCoreApplication.translate("SettingsDialog", u"Windows thumbnail buttons", None))
         self.checkBox_10.setText(QCoreApplication.translate("SettingsDialog", u"System tray icon", None))
         self.checkBox_11.setText(QCoreApplication.translate("SettingsDialog", u"Discord Rich Presence", None))
 #if QT_CONFIG(tooltip)

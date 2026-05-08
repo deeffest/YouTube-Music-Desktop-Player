@@ -6,6 +6,7 @@ packaging==25.0
 requests==2.32.5
 pyinstaller==6.17.0
 numpy==2.4.3; sys_platform=="win32"
+comtypes==1.4.16; sys_platform=="win32"
 soundfile==0.13.1; sys_platform=="win32"
 pyaudiowpatch==0.2.12.8; sys_platform=="win32"
 git+https://github.com/deeffest/Discord-RPC.git@5324548
