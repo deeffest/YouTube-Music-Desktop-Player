@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from PyQt5.QtWidgets import QAction
+    from PySide6.QtGui import QAction
 
     class MultiAction(QAction): ...  # noqa: E701
 

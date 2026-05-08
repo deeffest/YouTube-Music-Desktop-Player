@@ -1,9 +1,9 @@
-from PyQt5.QtCore import pyqtSignal, QObject
+from PySide6.QtCore import Signal, QObject
 
 
 class SignalBus(QObject):
-    show_window_sig = pyqtSignal()
-    app_error_sig = pyqtSignal(str)
+    show_window_sig = Signal()
+    app_error_sig = Signal(str)
 
 
 signal_bus = SignalBus()

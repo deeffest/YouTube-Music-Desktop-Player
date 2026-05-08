@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QTimer
+from PySide6.QtCore import QTimer
 from qfluentwidgets import MessageBoxBase, SubtitleLabel, LineEdit
 
 

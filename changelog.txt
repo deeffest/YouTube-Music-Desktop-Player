@@ -1,3 +1,17 @@
+v1.27.0-rc1 is Here! (08.05.2026)
+- Added lyrics dialog.
+- Added comments dialog.
+- Added "Clean share link" plugin.
+- Added support for GreaseMonkey scripts.
+- Added "Invert to light theme" plugin.
+- Added Qt6 (PySide6 6.8.3)
+- Removed Qt5 (PyQt5 5.15.11)
+- Removed Picture-in-Picture.
+- Fixed app icon on linux.
+- Fixed Fusion palette for light/dark themes.
+- Fixed Trusted Types errors with custom plugins.
+- Other fixes and improvements.
+
 v1.26.0 is Here! (06.04.2026)
 - Added "Spotify" and "Genius" actions to "Search on" menu.
 - Other fixes and improvements.

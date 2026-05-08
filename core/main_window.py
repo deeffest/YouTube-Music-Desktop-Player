@@ -4,9 +4,9 @@ import json
 import base64
 import logging
 import platform
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote_plus
 
-from PyQt5.QtCore import (
+from PySide6.QtCore import (
     Qt,
     QUrl,
     QSize,
@@ -16,25 +16,25 @@ from PyQt5.QtCore import (
     QTimer,
     QEvent,
     QProcess,
+    QIODevice,
     QTextStream,
+    QStandardPaths,
 )
-from PyQt5.QtWidgets import (
-    QAction,
-    QShortcut,
+from PySide6.QtWidgets import (
     QFileDialog,
     QMainWindow,
     QApplication,
     QSystemTrayIcon,
 )
-from PyQt5.QtTest import QTest
-from PyQt5.QtWebEngineWidgets import (
+from PySide6.QtTest import QTest
+from PySide6.QtWebEngineCore import (
     QWebEnginePage,
     QWebEngineScript,
     QWebEngineProfile,
     QWebEngineSettings,
 )
-from PyQt5.QtWebChannel import QWebChannel
-from PyQt5.QtGui import QIcon, QKeySequence
+from PySide6.QtWebChannel import QWebChannel
+from PySide6.QtGui import QIcon, QKeySequence, QAction, QShortcut
 from qfluentwidgets import (
     Theme,
     Action,
@@ -58,18 +58,19 @@ from core.helpers import (
     open_url,
     copy_text,
     str_to_bool,
-    clean_up_url,
     recolor_icon,
+    get_geometry,
     is_valid_ytmusic_url,
-    get_centered_geometry,
 )
 from core.about_card import AboutCard
 from core.signal_bus import signal_bus
 from core.multi_action import MultiAction
+from core.lyrics_dialog import LyricsDialog
 from core.update_checker import UpdateChecker
 from core.web_engine_page import WebEnginePage
 from core.web_engine_view import WebEngineView
 from core.settings_dialog import SettingsDialog
+from core.comments_dialog import CommentsDialog
 from core.system_tray_icon import SystemTrayIcon
 from core.ui.ui_main_window import Ui_MainWindow
 from core.ytmusic_downloader import DownloadThread
@@ -77,24 +78,24 @@ from core.hotkey_controller import HotkeyController
 from core.text_view_msg_box import TextViewMessageBox
 from core.web_channel_backend import WebChannelBackend
 from core.music_recognizer import MusicRecognizerThread
-from core.picture_in_picture_dialog import PictureInPictureDialog
+from core.web_engine_url_request_interceptor import WebEngineUrlRequestInterceptor
 
 if platform.system() == "Windows":
-    from PyQt5.QtWinExtras import (  # type: ignore
-        QWinThumbnailToolBar,
-        QWinThumbnailToolButton,
-    )
-    from pywinstyles import apply_style  # type: ignore
+    from core.taskbar_api import TaskbarAPI, THBF_ENABLED, THBF_DISABLED  # type: ignore
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(
-        self, app_settings, opengl_enviroment_setting, theme_setting, app_info
+        self,
+        app_settings,
+        light_theme_setting,
+        disable_frame_rate_limit_setting,
+        app_info,
     ):
         super().__init__()
         self.settings_ = app_settings
-        self.opengl_enviroment_setting = opengl_enviroment_setting
-        self.theme_setting = theme_setting
+        self.light_theme_setting = light_theme_setting
+        self.disable_frame_rate_limit_setting = disable_frame_rate_limit_setting
         self.name = app_info[0]
         self.display_name = app_info[1]
         self.version = app_info[2]
@@ -114,9 +115,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.song_status = "Indifferent"
         self.icon_folder = f"{self.current_dir}/resources/icons"
         self.force_exit = False
+        self.is_restarting = False
         self.is_downloading = False
         self.current_url = None
-        self.picture_in_picture_dialog = None
         self.download_thread = None
         self.update_checker_thread = None
         self.hotkey_controller_thread = None
@@ -124,14 +125,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.downloading_state_tool_tip = None
         self.recognizing_state_tool_tip = None
         self.discord_rpc = None
-        self.win_thumbnail_toolbar = None
+        self.default_geometry = QRect(get_geometry(1000, 799))
+        self.default_home_url = "https://music.youtube.com/"
+        self.system_tray_icon = None
+        local_data = QStandardPaths.writableLocation(
+            QStandardPaths.StandardLocation.AppLocalDataLocation
+        )
+        self.default_cookies_path = f"{local_data}/QtWebEngine/Default"
+        self.comments_dialogs = {}
+        self.lyrics_dialog = None
+        self.settings_dialog = None
+        self.taskbar = None
 
         self.load_settings()
         self.configure_window()
         self.connect_signals()
         self.connect_shortcuts()
-        self.show_splash_screen()
+        self.create_actions()
+        self.create_submenus()
+        self.create_context_menus()
         self.setup_web_engine()
+        self.show_splash_screen()
 
         if platform.system() == "Windows":
             self.ffmpeg_url = (
@@ -166,18 +180,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.cache_dir = os.path.join(self.home_dir, "__cache__")
         os.makedirs(self.cache_dir, exist_ok=True)
+        self.cookies_txt = os.path.join(self.cache_dir, "cookies.txt")
 
-        self.create_actions()
-        self.create_submenus()
-        self.create_context_menus()
         self.configure_ui_elements()
         self.activate_plugins()
         self.activate_custom_plugins()
         self.connect_actions()
-        self.run_discord_rpc()
+        self.create_win_thumbnail_buttons()
         self.show_system_tray_icon()
+        self.run_discord_rpc()
         self.start_playback_control()
-        self.create_win_thumbnail_toolbar()
 
     def load_settings(self):
         if self.settings_.value("ad_blocker") is None:
@@ -187,17 +199,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.settings_.value("open_last_url_at_startup") is None:
             self.settings_.setValue("open_last_url_at_startup", 1)
         if self.settings_.value("last_url") is None:
-            self.settings_.setValue("last_url", "https://music.youtube.com/")
+            self.settings_.setValue("last_url", self.default_home_url)
         if self.settings_.value("fullscreen_mode_support") is None:
             self.settings_.setValue("fullscreen_mode_support", 1)
         if self.settings_.value("support_animated_scrolling") is None:
             self.settings_.setValue("support_animated_scrolling", 0)
-        if self.settings_.value("save_last_pos_of_mp") is None:
-            self.settings_.setValue("save_last_pos_of_mp", 0)
         if self.settings_.value("last_win_geometry") is None:
-            self.settings_.setValue(
-                "last_win_geometry", QRect(get_centered_geometry(1000, 799))
-            )
+            self.settings_.setValue("last_win_geometry", self.default_geometry)
         if self.settings_.value("save_last_zoom_factor") is None:
             self.settings_.setValue("save_last_zoom_factor", 1)
         if self.settings_.value("last_zoom_factor") is None:
@@ -206,10 +214,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings_.setValue("last_download_folder", os.path.expanduser("~"))
         if self.settings_.value("discord_rpc") is None:
             self.settings_.setValue("discord_rpc", 0)
-        if self.settings_.value("geometry_of_mp") is None:
-            self.settings_.setValue(
-                "geometry_of_mp", QRect(get_centered_geometry(360, 150))
-            )
         if self.settings_.value("tray_icon") is None:
             self.settings_.setValue(
                 "tray_icon", 1 if QSystemTrayIcon.isSystemTrayAvailable() else 0
@@ -236,16 +240,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings_.setValue("im_not_a_kid", 1)
         if self.settings_.value("icon_color") is None:
             self.settings_.setValue("icon_color", 0)
-        if self.settings_.value("win_thumbnail_buttons") is None:
-            self.settings_.setValue(
-                "win_thumbnail_buttons", 1 if platform.system() == "Windows" else 0
-            )
-        if self.settings_.value("pip_is_always_on_top") is None:
-            self.settings_.setValue("pip_is_always_on_top", 1)
         if self.settings_.value("do_not_save_cookies") is None:
             self.settings_.setValue("do_not_save_cookies", 0)
-        if self.settings_.value("pip_opacity") is None:
-            self.settings_.setValue("pip_opacity", 1.0)
         if self.settings_.value("embed_metadata") is None:
             self.settings_.setValue("embed_metadata", 1)
         if self.settings_.value("ytdlp_format") is None:
@@ -258,6 +254,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings_.setValue("prefer_system_ffmpeg", 0)
         if self.settings_.value("prefer_system_deno") is None:
             self.settings_.setValue("prefer_system_deno", 0)
+        if self.settings_.value("invert_to_light_theme") is None:
+            self.settings_.setValue("invert_to_light_theme", 0)
+        if self.settings_.value("clean_share_link") is None:
+            self.settings_.setValue("clean_share_link", 1)
+        if self.settings_.value("win_thumbnail_buttons") is None:
+            self.settings_.setValue(
+                "win_thumbnail_buttons", 1 if platform.system() == "Windows" else 0
+            )
+        if self.settings_.value("last_save_lyrics_path") is None:
+            self.settings_.setValue("last_save_lyrics_path", os.path.expanduser("~"))
 
         self.ad_blocker_setting = int(self.settings_.value("ad_blocker"))
         self.save_last_win_geometry_setting = int(
@@ -273,9 +279,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.support_animated_scrolling_setting = int(
             self.settings_.value("support_animated_scrolling")
         )
-        self.save_last_pos_of_mp_setting = int(
-            self.settings_.value("save_last_pos_of_mp")
-        )
         self.last_win_geometry_setting = self.settings_.value("last_win_geometry")
         self.save_last_zoom_factor_setting = int(
             self.settings_.value("save_last_zoom_factor")
@@ -283,7 +286,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.last_zoom_factor_setting = float(self.settings_.value("last_zoom_factor"))
         self.last_download_folder_setting = self.settings_.value("last_download_folder")
         self.discord_rpc_setting = int(self.settings_.value("discord_rpc"))
-        self.geometry_of_mp_setting = self.settings_.value("geometry_of_mp")
         self.tray_icon_setting = (
             int(self.settings_.value("tray_icon"))
             if QSystemTrayIcon.isSystemTrayAvailable()
@@ -306,18 +308,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         self.im_not_a_kid_setting = int(self.settings_.value("im_not_a_kid"))
         self.icon_color_setting = int(self.settings_.value("icon_color"))
-        self.win_thumbnail_buttons_setting = (
-            int(self.settings_.value("win_thumbnail_buttons"))
-            if platform.system() == "Windows"
-            else 0
-        )
-        self.pip_is_always_on_top_setting = int(
-            self.settings_.value("pip_is_always_on_top")
-        )
         self.do_not_save_cookies_setting = int(
             self.settings_.value("do_not_save_cookies")
         )
-        self.pip_opacity_setting = float(self.settings_.value("pip_opacity"))
         self.embed_metadata_setting = int(self.settings_.value("embed_metadata"))
         self.ytdlp_format_setting = int(self.settings_.value("ytdlp_format"))
         self.audd_api_token_setting = self.settings_.value("audd_api_token")
@@ -330,34 +323,32 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.prefer_system_deno_setting = int(
             self.settings_.value("prefer_system_deno")
         )
+        self.invert_to_light_theme_setting = int(
+            self.settings_.value("invert_to_light_theme")
+        )
+        self.clean_share_link_setting = int(self.settings_.value("clean_share_link"))
+        self.win_thumbnail_buttons_setting = int(
+            self.settings_.value("win_thumbnail_buttons")
+        )
+        self.last_save_lyrics_path_setting = self.settings_.value(
+            "last_save_lyrics_path"
+        )
 
     def configure_window(self):
-        theme = self.theme_setting
-        if theme == 0:
-            color = "dark"
-            setTheme(Theme.DARK)
-        else:
-            color = "light"
-            setTheme(Theme.LIGHT)
+        setTheme(Theme.DARK) if self.light_theme_setting == 0 else setTheme(Theme.LIGHT)
         setThemeColor("red")
-
-        if platform.system() == "Windows":
-            try:
-                apply_style(self, color)
-            except Exception as e:
-                logging.error(f"Failed to apply dark style: + {str(e)}")
 
         self.setupUi(self)
         self.setWindowIcon(QIcon(f"{self.icon_folder}/icon.ico"))
         if self.save_last_win_geometry_setting == 1:
             self.setGeometry(self.last_win_geometry_setting)
             if self.maximized_state_setting == 1:
-                self.showMaximized()
+                self.setWindowState(Qt.WindowState.WindowMaximized)
         else:
-            self.setGeometry(get_centered_geometry(1000, 799))
+            self.setGeometry(self.default_geometry)
 
     def connect_signals(self):
-        signal_bus.show_window_sig.connect(self.show_window_or_picture_in_picture)
+        signal_bus.show_window_sig.connect(self.show_window)
         signal_bus.app_error_sig.connect(self.show_error_message)
 
     def show_error_message(self, msg, title=None):
@@ -365,71 +356,72 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             f"{title}" if title else "Unexpected error", msg, self
         )
         text_view_dialog.cancelButton.hide()
-        text_view_dialog.exec_()
+        text_view_dialog.exec()
 
     def connect_shortcuts(self):
-        self.back_shortcut = QShortcut(QKeySequence(Qt.ALT + Qt.Key_Left), self)
+        self.back_shortcut = QShortcut(QKeySequence("Alt+Left"), self)
         self.back_shortcut.activated.connect(self.back)
 
-        self.forward_shortcut = QShortcut(QKeySequence(Qt.ALT + Qt.Key_Right), self)
+        self.forward_shortcut = QShortcut(QKeySequence("Alt+Right"), self)
         self.forward_shortcut.activated.connect(self.forward)
 
-        self.home_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_H), self)
-        self.home_shortcut.activated.connect(self.home)
-
-        self.reload_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_R), self)
+        self.reload_shortcut = QShortcut(QKeySequence("Ctrl+R"), self)
         self.reload_shortcut.activated.connect(self.reload)
 
-        self.stop_shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+        self.stop_shortcut = QShortcut(QKeySequence("Esc"), self)
         self.stop_shortcut.setEnabled(False)
         self.stop_shortcut.activated.connect(self.stop)
 
-        self.go_to_youtube_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Y), self)
+        self.go_to_youtube_shortcut = QShortcut(QKeySequence("Ctrl+Y"), self)
         self.go_to_youtube_shortcut.setEnabled(False)
         self.go_to_youtube_shortcut.activated.connect(self.go_to_youtube)
 
-        self.musicbrainz_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_B), self)
+        self.musicbrainz_shortcut = QShortcut(QKeySequence("Ctrl+B"), self)
         self.musicbrainz_shortcut.setEnabled(False)
         self.musicbrainz_shortcut.activated.connect(
             lambda: self.search_on("MusicBrainz")
         )
 
-        self.spotify_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_O), self)
+        self.spotify_shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
         self.spotify_shortcut.setEnabled(False)
         self.spotify_shortcut.activated.connect(lambda: self.search_on("Spotify"))
 
-        self.genius_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_G), self)
+        self.genius_shortcut = QShortcut(QKeySequence("Ctrl+G"), self)
         self.genius_shortcut.setEnabled(False)
         self.genius_shortcut.activated.connect(lambda: self.search_on("Genius"))
 
-        self.download_song_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_D), self)
+        self.download_song_shortcut = QShortcut(QKeySequence("Ctrl+D"), self)
         self.download_song_shortcut.setEnabled(False)
         self.download_song_shortcut.activated.connect(self.download_song)
 
-        self.download_album_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_P), self)
+        self.download_album_shortcut = QShortcut(QKeySequence("Ctrl+P"), self)
         self.download_album_shortcut.setEnabled(False)
         self.download_album_shortcut.activated.connect(self.download_album)
 
-        self.watch_in_pip_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_M), self)
-        self.watch_in_pip_shortcut.setEnabled(False)
-        self.watch_in_pip_shortcut.activated.connect(self.watch_in_pip)
+        self.lyrics_shortcut = QShortcut(QKeySequence("Ctrl+L"), self)
+        self.lyrics_shortcut.setEnabled(False)
+        self.lyrics_shortcut.activated.connect(self.lyrics)
 
-        self.audd_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_U), self)
+        self.comments_shortcut = QShortcut(QKeySequence("Ctrl+M"), self)
+        self.comments_shortcut.setEnabled(False)
+        self.comments_shortcut.activated.connect(self.comments)
+
+        self.audd_shortcut = QShortcut(QKeySequence("Ctrl+U"), self)
         self.audd_shortcut.activated.connect(lambda: self.recognize_music("AudD"))
 
-        self.settings_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_S), self)
-        self.settings_shortcut.activated.connect(self.open_settings)
+        self.settings_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
+        self.settings_shortcut.activated.connect(self.settings)
 
-        self.hide_toolbar_shortcut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_T), self)
+        self.hide_toolbar_shortcut = QShortcut(QKeySequence("Ctrl+T"), self)
         self.hide_toolbar_shortcut.activated.connect(self.hide_toolbar)
 
-        self.restart_app_shortcut = QShortcut(
-            QKeySequence(Qt.CTRL + Qt.SHIFT + Qt.Key_R), self
-        )
+        self.restart_app_shortcut = QShortcut(QKeySequence("Ctrl+Shift+R"), self)
         self.restart_app_shortcut.activated.connect(self.restart_app)
 
     def show_splash_screen(self):
-        self.splash_screen = SplashScreen(self.windowIcon(), self, enableTitleBar=False)
+        self.splash_screen = SplashScreen(
+            self.windowIcon(), self.webview, enableTitleBar=False
+        )
         self.splash_screen.setIconSize(QSize(102, 102))
         self.update_splash_screen()
 
@@ -443,23 +435,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.do_not_save_cookies_setting:
             self.webprofile = QWebEngineProfile(self)
         else:
-            self.webprofile = QWebEngineProfile.defaultProfile()
+            self.webprofile = QWebEngineProfile("Default", self)
+            self.webprofile.setPersistentStoragePath(self.default_cookies_path)
 
-        self.webchannel_backend = WebChannelBackend(self)
+        self.webinterceptor = WebEngineUrlRequestInterceptor()
+        self.webprofile.setUrlRequestInterceptor(self.webinterceptor)
+
+        webchannel_backend = WebChannelBackend(self)
         self.webchannel = QWebChannel()
-        self.webchannel.registerObject("backend", self.webchannel_backend)
+        self.webchannel.registerObject("backend", webchannel_backend)
 
         self.webpage = WebEnginePage(self.webprofile, self)
         self.webpage.setWebChannel(self.webchannel)
         self.webpage.fullScreenRequested.connect(self.on_fullscreen_requested)
 
-        self.websettings = QWebEngineSettings.globalSettings()
-        self.websettings.setAttribute(
-            QWebEngineSettings.FullScreenSupportEnabled,
+        websettings = self.webprofile.settings()
+        websettings.setAttribute(
+            QWebEngineSettings.WebAttribute.FullScreenSupportEnabled,
             self.fullscreen_mode_support_setting,
         )
-        self.websettings.setAttribute(
-            QWebEngineSettings.ScrollAnimatorEnabled,
+        websettings.setAttribute(
+            QWebEngineSettings.WebAttribute.ScrollAnimatorEnabled,
             self.support_animated_scrolling_setting,
         )
 
@@ -473,40 +469,36 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         ):
             self.webview.load(QUrl(self.last_url_setting))
         else:
-            self.home()
+            self.webview.setUrl(QUrl(self.default_home_url))
         if self.save_last_zoom_factor_setting == 1:
             self.webview.setZoomFactor(self.last_zoom_factor_setting)
 
     def create_actions(self):
         self.exit_full_screen_action = Action("Exit full screen", shortcut="Esc")
         self.exit_full_screen_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/exit_full_screen.png", self.theme_setting)
+            recolor_icon(
+                f"{self.icon_folder}/exit_full_screen.png", self.light_theme_setting
+            )
         )
         self.exit_full_screen_action.triggered.connect(self.exit_full_screen)
 
         self.back_action = Action("Back", shortcut="Alt+Left")
         self.back_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/left.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/left.png", self.light_theme_setting)
         )
         self.back_action.setEnabled(False)
         self.back_action.triggered.connect(self.back)
 
         self.forward_action = Action("Forward", shortcut="Alt+Right")
         self.forward_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/right.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/right.png", self.light_theme_setting)
         )
         self.forward_action.setEnabled(False)
         self.forward_action.triggered.connect(self.forward)
 
-        self.home_action = Action("Home", shortcut="Ctrl+H")
-        self.home_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/home.png", self.theme_setting)
-        )
-        self.home_action.triggered.connect(self.home)
-
         self.reload_action = Action("Reload", shortcut="Ctrl+R")
         self.reload_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/reload.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/reload.png", self.light_theme_setting)
         )
         self.reload_action.triggered.connect(self.reload)
 
@@ -520,44 +512,49 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.download_song_action = Action("Song", shortcut="Ctrl+D")
         self.download_song_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/song.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/song.png", self.light_theme_setting)
         )
         self.download_song_action.setEnabled(False)
         self.download_song_action.triggered.connect(self.download_song)
 
         self.download_album_action = Action("Album", shortcut="Ctrl+P")
         self.download_album_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/album.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/album.png", self.light_theme_setting)
         )
         self.download_album_action.setEnabled(False)
         self.download_album_action.triggered.connect(self.download_album)
 
-        self.watch_in_pip_action = Action("Watch in PiP", shortcut="Ctrl+M")
-        self.watch_in_pip_action.setIcon(
-            recolor_icon(
-                f"{self.icon_folder}/picture_in_picture.png", self.theme_setting
-            )
+        self.lyrics_action = Action("Lyrics...", shortcut="Ctrl+L")
+        self.lyrics_action.setIcon(
+            recolor_icon(f"{self.icon_folder}/lyrics.png", self.light_theme_setting)
         )
-        self.watch_in_pip_action.setEnabled(False)
-        self.watch_in_pip_action.triggered.connect(self.watch_in_pip)
+        self.lyrics_action.setEnabled(False)
+        self.lyrics_action.triggered.connect(self.lyrics)
+
+        self.comments_action = Action("Comments...", shortcut="Ctrl+M")
+        self.comments_action.setIcon(
+            recolor_icon(f"{self.icon_folder}/comments.png", self.light_theme_setting)
+        )
+        self.comments_action.setEnabled(False)
+        self.comments_action.triggered.connect(self.comments)
 
         self.audd_action = MultiAction()
 
         self.restart_app_action = Action("Restart app", shortcut="Ctrl+Shift+R")
         self.restart_app_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/restart.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/restart.png", self.light_theme_setting)
         )
         self.restart_app_action.triggered.connect(self.restart_app)
 
         self.settings_action = Action("Settings...", shortcut="Ctrl+S")
         self.settings_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/settings.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/settings.png", self.light_theme_setting)
         )
-        self.settings_action.triggered.connect(self.open_settings)
+        self.settings_action.triggered.connect(self.settings)
 
         self.bug_report_action = Action("Bug report")
         self.bug_report_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/bug.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/bug.png", self.light_theme_setting)
         )
         self.bug_report_action.triggered.connect(self.bug_report)
 
@@ -577,30 +574,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.cut_action = Action("Cut", shortcut="Ctrl+X")
         self.cut_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/cut.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/cut.png", self.light_theme_setting)
         )
         self.cut_action.triggered.connect(self.cut)
 
         self.copy_action = Action("Copy", shortcut="Ctrl+C")
         self.copy_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/copy.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/copy.png", self.light_theme_setting)
         )
         self.copy_action.triggered.connect(self.copy)
 
         self.paste_action = Action("Paste", shortcut="Ctrl+V")
         self.paste_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/paste.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/paste.png", self.light_theme_setting)
         )
         self.paste_action.triggered.connect(self.paste)
 
         self.copy_url_action = Action("Copy URL")
         self.copy_url_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/url.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/copy_url.png", self.light_theme_setting)
         )
-        self.copy_url_action.triggered.connect(self.copy_current_url)
+        self.copy_url_action.triggered.connect(self.copy_url)
 
-        self.copy_clean_url_action = Action("Copy clean URL")
-        self.copy_clean_url_action.triggered.connect(self.copy_current_clean_url)
+        self.open_url_in_browser_action = Action("Open URL in browser", self)
+        self.open_url_in_browser_action.setIcon(
+            recolor_icon(
+                f"{self.icon_folder}/open_in_browser.png", self.light_theme_setting
+            )
+        )
+        self.open_url_in_browser_action.triggered.connect(self.open_url_in_browser)
 
         self.skip_video_ads_action = Action("Skip video ads")
         self.skip_video_ads_action.setIcon(QIcon(f"{self.icon_folder}/adblock.png"))
@@ -626,17 +628,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.hide_mini_player_action.setCheckable(True)
         self.hide_mini_player_action.setChecked(bool(self.hide_mini_player_setting))
 
-        self.im_not_a_kid_action = Action("I'm not a kid!", self)
+        self.im_not_a_kid_action = Action("I'm not a kid!")
         self.im_not_a_kid_action.setIcon(QIcon(f"{self.icon_folder}/im_not_a_kid.png"))
         self.im_not_a_kid_action.setCheckable(True)
         self.im_not_a_kid_action.setChecked(bool(self.im_not_a_kid_setting))
+
+        self.invert_to_light_theme_action = Action("Invert to light theme")
+        self.invert_to_light_theme_action.setIcon(
+            QIcon(f"{self.icon_folder}/invert_to_light_theme.png")
+        )
+        self.invert_to_light_theme_action.setCheckable(True)
+        self.invert_to_light_theme_action.setChecked(
+            bool(self.invert_to_light_theme_setting)
+        )
+
+        self.clean_share_link_action = Action("Clean share link")
+        self.clean_share_link_action.setIcon(
+            QIcon(f"{self.icon_folder}/clean_share_link.png")
+        )
+        self.clean_share_link_action.setCheckable(True)
+        self.clean_share_link_action.setChecked(bool(self.clean_share_link_setting))
 
     def create_submenus(self):
         self.search_on_menu = self.create_search_on_menu()
 
         self.download_menu = RoundMenu("Download")
         self.download_menu.setIcon(
-            recolor_icon(f"{self.icon_folder}/download.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/download.png", self.light_theme_setting)
         )
         self.download_menu.addAction(self.download_song_action)
         self.download_menu.addAction(self.download_album_action)
@@ -645,13 +663,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.plugins_menu = CheckableMenu("Plugins")
         self.plugins_menu.setIcon(
-            recolor_icon(f"{self.icon_folder}/plugins.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/plugins.png", self.light_theme_setting)
         )
         self.plugins_menu.addAction(self.skip_video_ads_action)
         self.plugins_menu.addAction(self.audio_only_mode_action)
         self.plugins_menu.addAction(self.nonstop_music_action)
         self.plugins_menu.addAction(self.hide_mini_player_action)
         self.plugins_menu.addAction(self.im_not_a_kid_action)
+        self.plugins_menu.addAction(self.invert_to_light_theme_action)
+        self.plugins_menu.addAction(self.clean_share_link_action)
 
         self.about_menu = self.create_about_menu()
 
@@ -662,7 +682,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.main_menu.addSeparator()
         self.main_menu.addAction(self.back_action)
         self.main_menu.addAction(self.forward_action)
-        self.main_menu.addAction(self.home_action)
         self.main_menu.addAction(self.reload_action)
         self.main_menu.addSeparator()
         self.go_to_youtube_action.add(
@@ -671,7 +690,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.main_menu.addMenu(self.search_on_menu)
         self.main_menu.addSeparator()
         self.main_menu.addMenu(self.download_menu)
-        self.main_menu.addAction(self.watch_in_pip_action)
+        self.main_menu.addAction(self.lyrics_action)
+        self.main_menu.addAction(self.comments_action)
         self.main_menu.addMenu(self.recognize_music_menu)
         self.main_menu.addAction(self.restart_app_action)
         self.main_menu.addSeparator()
@@ -683,19 +703,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.main_menu.addSeparator()
         self.hide_toolbar_action.add(self.main_menu, self.create_hide_toolbar_action())
 
-        self.more_menu = RoundMenu()
+        self.see_more_menu = RoundMenu()
         self.go_to_youtube_action.add(
-            self.more_menu, self.create_go_to_youtube_action()
+            self.see_more_menu, self.create_go_to_youtube_action()
         )
-        self.more_menu.addMenu(self.create_search_on_menu())
-        self.more_menu.addSeparator()
-        self.more_menu.addMenu(self.create_recognize_music_menu())
-        self.more_menu.addAction(self.restart_app_action)
-        self.more_menu.addSeparator()
-        self.more_menu.addAction(self.bug_report_action)
-        self.more_menu.addMenu(self.create_about_menu())
-        self.more_menu.addSeparator()
-        self.hide_toolbar_action.add(self.more_menu, self.create_hide_toolbar_action())
+        self.see_more_menu.addMenu(self.create_search_on_menu())
+        self.see_more_menu.addSeparator()
+        self.see_more_menu.addMenu(self.create_recognize_music_menu())
+        self.see_more_menu.addAction(self.restart_app_action)
+        self.see_more_menu.addSeparator()
+        self.see_more_menu.addAction(self.bug_report_action)
+        self.see_more_menu.addMenu(self.create_about_menu())
+        self.see_more_menu.addSeparator()
+        self.hide_toolbar_action.add(
+            self.see_more_menu, self.create_hide_toolbar_action()
+        )
 
         self.edit_menu = RoundMenu()
         self.edit_menu.addAction(self.cut_action)
@@ -710,32 +732,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.url_menu = RoundMenu()
         self.url_menu.addAction(self.copy_url_action)
-        self.url_menu.addAction(self.copy_clean_url_action)
+        self.url_menu.addAction(self.open_url_in_browser_action)
 
     def configure_ui_elements(self):
         self.back_tbutton.setIcon(
-            recolor_icon(f"{self.icon_folder}/left.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/left.png", self.light_theme_setting)
         )
         self.back_tbutton.setEnabled(False)
         self.back_tbutton.clicked.connect(self.back)
 
         self.forward_tbutton.setIcon(
-            recolor_icon(f"{self.icon_folder}/right.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/right.png", self.light_theme_setting)
         )
         self.forward_tbutton.setEnabled(False)
         self.forward_tbutton.clicked.connect(self.forward)
 
-        self.home_tbutton.setIcon(
-            recolor_icon(f"{self.icon_folder}/home.png", self.theme_setting)
-        )
-        self.home_tbutton.clicked.connect(self.home)
-
         self.reload_tbutton.setIcon(
-            recolor_icon(f"{self.icon_folder}/reload.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/reload.png", self.light_theme_setting)
         )
         self.reload_tbutton.clicked.connect(self.reload)
 
-        if self.theme_setting == 1:
+        if self.light_theme_setting == 1:
             self.url_label.setStyleSheet(
                 """
                 QLabel {
@@ -752,38 +769,41 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
         self.update_url_label(self.current_url)
         self.url_label.customContextMenuRequested.disconnect()
-        self.url_label.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.url_label.customContextMenuRequested.connect(
-            lambda pos: self.show_url_menu(pos)
-        )
+        self.url_label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.url_label.customContextMenuRequested.connect(self.show_url_menu)
+        self.url_label.installEventFilter(self)
 
         self.download_ddtbutton.setIcon(
-            recolor_icon(f"{self.icon_folder}/download.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/download.png", self.light_theme_setting)
         )
         self.download_ddtbutton.setMenu(self.download_menu)
 
+        self.lyrics_tbutton.setIcon(
+            recolor_icon(f"{self.icon_folder}/lyrics.png", self.light_theme_setting)
+        )
+        self.lyrics_tbutton.setEnabled(False)
+        self.lyrics_tbutton.clicked.connect(self.lyrics)
+
+        self.comments_tbutton.setIcon(
+            recolor_icon(f"{self.icon_folder}/comments.png", self.light_theme_setting)
+        )
+        self.comments_tbutton.setEnabled(False)
+        self.comments_tbutton.clicked.connect(self.comments)
+
         self.plugins_ddtbutton.setIcon(
-            recolor_icon(f"{self.icon_folder}/plugins.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/plugins.png", self.light_theme_setting)
         )
         self.plugins_ddtbutton.setMenu(self.plugins_menu)
 
-        self.watch_in_pip_tbutton.setIcon(
-            recolor_icon(
-                f"{self.icon_folder}/picture_in_picture.png", self.theme_setting
-            )
-        )
-        self.watch_in_pip_tbutton.setEnabled(False)
-        self.watch_in_pip_tbutton.clicked.connect(self.watch_in_pip)
-
         self.settings_ddtbutton.setIcon(
-            recolor_icon(f"{self.icon_folder}/settings.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/settings.png", self.light_theme_setting)
         )
-        self.settings_ddtbutton.clicked.connect(self.open_settings)
+        self.settings_ddtbutton.clicked.connect(self.settings)
 
-        self.more_ddtbutton.setIcon(
-            recolor_icon(f"{self.icon_folder}/more.png", self.theme_setting)
+        self.see_more_ddtbutton.setIcon(
+            recolor_icon(f"{self.icon_folder}/see_more.png", self.light_theme_setting)
         )
-        self.more_ddtbutton.setMenu(self.more_menu)
+        self.see_more_ddtbutton.setMenu(self.see_more_menu)
 
         self.back_tbutton.installEventFilter(
             ToolTipFilter(self.back_tbutton, 300, ToolTipPosition.TOP)
@@ -791,17 +811,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.forward_tbutton.installEventFilter(
             ToolTipFilter(self.forward_tbutton, 300, ToolTipPosition.TOP)
         )
-        self.home_tbutton.installEventFilter(
-            ToolTipFilter(self.home_tbutton, 300, ToolTipPosition.TOP)
-        )
         self.reload_tbutton.installEventFilter(
             ToolTipFilter(self.reload_tbutton, 300, ToolTipPosition.TOP)
         )
         self.download_ddtbutton.installEventFilter(
             ToolTipFilter(self.download_ddtbutton, 300, ToolTipPosition.TOP)
         )
-        self.watch_in_pip_tbutton.installEventFilter(
-            ToolTipFilter(self.watch_in_pip_tbutton, 300, ToolTipPosition.TOP)
+        self.lyrics_tbutton.installEventFilter(
+            ToolTipFilter(self.lyrics_tbutton, 300, ToolTipPosition.TOP)
+        )
+        self.comments_tbutton.installEventFilter(
+            ToolTipFilter(self.comments_tbutton, 300, ToolTipPosition.TOP)
         )
         self.settings_ddtbutton.installEventFilter(
             ToolTipFilter(self.settings_ddtbutton, 300, ToolTipPosition.TOP)
@@ -809,8 +829,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.plugins_ddtbutton.installEventFilter(
             ToolTipFilter(self.plugins_ddtbutton, 300, ToolTipPosition.TOP)
         )
-        self.more_ddtbutton.installEventFilter(
-            ToolTipFilter(self.more_ddtbutton, 300, ToolTipPosition.TOP)
+        self.see_more_ddtbutton.installEventFilter(
+            ToolTipFilter(self.see_more_ddtbutton, 300, ToolTipPosition.TOP)
         )
 
         self.ToolBar.installEventFilter(self)
@@ -823,9 +843,46 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         cookie_store = self.webprofile.cookieStore()
         cookie_store.deleteAllCookies()
 
-    def open_settings(self):
-        self.settings_dialog = SettingsDialog(self)
-        self.settings_dialog.exec()
+    def lyrics(self):
+        if self.lyrics_dialog is not None:
+            self.lyrics_dialog.activateWindow()
+        else:
+            self.lyrics_dialog = LyricsDialog(self)
+            self.lyrics_dialog.show()
+
+    def comments(self):
+        if self.video_id in self.comments_dialogs:
+            dialog = self.comments_dialogs[self.video_id]
+            dialog.activateWindow()
+        else:
+            if not self.comments_dialogs:
+                self.toggle_script(
+                    "comments_dialog.js",
+                    True,
+                    run_at=1,
+                    config={
+                        "light_theme": self.light_theme_setting,
+                        "video_id": self.video_id,
+                    },
+                )
+            self.comments_dialog = CommentsDialog(self.video_id, self)
+            self.comments_dialogs[self.video_id] = self.comments_dialog
+            self.comments_dialog.destroyed.connect(
+                lambda obj, vid=self.video_id: self.on_comments_destroyed(vid)
+            )
+            self.comments_dialog.show()
+
+    def on_comments_destroyed(self, video_id: str):
+        self.comments_dialogs.pop(video_id, None)
+        if not self.comments_dialogs:
+            self.toggle_script("comments_dialog.js", False)
+
+    def settings(self):
+        if self.settings_dialog is not None:
+            self.settings_dialog.activateWindow()
+        else:
+            self.settings_dialog = SettingsDialog(self)
+            self.settings_dialog.show()
 
     def restart_app(self):
         msg_box = None
@@ -841,8 +898,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self,
             )
             msg_box.yesButton.setText("Restart")
-        if not msg_box or msg_box.exec_():
-            self.save_settings()
+        if not msg_box or msg_box.exec():
+            self.is_restarting = True
 
             QProcess.startDetached(sys.executable, sys.argv)
             QApplication.quit()
@@ -867,15 +924,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         elif tool == "Deno":
             return os.path.isfile(self.deno_path)
 
-    def copy_current_url(self):
+    def copy_url(self):
         copy_text(self.current_url)
 
-    def copy_current_clean_url(self):
-        copy_text(clean_up_url(self.current_url))
+    def open_url_in_browser(self):
+        open_url(self.current_url)
 
     def show_url_menu(self, pos):
         def reset_hover():
-            self.url_label.setAttribute(Qt.WA_UnderMouse, False)
+            self.url_label.setAttribute(Qt.WidgetAttribute.WA_UnderMouse, False)
             self.url_label.style().unpolish(self.url_label)
             self.url_label.style().polish(self.url_label)
             self.url_label.update()
@@ -886,7 +943,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def create_hide_toolbar_action(self):
         action = Action("Hide toolbar", shortcut="Ctrl+T")
         action.setIcon(
-            recolor_icon(f"{self.icon_folder}/hide_toolbar.png", self.theme_setting)
+            recolor_icon(
+                f"{self.icon_folder}/hide_toolbar.png", self.light_theme_setting
+            )
         )
         action.triggered.connect(self.hide_toolbar)
         return action
@@ -900,12 +959,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def create_genius_action(self):
         action = Action("Genius", shortcut="Ctrl+G")
         action.setIcon(QIcon(f"{self.icon_folder}/genius.png"))
+        action.setEnabled(False)
         action.triggered.connect(lambda: self.search_on("Genius"))
         return action
 
     def create_spotify_action(self):
         action = Action("Spotify", shortcut="Ctrl+O")
         action.setIcon(QIcon(f"{self.icon_folder}/spotify.png"))
+        action.setEnabled(False)
         action.triggered.connect(lambda: self.search_on("Spotify"))
         return action
 
@@ -918,14 +979,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def create_go_to_youtube_action(self):
         action = Action("Go to YouTube", shortcut="Ctrl+Y")
-        action.setIcon(recolor_icon(f"{self.icon_folder}/open.png", self.theme_setting))
+        action.setIcon(
+            recolor_icon(f"{self.icon_folder}/open.png", self.light_theme_setting)
+        )
         action.setEnabled(False)
         action.triggered.connect(self.go_to_youtube)
         return action
 
     def create_search_on_menu(self):
         menu = RoundMenu("Search on")
-        menu.setIcon(recolor_icon(f"{self.icon_folder}/search.png", self.theme_setting))
+        menu.setIcon(
+            recolor_icon(f"{self.icon_folder}/search.png", self.light_theme_setting)
+        )
 
         self.musicbrainz_action.add(menu, self.create_musicbrainz_action())
         self.spotify_action.add(menu, self.create_spotify_action())
@@ -935,14 +1000,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def create_recognize_music_menu(self):
         menu = RoundMenu("Recognize music", self)
         menu.setIcon(
-            recolor_icon(f"{self.icon_folder}/recognize_music.png", self.theme_setting)
+            recolor_icon(
+                f"{self.icon_folder}/recognize_music.png", self.light_theme_setting
+            )
         )
         self.audd_action.add(menu, self.create_audd_action())
         return menu
 
     def create_about_menu(self):
         menu = RoundMenu("About")
-        menu.setIcon(recolor_icon(f"{self.icon_folder}/about.png", self.theme_setting))
+        menu.setIcon(
+            recolor_icon(f"{self.icon_folder}/about.png", self.light_theme_setting)
+        )
 
         card = AboutCard(
             f"{self.icon_folder}/logo.png",
@@ -1038,7 +1107,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         info_bar = InfoBar.error(
             title=f"Error code: {code}",
             content="Recognize music failed!",
-            orient=Qt.Horizontal,
+            orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.BOTTOM,
             duration=-1,
@@ -1046,7 +1115,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
 
         button = PushButton(
-            recolor_icon(f"{self.icon_folder}/show.png", self.theme_setting),
+            recolor_icon(f"{self.icon_folder}/show.png", self.light_theme_setting),
             "Show error",
             self,
         )
@@ -1059,7 +1128,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         info_bar = InfoBar.success(
             title=f"{author} - {title}",
             content="Recognize music successfully!",
-            orient=Qt.Horizontal,
+            orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.BOTTOM,
             duration=-1,
@@ -1067,7 +1136,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
 
         button = PushButton(
-            recolor_icon(f"{self.icon_folder}/search.png", self.theme_setting),
+            recolor_icon(f"{self.icon_folder}/search.png", self.light_theme_setting),
             "Search song",
             self,
         )
@@ -1093,7 +1162,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
 
         def after_insert(_):
-            QTest.keyClick(self.webview.focusProxy(), Qt.Key_Return)
+            QTest.keyClick(self.webview.focusProxy(), Qt.Key.Key_Return)
 
         if is_valid_ytmusic_url(self.current_url):
             self.webpage.runJavaScript(js, after_insert)
@@ -1107,39 +1176,58 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.audd_action.setEnabled(True)
         self.audd_shortcut.setEnabled(True)
 
-    def activate_plugins(self):
-        qtwebchannel = QWebEngineScript()
-        file = QFile(":/qtwebchannel/qwebchannel.js")
-        if file.open(QFile.ReadOnly | QFile.Text):
-            stream = QTextStream(file)
-            qtwebchannel.setSourceCode(stream.readAll())
-            file.close()
-        qtwebchannel.setInjectionPoint(QWebEngineScript.DocumentReady)
-        qtwebchannel.setWorldId(QWebEngineScript.MainWorld)
-        qtwebchannel.setRunsOnSubFrames(False)
-        self.webpage.profile().scripts().insert(qtwebchannel)
-
-        def insert_script(filename):
+    def toggle_script(self, filenames, enabled, source=None, run_at=0, config=None):
+        def inject_script(name, source, script_run_at):
             script = QWebEngineScript()
-            script.setName(filename)
-            script.setSourceCode(self.read_script(filename))
-            script.setWorldId(QWebEngineScript.MainWorld)
+            script.setName(name)
+            script.setSourceCode(source)
+            script.setInjectionPoint(
+                QWebEngineScript.InjectionPoint.DocumentCreation
+                if script_run_at
+                else QWebEngineScript.InjectionPoint.DocumentReady
+            )
+            script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
             script.setRunsOnSubFrames(False)
-            self.webpage.profile().scripts().insert(script)
+            return script
 
-        insert_script("scrollbar_styles.js")
-        insert_script("ytmusic_observer.js")
+        if isinstance(filenames, str):
+            filenames = [filenames]
+        scripts = self.webpage.profile().scripts()
+
+        for item in filenames:
+            filename, script_run_at = (item, run_at) if isinstance(item, str) else item
+            for script in scripts.find(filename):
+                scripts.remove(script)
+            if enabled:
+                src = source or self.read_script(filename)
+                if config is not None:
+                    src = f"({src.strip().rstrip(';')})({json.dumps(config)});"
+                scripts.insert(inject_script(filename, src, script_run_at))
+
+    def activate_plugins(self):
+        file = QFile(":/qtwebchannel/qwebchannel.js")
+        if file.open(QIODevice.OpenModeFlag.ReadOnly | QIODevice.OpenModeFlag.Text):
+            stream = QTextStream(file)
+            self.toggle_script("qwebchannel.js", True, stream.readAll(), run_at=1)
+            file.close()
+
+        self.toggle_script("trustedtypes.js", True, run_at=1)
+        self.toggle_script("greasemonkey.js", True, run_at=1)
+        self.toggle_script("ytmusic_observer.js", True)
         if self.ad_blocker_setting == 1:
-            insert_script("skip_video_ads.js")
+            self.toggle_script("skip_video_ads.js", True)
         if self.only_audio_mode_setting == 1:
-            insert_script("audio_only_mode.js")
-            insert_script("block_video.js")
+            self.toggle_script(["audio_only_mode.js", ("block_video.js", 1)], True)
         if self.nonstop_music_setting == 1:
-            insert_script("non_stop_music.js")
+            self.toggle_script("non_stop_music.js", True)
         if self.hide_mini_player_setting == 1:
-            insert_script("hide_mini_player.js")
+            self.toggle_script("hide_mini_player.js", True)
         if self.im_not_a_kid_setting == 1:
-            insert_script("im_not_a_kid.js")
+            self.toggle_script("im_not_a_kid.js", True)
+        if self.invert_to_light_theme_setting == 1:
+            self.toggle_script("invert_to_light_theme.js", True)
+        if self.clean_share_link_setting == 1:
+            self.toggle_script("clean_share_link.js", True)
 
     def activate_custom_plugins(self):
         plugin_locations = [
@@ -1169,12 +1257,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     )
                     continue
 
-                script = QWebEngineScript()
-                script.setName(f"custom_{filename}")
-                script.setSourceCode(source)
-                script.setWorldId(QWebEngineScript.MainWorld)
-                script.setRunsOnSubFrames(False)
-                self.webpage.profile().scripts().insert(script)
+                self.toggle_script(f"custom_{filename}", True, source)
 
                 action = Action(filename)
                 action.setEnabled(False)
@@ -1183,53 +1266,36 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 seen_plugins.add(filename)
 
     def connect_actions(self):
-        def toggle_audio_only_mode(enabled):
-            toggle_script("audio_only_mode.js", enabled=enabled)
-            toggle_script("block_video.js", enabled=enabled)
-
-        def toggle_script(filename, enabled=None):
-            scripts = self.webpage.profile().scripts()
-            existing = scripts.findScript(filename)
-            if not existing.isNull():
-                scripts.remove(existing)
-
-            if enabled:
-                script = QWebEngineScript()
-                script.setName(filename)
-                script.setSourceCode(self.read_script(filename))
-                script.setWorldId(QWebEngineScript.MainWorld)
-                script.setRunsOnSubFrames(False)
-                scripts.insert(script)
-
         self.skip_video_ads_action.toggled.connect(
-            lambda checked: toggle_script("skip_video_ads.js", enabled=checked)
+            lambda checked: self.toggle_script("skip_video_ads.js", checked)
         )
         self.audio_only_mode_action.toggled.connect(
-            lambda checked: toggle_audio_only_mode(checked)
+            lambda checked: self.toggle_script(
+                ["audio_only_mode.js", "block_video.js"], checked
+            )
         )
         self.nonstop_music_action.toggled.connect(
-            lambda checked: toggle_script("non_stop_music.js", enabled=checked)
+            lambda checked: self.toggle_script("non_stop_music.js", checked)
         )
         self.hide_mini_player_action.toggled.connect(
-            lambda checked: toggle_script("hide_mini_player.js", enabled=checked)
+            lambda checked: self.toggle_script("hide_mini_player.js", checked)
         )
         self.im_not_a_kid_action.toggled.connect(
-            lambda checked: toggle_script("im_not_a_kid.js", enabled=checked)
+            lambda checked: self.toggle_script("im_not_a_kid.js", checked)
+        )
+        self.invert_to_light_theme_action.toggled.connect(
+            lambda checked: self.toggle_script("invert_to_light_theme.js", checked)
         )
 
-    def create_win_thumbnail_toolbar(self):
+    def create_win_thumbnail_buttons(self):
         if platform.system() == "Windows" and self.win_thumbnail_buttons_setting == 1:
-            self.win_thumbnail_toolbar = QWinThumbnailToolBar(self)
-            self.create_previous_button()
-            self.create_play_pause_button()
-            self.create_next_button()
-            self.win_thumbnail_toolbar.setWindow(self.windowHandle())
+            self.taskbar = TaskbarAPI()
 
     def on_load_progress(self, progress):
         if progress > 70:
             self.reload_tbutton.setToolTip("Reload")
             self.reload_tbutton.setIcon(
-                recolor_icon(f"{self.icon_folder}/reload.png", self.theme_setting)
+                recolor_icon(f"{self.icon_folder}/reload.png", self.light_theme_setting)
             )
             self.reload_tbutton.clicked.disconnect()
             self.reload_tbutton.clicked.connect(self.reload)
@@ -1237,7 +1303,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.reload_action.setText("Reload")
             self.reload_action.setShortcut("Ctrl+R")
             self.reload_action.setIcon(
-                recolor_icon(f"{self.icon_folder}/reload.png", self.theme_setting)
+                recolor_icon(f"{self.icon_folder}/reload.png", self.light_theme_setting)
             )
             self.reload_action.triggered.disconnect()
             self.reload_action.triggered.connect(self.reload)
@@ -1251,7 +1317,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_load_started(self):
         self.reload_tbutton.setToolTip("Stop")
         self.reload_tbutton.setIcon(
-            recolor_icon(f"{self.icon_folder}/close.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/close.png", self.light_theme_setting)
         )
         self.reload_tbutton.clicked.disconnect()
         self.reload_tbutton.clicked.connect(self.stop)
@@ -1259,7 +1325,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.reload_action.setText("Stop")
         self.reload_action.setShortcut("Esc")
         self.reload_action.setIcon(
-            recolor_icon(f"{self.icon_folder}/close.png", self.theme_setting)
+            recolor_icon(f"{self.icon_folder}/close.png", self.light_theme_setting)
         )
         self.reload_action.triggered.disconnect()
         self.reload_action.triggered.connect(self.stop)
@@ -1282,7 +1348,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             msg_box = MessageBox(title, whats_new, self)
             msg_box.yesButton.setText("Download")
             msg_box.cancelButton.setText("Later")
-            if msg_box.exec_():
+            if msg_box.exec():
                 open_url(last_release_url)
                 self.force_exit = True
                 self.close()
@@ -1359,7 +1425,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if parsed.fragment:
             rest += "#" + parsed.fragment
 
-        if self.theme_setting == 0:
+        if self.light_theme_setting == 0:
             gray = "rgb(130, 130, 130)"
         else:
             gray = "rgb(150, 150, 150)"
@@ -1372,8 +1438,188 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             parts_html.append(f'<span style="color: {gray};">{rest}</span>')
 
         self.url_label.setText("".join(parts_html))
-        self.url_label.setTextFormat(Qt.RichText)
+        self.url_label.setTextFormat(Qt.TextFormat.RichText)
         self.url_label.setToolTip(url)
+
+    def update_win_thumbnail_buttons_song_state(self):
+        if self.taskbar is not None:
+            if self.song_state == "Playing":
+                self.taskbar.update_button(1, flags=THBF_ENABLED)
+                self.taskbar.update_button(
+                    2, icon=f"{self.icon_folder}/pause-taskbar.png", flags=THBF_ENABLED
+                )
+                self.taskbar.update_button(3, flags=THBF_ENABLED)
+            elif self.song_state == "Paused":
+                self.taskbar.update_button(1, flags=THBF_ENABLED)
+                self.taskbar.update_button(
+                    2, icon=f"{self.icon_folder}/play-taskbar.png", flags=THBF_ENABLED
+                )
+                self.taskbar.update_button(3, flags=THBF_ENABLED)
+            else:
+                self.taskbar.update_button(1, flags=THBF_DISABLED)
+                self.taskbar.update_button(
+                    2, icon=f"{self.icon_folder}/play-taskbar.png", flags=THBF_DISABLED
+                )
+                self.taskbar.update_button(3, flags=THBF_DISABLED)
+
+    def show_system_tray_icon(self):
+        if self.tray_icon_setting == 1:
+            self.system_tray_icon = SystemTrayIcon(self.windowIcon(), self)
+            self.system_tray_icon.setToolTip(self.display_name)
+            self.system_tray_icon.show()
+
+    def update_system_tray_icon_song_state(self):
+        if self.tray_icon_setting == 1 and self.system_tray_icon:
+            if self.song_state == "Playing":
+                self.system_tray_icon.play_pause_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/pause.png",
+                        (
+                            1
+                            if self.icon_color_setting == 1
+                            else (
+                                2
+                                if self.icon_color_setting == 2
+                                else self.light_theme_setting
+                            )
+                        ),
+                    )
+                )
+                self.system_tray_icon.play_pause_action.setEnabled(True)
+                self.system_tray_icon.like_action.setEnabled(True)
+                self.system_tray_icon.previous_action.setEnabled(True)
+                self.system_tray_icon.next_action.setEnabled(True)
+                self.system_tray_icon.dislike_action.setEnabled(True)
+            elif self.song_state == "Paused":
+                self.system_tray_icon.play_pause_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/play.png",
+                        (
+                            1
+                            if self.icon_color_setting == 1
+                            else (
+                                2
+                                if self.icon_color_setting == 2
+                                else self.light_theme_setting
+                            )
+                        ),
+                    )
+                )
+                self.system_tray_icon.play_pause_action.setEnabled(True)
+                self.system_tray_icon.like_action.setEnabled(True)
+                self.system_tray_icon.previous_action.setEnabled(True)
+                self.system_tray_icon.next_action.setEnabled(True)
+                self.system_tray_icon.dislike_action.setEnabled(True)
+            else:
+                self.system_tray_icon.play_pause_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/play.png",
+                        (
+                            1
+                            if self.icon_color_setting == 1
+                            else (
+                                2
+                                if self.icon_color_setting == 2
+                                else self.light_theme_setting
+                            )
+                        ),
+                    )
+                )
+                self.system_tray_icon.play_pause_action.setEnabled(False)
+                self.system_tray_icon.like_action.setEnabled(False)
+                self.system_tray_icon.previous_action.setEnabled(False)
+                self.system_tray_icon.next_action.setEnabled(False)
+                self.system_tray_icon.dislike_action.setEnabled(False)
+
+    def update_system_tray_icon_song_status(self):
+        if self.tray_icon_setting == 1 and self.system_tray_icon:
+            if self.song_status == "Like":
+                self.system_tray_icon.like_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/like-filled.png",
+                        (
+                            1
+                            if self.icon_color_setting == 1
+                            else (
+                                2
+                                if self.icon_color_setting == 2
+                                else self.light_theme_setting
+                            )
+                        ),
+                    )
+                )
+                self.system_tray_icon.dislike_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/dislike.png",
+                        (
+                            1
+                            if self.icon_color_setting == 1
+                            else (
+                                2
+                                if self.icon_color_setting == 2
+                                else self.light_theme_setting
+                            )
+                        ),
+                    )
+                )
+            elif self.song_status == "Dislike":
+                self.system_tray_icon.like_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/like.png",
+                        (
+                            1
+                            if self.icon_color_setting == 1
+                            else (
+                                2
+                                if self.icon_color_setting == 2
+                                else self.light_theme_setting
+                            )
+                        ),
+                    )
+                )
+                self.system_tray_icon.dislike_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/dislike-filled.png",
+                        (
+                            1
+                            if self.icon_color_setting == 1
+                            else (
+                                2
+                                if self.icon_color_setting == 2
+                                else self.light_theme_setting
+                            )
+                        ),
+                    )
+                )
+            else:
+                self.system_tray_icon.like_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/like.png",
+                        (
+                            1
+                            if self.icon_color_setting == 1
+                            else (
+                                2
+                                if self.icon_color_setting == 2
+                                else self.light_theme_setting
+                            )
+                        ),
+                    )
+                )
+                self.system_tray_icon.dislike_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/dislike.png",
+                        (
+                            1
+                            if self.icon_color_setting == 1
+                            else (
+                                2
+                                if self.icon_color_setting == 2
+                                else self.light_theme_setting
+                            )
+                        ),
+                    )
+                )
 
     def run_discord_rpc(self):
         if self.discord_rpc_setting == 1:
@@ -1439,268 +1685,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.run_discord_rpc()
             self.update_discord_rpc()
 
-    def show_system_tray_icon(self):
-        if self.tray_icon_setting == 1:
-            self.system_tray_icon = SystemTrayIcon(self.windowIcon(), self)
-            self.system_tray_icon.setToolTip(self.display_name)
-            self.system_tray_icon.show()
-        else:
-            self.system_tray_icon = None
-
-    def update_system_tray_icon_song_state(self):
-        if self.tray_icon_setting == 1 and self.system_tray_icon:
-            if self.song_state == "Playing":
-                self.system_tray_icon.play_pause_action.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/pause.png",
-                        (
-                            1
-                            if self.icon_color_setting == 1
-                            else (
-                                2
-                                if self.icon_color_setting == 2
-                                else self.theme_setting
-                            )
-                        ),
-                    )
-                )
-                self.system_tray_icon.play_pause_action.setEnabled(True)
-                self.system_tray_icon.like_action.setEnabled(True)
-                self.system_tray_icon.previous_action.setEnabled(True)
-                self.system_tray_icon.next_action.setEnabled(True)
-                self.system_tray_icon.dislike_action.setEnabled(True)
-            elif self.song_state == "Paused":
-                self.system_tray_icon.play_pause_action.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/play.png",
-                        (
-                            1
-                            if self.icon_color_setting == 1
-                            else (
-                                2
-                                if self.icon_color_setting == 2
-                                else self.theme_setting
-                            )
-                        ),
-                    )
-                )
-                self.system_tray_icon.play_pause_action.setEnabled(True)
-                self.system_tray_icon.like_action.setEnabled(True)
-                self.system_tray_icon.previous_action.setEnabled(True)
-                self.system_tray_icon.next_action.setEnabled(True)
-                self.system_tray_icon.dislike_action.setEnabled(True)
-            else:
-                self.system_tray_icon.play_pause_action.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/play.png",
-                        (
-                            1
-                            if self.icon_color_setting == 1
-                            else (
-                                2
-                                if self.icon_color_setting == 2
-                                else self.theme_setting
-                            )
-                        ),
-                    )
-                )
-                self.system_tray_icon.play_pause_action.setEnabled(False)
-                self.system_tray_icon.like_action.setEnabled(False)
-                self.system_tray_icon.previous_action.setEnabled(False)
-                self.system_tray_icon.next_action.setEnabled(False)
-                self.system_tray_icon.dislike_action.setEnabled(False)
-
-    def update_system_tray_icon_song_status(self):
-        if self.tray_icon_setting == 1 and self.system_tray_icon:
-            if self.song_status == "Like":
-                self.system_tray_icon.like_action.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/like-filled.png",
-                        (
-                            1
-                            if self.icon_color_setting == 1
-                            else (
-                                2
-                                if self.icon_color_setting == 2
-                                else self.theme_setting
-                            )
-                        ),
-                    )
-                )
-                self.system_tray_icon.dislike_action.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/dislike.png",
-                        (
-                            1
-                            if self.icon_color_setting == 1
-                            else (
-                                2
-                                if self.icon_color_setting == 2
-                                else self.theme_setting
-                            )
-                        ),
-                    )
-                )
-            elif self.song_status == "Dislike":
-                self.system_tray_icon.like_action.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/like.png",
-                        (
-                            1
-                            if self.icon_color_setting == 1
-                            else (
-                                2
-                                if self.icon_color_setting == 2
-                                else self.theme_setting
-                            )
-                        ),
-                    )
-                )
-                self.system_tray_icon.dislike_action.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/dislike-filled.png",
-                        (
-                            1
-                            if self.icon_color_setting == 1
-                            else (
-                                2
-                                if self.icon_color_setting == 2
-                                else self.theme_setting
-                            )
-                        ),
-                    )
-                )
-            else:
-                self.system_tray_icon.like_action.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/like.png",
-                        (
-                            1
-                            if self.icon_color_setting == 1
-                            else (
-                                2
-                                if self.icon_color_setting == 2
-                                else self.theme_setting
-                            )
-                        ),
-                    )
-                )
-                self.system_tray_icon.dislike_action.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/dislike.png",
-                        (
-                            1
-                            if self.icon_color_setting == 1
-                            else (
-                                2
-                                if self.icon_color_setting == 2
-                                else self.theme_setting
-                            )
-                        ),
-                    )
-                )
-
-    def update_win_thumbnail_buttons_song_state(self):
-        if self.win_thumbnail_toolbar:
-            if self.song_state == "Playing":
-                self.tool_btn_previous.setEnabled(True)
-                self.tool_btn_play_pause.setIcon(
-                    QIcon(f"{self.icon_folder}/pause-taskbar.png")
-                )
-                self.tool_btn_play_pause.setEnabled(True)
-                self.tool_btn_next.setEnabled(True)
-            elif self.song_state == "Paused":
-                self.tool_btn_previous.setEnabled(True)
-                self.tool_btn_play_pause.setIcon(
-                    QIcon(f"{self.icon_folder}/play-taskbar.png")
-                )
-                self.tool_btn_play_pause.setEnabled(True)
-                self.tool_btn_next.setEnabled(True)
-            else:
-                self.tool_btn_previous.setEnabled(False)
-                self.tool_btn_play_pause.setIcon(
-                    QIcon(f"{self.icon_folder}/play-taskbar.png")
-                )
-                self.tool_btn_play_pause.setEnabled(False)
-                self.tool_btn_next.setEnabled(False)
-
-    def update_picture_in_picture_song_info(self):
-        if self.picture_in_picture_dialog:
-            self.picture_in_picture_dialog.title_label.setText(self.title)
-            self.picture_in_picture_dialog.title_label.setToolTip(self.title)
-            self.picture_in_picture_dialog.artist_label.setText(self.artist)
-            self.picture_in_picture_dialog.artist_label.setToolTip(self.artist)
-            self.picture_in_picture_dialog.load_artwork(self.artwork)
-
-    def update_picture_in_picture_song_state(self):
-        if self.picture_in_picture_dialog:
-            if self.song_state == "Playing":
-                self.picture_in_picture_dialog.dislike_button.setEnabled(True)
-                self.picture_in_picture_dialog.previous_button.setEnabled(True)
-                self.picture_in_picture_dialog.play_pause_button.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/pause-filled.png", self.theme_setting
-                    )
-                )
-                self.picture_in_picture_dialog.play_pause_button.setEnabled(True)
-                self.picture_in_picture_dialog.next_button.setEnabled(True)
-                self.picture_in_picture_dialog.like_button.setEnabled(True)
-            elif self.song_state == "Paused":
-                self.picture_in_picture_dialog.dislike_button.setEnabled(True)
-                self.picture_in_picture_dialog.previous_button.setEnabled(True)
-                self.picture_in_picture_dialog.play_pause_button.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/play-filled.png", self.theme_setting
-                    )
-                )
-                self.picture_in_picture_dialog.play_pause_button.setEnabled(True)
-                self.picture_in_picture_dialog.next_button.setEnabled(True)
-                self.picture_in_picture_dialog.like_button.setEnabled(True)
-            else:
-                self.picture_in_picture_dialog.dislike_button.setEnabled(False)
-                self.picture_in_picture_dialog.previous_button.setEnabled(False)
-                self.picture_in_picture_dialog.play_pause_button.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/play-filled.png", self.theme_setting
-                    )
-                )
-                self.picture_in_picture_dialog.play_pause_button.setEnabled(False)
-                self.picture_in_picture_dialog.next_button.setEnabled(False)
-                self.picture_in_picture_dialog.like_button.setEnabled(False)
-
-    def update_picture_in_picture_song_progress(self):
-        if self.picture_in_picture_dialog:
-            self.picture_in_picture_dialog.BodyLabel.setText(self.current_time)
-            self.picture_in_picture_dialog.BodyLabel_2.setText(self.total_time)
-
-    def update_picture_in_picture_song_status(self):
-        if self.picture_in_picture_dialog:
-            if self.song_status == "Like":
-                self.picture_in_picture_dialog.dislike_button.setIcon(
-                    recolor_icon(f"{self.icon_folder}/dislike.png", self.theme_setting)
-                )
-                self.picture_in_picture_dialog.like_button.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/like-filled.png", self.theme_setting
-                    )
-                )
-            elif self.song_status == "Dislike":
-                self.picture_in_picture_dialog.dislike_button.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/dislike-filled.png", self.theme_setting
-                    )
-                )
-                self.picture_in_picture_dialog.like_button.setIcon(
-                    recolor_icon(f"{self.icon_folder}/like.png", self.theme_setting)
-                )
-            else:
-                self.picture_in_picture_dialog.dislike_button.setIcon(
-                    recolor_icon(f"{self.icon_folder}/dislike.png", self.theme_setting)
-                )
-                self.picture_in_picture_dialog.like_button.setIcon(
-                    recolor_icon(f"{self.icon_folder}/like.png", self.theme_setting)
-                )
-
     def start_playback_control(self):
         if self.hotkey_playback_control_setting == 1:
             self.hotkey_controller_thread = HotkeyController(self)
@@ -1708,32 +1692,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.hotkey_controller_thread.previous.connect(self.previous)
             self.hotkey_controller_thread.next.connect(self.next)
             self.hotkey_controller_thread.start()
-
-    def create_previous_button(self):
-        self.tool_btn_previous = QWinThumbnailToolButton(self.win_thumbnail_toolbar)
-        self.tool_btn_previous.setToolTip("Previous")
-        self.tool_btn_previous.setEnabled(False)
-        self.tool_btn_previous.setIcon(
-            QIcon(f"{self.icon_folder}/previous-taskbar.png")
-        )
-        self.tool_btn_previous.clicked.connect(self.previous)
-        self.win_thumbnail_toolbar.addButton(self.tool_btn_previous)
-
-    def create_play_pause_button(self):
-        self.tool_btn_play_pause = QWinThumbnailToolButton(self.win_thumbnail_toolbar)
-        self.tool_btn_play_pause.setToolTip("Play/Pause")
-        self.tool_btn_play_pause.setEnabled(False)
-        self.tool_btn_play_pause.setIcon(QIcon(f"{self.icon_folder}/play-taskbar.png"))
-        self.tool_btn_play_pause.clicked.connect(self.play_pause)
-        self.win_thumbnail_toolbar.addButton(self.tool_btn_play_pause)
-
-    def create_next_button(self):
-        self.tool_btn_next = QWinThumbnailToolButton(self.win_thumbnail_toolbar)
-        self.tool_btn_next.setToolTip("Next")
-        self.tool_btn_next.setEnabled(False)
-        self.tool_btn_next.setIcon(QIcon(f"{self.icon_folder}/next-taskbar.png"))
-        self.tool_btn_next.clicked.connect(self.next)
-        self.win_thumbnail_toolbar.addButton(self.tool_btn_next)
 
     def dislike(self):
         js = """
@@ -1786,9 +1744,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def forward(self):
         self.webview.forward()
 
-    def home(self):
-        self.webview.load(QUrl("https://music.youtube.com/"))
-
     def reload(self):
         self.webview.reload()
 
@@ -1796,7 +1751,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.webview.stop()
 
     def search_on(self, service):
-        query = f"{self.title}+-+{self.artist}"
+        query = quote_plus(f"{self.title}+-+{self.artist}")
         if service == "MusicBrainz":
             open_url(f"https://musicbrainz.org/search?query={query}&type=release")
         elif service == "Spotify":
@@ -1808,7 +1763,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         open_url(f"https://www.youtube.com/watch?v={self.video_id}")
 
     def select_download_folder(self):
-        title = "Select Folder"
+        title = f"Download | {self.title}"
         folder = QFileDialog.getExistingDirectory(
             self, title, self.last_download_folder_setting
         )
@@ -1818,10 +1773,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.start_download(f"https://music.youtube.com/watch?v={self.video_id}")
 
     def download_album(self):
-        self.start_download(self.current_url)
+        self.start_download(self.current_url, type=1)
 
-    def start_download(self, download_url):
-        download_folder = self.select_download_folder()
+    def start_download(self, download_url, type=0):
+        download_folder = QFileDialog.getExistingDirectory(
+            self,
+            f"Download | {download_url if type == 1 else self.title}",
+            self.last_download_folder_setting,
+        )
         if not download_folder:
             return
 
@@ -1930,7 +1889,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         info_bar = InfoBar.error(
             title=f"{title}",
             content="Audio downloaded failed!",
-            orient=Qt.Horizontal,
+            orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.BOTTOM,
             duration=-1,
@@ -1938,7 +1897,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
 
         button = PushButton(
-            recolor_icon(f"{self.icon_folder}/show.png", self.theme_setting),
+            recolor_icon(f"{self.icon_folder}/show.png", self.light_theme_setting),
             "Show error",
             self,
         )
@@ -1951,7 +1910,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         info_bar = InfoBar.success(
             title=f"{title}",
             content="Audio downloaded successfully!",
-            orient=Qt.Horizontal,
+            orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.BOTTOM,
             duration=-1,
@@ -1959,8 +1918,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
 
         button = PushButton(
-            recolor_icon(f"{self.icon_folder}/open_folder.png", self.theme_setting),
-            "Open Folder",
+            recolor_icon(
+                f"{self.icon_folder}/open_folder.png", self.light_theme_setting
+            ),
+            "Open folder",
             self,
         )
         button.clicked.connect(lambda: self.open_download_folder(folder, info_bar))
@@ -1991,22 +1952,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.download_album_action.setEnabled(can_download_album)
         self.download_album_shortcut.setEnabled(can_download_album)
 
-    def watch_in_pip(self):
-        if self.song_state == "Playing" or "Paused":
-            self.picture_in_picture_dialog = PictureInPictureDialog(
-                self.geometry(), self
-            )
-            self.update_picture_in_picture_song_info()
-            self.update_picture_in_picture_song_state()
-            self.update_picture_in_picture_song_progress()
-            self.update_picture_in_picture_song_status()
-            self.picture_in_picture_dialog.show()
-            self.picture_in_picture_dialog.activateWindow()
-
-            self.hide()
-            if self.system_tray_icon:
-                self.system_tray_icon.hide()
-
     def load_url(self, url):
         self.webview.load(QUrl(url))
 
@@ -2031,13 +1976,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.hide_toolbar_setting = 1
 
     def cut(self):
-        self.webpage.triggerAction(QWebEnginePage.Cut)
+        self.webpage.triggerAction(QWebEnginePage.WebAction.Cut)
 
     def copy(self):
-        self.webpage.triggerAction(QWebEnginePage.Copy)
+        self.webpage.triggerAction(QWebEnginePage.WebAction.Copy)
 
     def paste(self):
-        self.webpage.triggerAction(QWebEnginePage.Paste)
+        self.webpage.triggerAction(QWebEnginePage.WebAction.Paste)
 
     def save_settings(self):
         if self.save_last_win_geometry_setting == 1:
@@ -2067,45 +2012,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.settings_.setValue(
             "im_not_a_kid", int(self.im_not_a_kid_action.isChecked())
         )
+        self.settings_.setValue(
+            "invert_to_light_theme", int(self.invert_to_light_theme_action.isChecked())
+        )
+        self.settings_.setValue(
+            "clean_share_link", int(self.clean_share_link_action.isChecked())
+        )
 
-    def show_window(self, last_win_geo=None):
-        if self.isMinimized() or self.isHidden():
-            if self.isMaximized():
+    def show_window(self, last_win_geo=None, maximized_state=None):
+        if maximized_state == 1:
+            self.showMaximized()
+        elif self.isMinimized() or self.isHidden():
+            if self.windowState() & Qt.WindowState.WindowMaximized:
                 self.showMaximized()
-            elif self.isMinimized():
-                self.showNormal()
             else:
-                self.show()
+                self.showNormal()
+        else:
+            self.show()
+
         self.activateWindow()
-        if last_win_geo:
+        self.raise_()
+
+        if last_win_geo and maximized_state != 1:
             self.setGeometry(last_win_geo)
+
         if self.system_tray_icon:
             self.system_tray_icon.last_win_geo = None
-
-    def show_window_or_picture_in_picture(self):
-        if self.picture_in_picture_dialog is None:
-            self.show_window(
-                self.system_tray_icon.last_win_geo if self.system_tray_icon else None
-            )
-        else:
-            if self.picture_in_picture_dialog.isMinimized():
-                self.picture_in_picture_dialog.showNormal()
-
-    def eventFilter(self, obj, event):
-        if obj == self.ToolBar:
-            if event.type() == QEvent.Show:
-                self.hide_toolbar_action.setText("Hide toolbar")
-                self.hide_toolbar_action.setIcon(
-                    recolor_icon(
-                        f"{self.icon_folder}/hide_toolbar.png", self.theme_setting
-                    )
-                )
-            elif event.type() == QEvent.Hide:
-                self.hide_toolbar_action.setText("Show toolbar")
-                self.hide_toolbar_action.setIcon(
-                    recolor_icon(f"{self.icon_folder}/toolbar.png", self.theme_setting)
-                )
-        return super().eventFilter(obj, event)
+            self.system_tray_icon.maximized_state = None
 
     def stop_running_threads(self):
         if (
@@ -2130,6 +2063,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.music_recognizer_thread.stop()
 
     def app_quit(self):
+        self.save_settings()
+        self.webpage.deleteLater()
         self.stop_running_threads()
 
         app = QApplication.instance()
@@ -2138,20 +2073,82 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if hasattr(app, "server"):
             app.server.close()
 
+    def nativeEvent(self, eventType, message):
+        if self.taskbar is not None:
+            event = self.taskbar.handle_message(int(message))
+            if event:
+                if event["type"] == "created":
+                    self.taskbar.register(int(self.winId()))
+                    self.taskbar.add_buttons(
+                        [
+                            {
+                                "id": 1,
+                                "icon": f"{self.icon_folder}/previous-taskbar.png",
+                                "tooltip": "Previous",
+                            },
+                            {
+                                "id": 2,
+                                "icon": f"{self.icon_folder}/play-taskbar.png",
+                                "tooltip": "Play/Pause",
+                            },
+                            {
+                                "id": 3,
+                                "icon": f"{self.icon_folder}/next-taskbar.png",
+                                "tooltip": "Next",
+                            },
+                        ]
+                    )
+                elif event["type"] == "click" and event["id"] == 1:
+                    self.previous()
+                elif event["type"] == "click" and event["id"] == 2:
+                    self.play_pause()
+                elif event["type"] == "click" and event["id"] == 3:
+                    self.next()
+            return False, 0
+
+    def eventFilter(self, obj, event):
+        if obj == self.ToolBar:
+            if event.type() == QEvent.Type.Show:
+                self.hide_toolbar_action.setText("Hide toolbar")
+                self.hide_toolbar_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/hide_toolbar.png", self.light_theme_setting
+                    )
+                )
+            elif event.type() == QEvent.Type.Hide:
+                self.hide_toolbar_action.setText("Show toolbar")
+                self.hide_toolbar_action.setIcon(
+                    recolor_icon(
+                        f"{self.icon_folder}/toolbar.png", self.light_theme_setting
+                    )
+                )
+        elif obj == self.url_label:
+            if event.type() == QEvent.Type.MouseButtonPress:
+                if event.button() == Qt.MouseButton.MiddleButton:
+                    self.webview.setUrl(QUrl(self.default_home_url))
+                    return True
+
+        return super().eventFilter(obj, event)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.update_splash_screen()
+
     def closeEvent(self, event):
-        self.save_settings()
+        if self.is_restarting:
+            event.accept()
+            return
 
         if self.tray_icon_setting == 1 and self.system_tray_icon is not None:
             if not self.force_exit:
                 self.system_tray_icon.last_win_geo = self.geometry()
+                self.system_tray_icon.maximized_state = self.isMaximized()
                 self.hide()
                 event.ignore()
                 return
 
         if self.song_state == "Playing":
-            self.show_window(
-                self.system_tray_icon.last_win_geo if self.system_tray_icon else None
-            )
+            self.show_window()
 
             msg_box = MessageBox(
                 "Exit confirmation",
@@ -2163,13 +2160,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self,
             )
             msg_box.yesButton.setText("Exit")
-            if not msg_box.exec_():
+            if not msg_box.exec():
                 self.force_exit = False
                 event.ignore()
                 return
 
         event.accept()
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.update_splash_screen()

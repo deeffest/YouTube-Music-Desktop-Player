@@ -1,15 +1,15 @@
 import logging
-import requests
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import QThread, pyqtSignal
+import requests
+from PySide6.QtCore import QThread, Signal
 
 if TYPE_CHECKING:
     from core.main_window import MainWindow
 
 
 class UpdateChecker(QThread):
-    update_checked = pyqtSignal(str, str, str, str)
+    update_checked = Signal(str, str, str, str)
 
     def __init__(self, parent=None):
         super().__init__(parent)

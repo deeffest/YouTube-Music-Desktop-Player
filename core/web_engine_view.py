@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineContextMenuData
+
+from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtWebEngineCore import QWebEngineContextMenuRequest
 
 if TYPE_CHECKING:
     from core.main_window import MainWindow
@@ -11,28 +13,31 @@ class WebEngineView(QWebEngineView):
         self.window: "MainWindow" = parent
 
     def contextMenuEvent(self, event):
-        context_data = self.page().contextMenuData()
-        flags = context_data.editFlags()
+        request = self.lastContextMenuRequest()
+        flags = request.editFlags()
 
-        if context_data.isContentEditable() and self.page().selectedText():
+        if request.isContentEditable() and request.selectedText():
             self.window.edit_menu.actions()[0].setEnabled(
-                flags & QWebEngineContextMenuData.CanCopy
+                bool(flags & QWebEngineContextMenuRequest.EditFlag.CanCopy)
             )
             self.window.edit_menu.actions()[1].setEnabled(
-                flags & QWebEngineContextMenuData.CanPaste
+                bool(flags & QWebEngineContextMenuRequest.EditFlag.CanPaste)
             )
             self.window.edit_menu.exec(event.globalPos())
-        elif context_data.isContentEditable():
+
+        elif request.isContentEditable():
             self.window.paste_menu.actions()[0].setEnabled(
-                flags & QWebEngineContextMenuData.CanPaste
+                bool(flags & QWebEngineContextMenuRequest.EditFlag.CanPaste)
             )
             self.window.paste_menu.exec(event.globalPos())
-        elif self.page().selectedText():
+
+        elif request.selectedText():
             self.window.copy_menu.actions()[0].setEnabled(
-                flags & QWebEngineContextMenuData.CanCopy
+                bool(flags & QWebEngineContextMenuRequest.EditFlag.CanCopy)
             )
             self.window.copy_menu.exec(event.globalPos())
+
         else:
             self.window.main_menu.exec(event.globalPos())
 
-        event.accept()
+        request.setAccepted(True)

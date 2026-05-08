@@ -54,7 +54,7 @@
           <bool>false</bool>
          </property>
          <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
+          <enum>Qt::FocusPolicy::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>Back</string>
@@ -67,7 +67,7 @@
           <bool>false</bool>
          </property>
          <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
+          <enum>Qt::FocusPolicy::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>Forward</string>
@@ -75,19 +75,9 @@
         </widget>
        </item>
        <item>
-        <widget class="TransparentToolButton" name="home_tbutton">
-         <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
-         </property>
-         <property name="toolTip">
-          <string>Home</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="TransparentToolButton" name="reload_tbutton">
          <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
+          <enum>Qt::FocusPolicy::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>Reload</string>
@@ -97,10 +87,10 @@
        <item>
         <spacer name="horizontalSpacer">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
+          <enum>QSizePolicy::Policy::Fixed</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -138,17 +128,17 @@ QLabel:hover {
 </string>
          </property>
          <property name="text">
-          <string>🔒 music.youtube.com</string>
+          <string>music.youtube.com</string>
          </property>
         </widget>
        </item>
        <item>
         <spacer name="horizontalSpacer_2">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
+          <enum>QSizePolicy::Policy::Fixed</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -161,7 +151,7 @@ QLabel:hover {
        <item>
         <widget class="TransparentDropDownToolButton" name="download_ddtbutton">
          <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
+          <enum>Qt::FocusPolicy::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>Download</string>
@@ -169,19 +159,29 @@ QLabel:hover {
         </widget>
        </item>
        <item>
-        <widget class="TransparentToolButtonWithMenu" name="watch_in_pip_tbutton">
-         <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
-         </property>
+        <widget class="TransparentToolButton" name="lyrics_tbutton">
          <property name="toolTip">
-          <string>Watch in PiP</string>
+          <string>Lyrics...</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="TransparentToolButton" name="comments_tbutton">
+         <property name="toolTip">
+          <string>Comments...</string>
+         </property>
+         <property name="text">
+          <string/>
          </property>
         </widget>
        </item>
        <item>
         <widget class="TransparentToolButtonWithMenu" name="settings_ddtbutton">
          <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
+          <enum>Qt::FocusPolicy::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>Settings...</string>
@@ -191,7 +191,7 @@ QLabel:hover {
        <item>
         <widget class="TransparentDropDownToolButton" name="plugins_ddtbutton">
          <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
+          <enum>Qt::FocusPolicy::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>Plugins</string>
@@ -202,12 +202,12 @@ QLabel:hover {
         </widget>
        </item>
        <item>
-        <widget class="TransparentToolButtonWithMenu" name="more_ddtbutton">
+        <widget class="TransparentToolButtonWithMenu" name="see_more_ddtbutton">
          <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
+          <enum>Qt::FocusPolicy::NoFocus</enum>
          </property>
          <property name="toolTip">
-          <string>More</string>
+          <string>See more</string>
          </property>
         </widget>
        </item>
@@ -219,7 +219,7 @@ QLabel:hover {
       <item>
        <spacer name="verticalSpacer">
         <property name="orientation">
-         <enum>Qt::Vertical</enum>
+         <enum>Qt::Orientation::Vertical</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>

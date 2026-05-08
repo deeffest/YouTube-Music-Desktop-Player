@@ -1,5 +1,7 @@
 if (typeof qt !== "undefined" && qt.webChannelTransport) {
     new QWebChannel(qt.webChannelTransport, (channel) => {
+        if (location.href.startsWith("https://m.youtube.com/")) return;
+
         const backend = channel.objects.backend;
         let lastSongState = "",
             lastSongInfo = {},

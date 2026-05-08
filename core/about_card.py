@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from qfluentwidgets import AvatarWidget, BodyLabel, CaptionLabel
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ class AboutCard(QWidget):
         self.name_widget = BodyLabel(name, self)
         self.version_widget = CaptionLabel(version, self)
 
-        gray = "lightgray" if self.window.theme_setting == 0 else "gray"
+        gray = "lightgray" if self.window.light_theme_setting == 0 else "gray"
         self.version_widget.setStyleSheet(f"color: {gray}")
 
         self.name_widget.setFixedHeight(self.name_widget.fontMetrics().height())
