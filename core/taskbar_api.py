@@ -124,6 +124,13 @@ def _load_icon(path):
     return ico.value
 
 
+def _destroy_icons(buttons: dict):
+    for data in buttons.values():
+        hicon = data.get("hIcon")
+        if hicon:
+            ctypes.windll.user32.DestroyIcon(hicon)
+
+
 class TaskbarAPI:
     def __init__(self):
         self._taskbar = CreateObject(CLSID_TaskbarList, interface=ITaskbarList3)
@@ -132,6 +139,11 @@ class TaskbarAPI:
             "TaskbarButtonCreated"
         )
         self._buttons = {}
+        self._button_defs = []
+
+    def __del__(self):
+        _destroy_icons(self._buttons)
+        self._buttons.clear()
 
     def register(self, hwnd):
         self._hwnd = hwnd
@@ -141,6 +153,12 @@ class TaskbarAPI:
     def add_buttons(self, buttons):
         if not self._hwnd:
             return
+        _destroy_icons(self._buttons)
+        self._buttons.clear()
+        self._button_defs = [dict(btn) for btn in buttons]
+        self._init_buttons(self._button_defs)
+
+    def _init_buttons(self, buttons):
         btn_array = (THUMBBUTTON * len(buttons))()
         for i, btn in enumerate(buttons):
             bid = btn.get("id")
@@ -172,14 +190,17 @@ class TaskbarAPI:
                 ctypes.windll.user32.DestroyIcon(old)
             data["hIcon"] = _load_icon(icon)
             mask |= THB_ICON
+            self._sync_def(button_id, "icon", icon)
 
         if tooltip is not None:
             data["tooltip"] = tooltip
             mask |= THB_TOOLTIP
+            self._sync_def(button_id, "tooltip", tooltip)
 
         if flags is not None:
             data["flags"] = flags
             mask |= THB_FLAGS
+            self._sync_def(button_id, "flags", flags)
 
         if mask == 0:
             return
@@ -193,9 +214,21 @@ class TaskbarAPI:
 
         self._taskbar.ThumbBarUpdateButtons(self._hwnd, 1, (THUMBBUTTON * 1)(btn))
 
+    def _sync_def(self, button_id, key, value):
+        for btn in self._button_defs:
+            if btn.get("id") == button_id:
+                btn[key] = value
+                break
+
     def handle_message(self, msg_ptr):
         msg = wintypes.MSG.from_address(msg_ptr)
         if msg.message == self._msg_created:
+            self._taskbar.HrInit()
+            self._taskbar.SetProgressState(self._hwnd, 0)
+            _destroy_icons(self._buttons)
+            self._buttons.clear()
+            if self._button_defs:
+                self._init_buttons(self._button_defs)
             return {"type": "created"}
         if msg.message == WM_COMMAND and (msg.wParam >> 16) & 0xFFFF == THBN_CLICKED:
             return {"type": "click", "id": msg.wParam & 0xFFFF}
