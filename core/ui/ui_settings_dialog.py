@@ -25,8 +25,8 @@ class Ui_SettingsDialog(object):
     def setupUi(self, SettingsDialog):
         if not SettingsDialog.objectName():
             SettingsDialog.setObjectName(u"SettingsDialog")
-        SettingsDialog.resize(320, 500)
-        SettingsDialog.setMinimumSize(QSize(320, 500))
+        SettingsDialog.resize(335, 525)
+        SettingsDialog.setMinimumSize(QSize(335, 525))
         self.horizontalLayout_2 = QHBoxLayout(SettingsDialog)
         self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
@@ -142,7 +142,7 @@ class Ui_SettingsDialog(object):
 
         self.verticalLayout_2.addWidget(self.groupBox_10)
 
-        self.verticalSpacer = QSpacerItem(20, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding)
+        self.verticalSpacer = QSpacerItem(293, 54, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding)
 
         self.verticalLayout_2.addItem(self.verticalSpacer)
 
@@ -257,6 +257,11 @@ class Ui_SettingsDialog(object):
 
         self.verticalLayout_8.addWidget(self.checkBox_17)
 
+        self.checkBox_16 = QCheckBox(self.groupBox_3)
+        self.checkBox_16.setObjectName(u"checkBox_16")
+
+        self.verticalLayout_8.addWidget(self.checkBox_16)
+
         self.pushButton = QPushButton(self.groupBox_3)
         self.pushButton.setObjectName(u"pushButton")
         self.pushButton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -361,6 +366,7 @@ class Ui_SettingsDialog(object):
 
         self.label_6 = QLabel(self.groupBox_12)
         self.label_6.setObjectName(u"label_6")
+        self.label_6.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTrailing|Qt.AlignmentFlag.AlignVCenter)
 
         self.horizontalLayout_6.addWidget(self.label_6)
 
@@ -370,7 +376,7 @@ class Ui_SettingsDialog(object):
 
         self.verticalLayout_18.addWidget(self.groupBox_12)
 
-        self.verticalSpacer_5 = QSpacerItem(20, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding)
+        self.verticalSpacer_5 = QSpacerItem(275, 196, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding)
 
         self.verticalLayout_18.addItem(self.verticalSpacer_5)
 
@@ -410,14 +416,16 @@ class Ui_SettingsDialog(object):
         self.comboBox_2.setItemText(2, QCoreApplication.translate("SettingsDialog", u"Light", None))
 
 #if QT_CONFIG(tooltip)
-        self.comboBox_2.setToolTip(QCoreApplication.translate("SettingsDialog", u"<html><head/><body><p>This setting applies only to the icons in the system tray.</p></body></html>", None))
+        self.comboBox_2.setToolTip(QCoreApplication.translate("SettingsDialog", u"This setting applies only to the icons in the system tray!", None))
 #endif // QT_CONFIG(tooltip)
         self.groupBox_10.setTitle(QCoreApplication.translate("SettingsDialog", u"Features", None))
         self.checkBox_14.setText(QCoreApplication.translate("SettingsDialog", u"Windows thumbnail buttons", None))
         self.checkBox_10.setText(QCoreApplication.translate("SettingsDialog", u"System tray icon", None))
         self.checkBox_11.setText(QCoreApplication.translate("SettingsDialog", u"Discord Rich Presence", None))
 #if QT_CONFIG(tooltip)
-        self.checkBox_13.setToolTip(QCoreApplication.translate("SettingsDialog", u"\u2022 Ctrl + Shift + Space: Play/Pause.\n"
+        self.checkBox_13.setToolTip(QCoreApplication.translate("SettingsDialog", u"It may not work on Wayland.\n"
+"\n"
+"\u2022 Ctrl + Shift + Space: Play/Pause.\n"
 "\u2022 Ctrl + Shift + Left: Previous.\n"
 "\u2022 Ctrl + Shift + Right: Next.", None))
 #endif // QT_CONFIG(tooltip)
@@ -428,12 +436,7 @@ class Ui_SettingsDialog(object):
         self.checkBox_9.setText(QCoreApplication.translate("SettingsDialog", u"Animated scrolling support", None))
         self.groupBox_4.setTitle(QCoreApplication.translate("SettingsDialog", u"Rendering", None))
 #if QT_CONFIG(tooltip)
-        self.checkBox_12.setToolTip(QCoreApplication.translate("SettingsDialog", u"This setting removes the 60 fps limit,\n"
-"but puts a heavy load on the CPU\n"
-"during video playback (even in the background).\n"
-"\n"
-"Recommended to use only with\n"
-"the Audio-only mode plugin.", None))
+        self.checkBox_12.setToolTip(QCoreApplication.translate("SettingsDialog", u"This setting removes the 60 FPS limit, but may consume more CPU resources.", None))
 #endif // QT_CONFIG(tooltip)
         self.checkBox_12.setText(QCoreApplication.translate("SettingsDialog", u"Disable frame rate limit", None))
         self.groupBox_5.setTitle(QCoreApplication.translate("SettingsDialog", u"Cookies", None))
@@ -447,33 +450,47 @@ class Ui_SettingsDialog(object):
         self.comboBox_3.setItemText(2, QCoreApplication.translate("SettingsDialog", u"MP4", None))
         self.comboBox_3.setItemText(3, QCoreApplication.translate("SettingsDialog", u"WebM", None))
 
+#if QT_CONFIG(tooltip)
+        self.comboBox_3.setToolTip(QCoreApplication.translate("SettingsDialog", u"All of these formats are provided by YouTube itself, so the audio is not transcoded.", None))
+#endif // QT_CONFIG(tooltip)
         self.checkBox_4.setText(QCoreApplication.translate("SettingsDialog", u"Use cookies", None))
         self.checkBox_6.setText(QCoreApplication.translate("SettingsDialog", u"Auto update", None))
         self.checkBox_17.setText(QCoreApplication.translate("SettingsDialog", u"Embed metadata", None))
+#if QT_CONFIG(tooltip)
+        self.checkBox_16.setToolTip(QCoreApplication.translate("SettingsDialog", u"The system's yt-dlp will be used, if available.\n"
+"Make sure that the version of yt-dlp installed is 2025.11.12 or later.", None))
+#endif // QT_CONFIG(tooltip)
+        self.checkBox_16.setText(QCoreApplication.translate("SettingsDialog", u"Prefer system yt-dlp", None))
+#if QT_CONFIG(tooltip)
+        self.pushButton.setToolTip(QCoreApplication.translate("SettingsDialog", u"This will not remove the system version of yt-dlp - only the built-in version!", None))
+#endif // QT_CONFIG(tooltip)
         self.pushButton.setText(QCoreApplication.translate("SettingsDialog", u"Remove from device", None))
         self.groupBox_6.setTitle(QCoreApplication.translate("SettingsDialog", u"FFmpeg", None))
 #if QT_CONFIG(tooltip)
-        self.checkBox_5.setToolTip(QCoreApplication.translate("SettingsDialog", u"The system's FFmpeg will be used, if available.", None))
+        self.checkBox_5.setToolTip(QCoreApplication.translate("SettingsDialog", u"The system's FFmpeg will be used, if available.\n"
+"If you encounter errors, make sure that yt-dlp is compatible with your version of FFmpeg.", None))
 #endif // QT_CONFIG(tooltip)
         self.checkBox_5.setText(QCoreApplication.translate("SettingsDialog", u"Prefer system FFmpeg", None))
 #if QT_CONFIG(tooltip)
-        self.pushButton_2.setToolTip(QCoreApplication.translate("SettingsDialog", u"This will not remove the system version of FFmpeg - only the built-in version.", None))
+        self.pushButton_2.setToolTip(QCoreApplication.translate("SettingsDialog", u"This will not remove the system version of FFmpeg - only the built-in version!", None))
 #endif // QT_CONFIG(tooltip)
         self.pushButton_2.setText(QCoreApplication.translate("SettingsDialog", u"Remove from device", None))
         self.groupBox_7.setTitle(QCoreApplication.translate("SettingsDialog", u"Deno", None))
 #if QT_CONFIG(tooltip)
-        self.checkBox_18.setToolTip(QCoreApplication.translate("SettingsDialog", u"The system's Deno will be used, if available.", None))
+        self.checkBox_18.setToolTip(QCoreApplication.translate("SettingsDialog", u"The system's Deno will be used, if available.\n"
+"If you encounter errors, make sure that yt-dlp is compatible with your version of Deno.", None))
 #endif // QT_CONFIG(tooltip)
         self.checkBox_18.setText(QCoreApplication.translate("SettingsDialog", u"Prefer system Deno", None))
 #if QT_CONFIG(tooltip)
-        self.pushButton_3.setToolTip(QCoreApplication.translate("SettingsDialog", u"This will not remove the system version of Deno - only the built-in version.", None))
+        self.pushButton_3.setToolTip(QCoreApplication.translate("SettingsDialog", u"This will not remove the system version of Deno - only the built-in version!", None))
 #endif // QT_CONFIG(tooltip)
         self.pushButton_3.setText(QCoreApplication.translate("SettingsDialog", u"Remove from device", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), QCoreApplication.translate("SettingsDialog", u"Tools", None))
         self.groupBox_12.setTitle(QCoreApplication.translate("SettingsDialog", u"AudD API", None))
         self.label_4.setText(QCoreApplication.translate("SettingsDialog", u"Token", None))
 #if QT_CONFIG(tooltip)
-        self.lineEdit.setToolTip(QCoreApplication.translate("SettingsDialog", u"To get more than 10 recognitions, obtain a token from the AudD API dashboard.", None))
+        self.lineEdit.setToolTip(QCoreApplication.translate("SettingsDialog", u"To get more than 10 recognitions, obtain a token from the AudD API dashboard.\n"
+"Alternatively, please wait; recognitions should be restored shortly.", None))
 #endif // QT_CONFIG(tooltip)
         self.lineEdit.setPlaceholderText(QCoreApplication.translate("SettingsDialog", u"Enter your AudD token here", None))
         self.label_5.setText(QCoreApplication.translate("SettingsDialog", u"Recording lenght", None))

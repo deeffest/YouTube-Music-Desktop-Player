@@ -21,7 +21,7 @@ class SingletonApplication(QApplication):
         self.memory.setKey(key)
         if self.memory.attach():
             self.is_running = True
-            print("Application is already running")
+            print("Application is already running!")
             self.show_existing_instance()
             sys.exit(0)
 

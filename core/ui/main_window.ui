@@ -114,19 +114,6 @@
            <height>0</height>
           </size>
          </property>
-         <property name="styleSheet">
-          <string notr="true">QLabel {
-    color: rgb(210, 210, 210);
-    background-color: rgb(33, 33, 33);
-    border: 1px solid transparent;
-    border-radius: 6px;
-    padding: 3px 6px;
-}
-QLabel:hover {
-    border: 1px solid rgb(255, 41, 41);
-}
-</string>
-         </property>
          <property name="text">
           <string>music.youtube.com</string>
          </property>

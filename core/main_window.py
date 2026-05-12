@@ -264,6 +264,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
         if self.settings_.value("last_save_lyrics_path") is None:
             self.settings_.setValue("last_save_lyrics_path", os.path.expanduser("~"))
+        if self.settings_.value("prefer_system_ytdlp") is None:
+            self.settings_.setValue("prefer_system_ytdlp", 0)
 
         self.ad_blocker_setting = int(self.settings_.value("ad_blocker"))
         self.save_last_win_geometry_setting = int(
@@ -332,6 +334,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         self.last_save_lyrics_path_setting = self.settings_.value(
             "last_save_lyrics_path"
+        )
+        self.prefer_system_ytdlp_setting = int(
+            self.settings_.value("prefer_system_ytdlp")
         )
 
     def configure_window(self):
@@ -752,21 +757,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         self.reload_tbutton.clicked.connect(self.reload)
 
-        if self.light_theme_setting == 1:
-            self.url_label.setStyleSheet(
-                """
-                QLabel {
-                    color: rgb(30, 30, 30);
-                    background-color: rgb(234, 234, 234);
-                    border: 1px solid transparent;
-                    border-radius: 6px;
-                    padding: 3px 6px;
-                }
-                QLabel:hover {
-                    border: 1px solid rgb(255, 0, 0);
-                }
-                """
-            )
         self.update_url_label(self.current_url)
         self.url_label.customContextMenuRequested.disconnect()
         self.url_label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)

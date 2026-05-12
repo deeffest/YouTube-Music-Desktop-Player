@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt, QThread, QSize, Signal
 from PySide6.QtWidgets import QDialog, QLabel, QFileDialog
 from qfluentwidgets import SplashScreen, Action, RoundMenu
 
-from core.helpers import recolor_icon
+from core.helpers import recolor_icon, open_url
 from core.ui.ui_lyrics_dialog import Ui_LyricsDialog
 
 if TYPE_CHECKING:
@@ -171,6 +171,14 @@ class LyricsDialog(QDialog, Ui_LyricsDialog):
         self.save_lyrics_as_action.setEnabled(False)
         self.save_lyrics_as_action.triggered.connect(self.save_lyrics_as)
 
+        self.powered_by_lrclib_action = Action("Powered by lrclib.net")
+        self.powered_by_lrclib_action.setIcon(
+            QIcon(f"{self.window.icon_folder}/lrclib.png")
+        )
+        self.powered_by_lrclib_action.triggered.connect(
+            lambda: open_url("https://lrclib.net")
+        )
+
     def save_lyrics_as(self):
         if not self.lines:
             return
@@ -202,6 +210,7 @@ class LyricsDialog(QDialog, Ui_LyricsDialog):
     def create_context_menus(self):
         self.main_menu = RoundMenu()
         self.main_menu.addAction(self.save_lyrics_as_action)
+        self.main_menu.addAction(self.powered_by_lrclib_action)
 
     def sync_lyrics_to_time(self, current_time):
         if not self.lines:

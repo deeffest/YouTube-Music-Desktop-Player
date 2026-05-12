@@ -86,7 +86,9 @@ class DownloadThread(QThread):
             download_binary(self.window.deno_url, self.window.deno_path)
             self.downloading_deno_success.emit()
 
-        if not os.path.isfile(self.window.ytdlp_path):
+        if self.window.prefer_system_ytdlp_setting != 1 and not os.path.isfile(
+            self.window.ytdlp_path
+        ):
             self.downloading_ytdlp.emit()
             download_binary(self.window.ytdlp_url, self.window.ytdlp_path)
             self.downloading_ytdlp_success.emit()
@@ -138,8 +140,13 @@ class DownloadThread(QThread):
 
         use_sys_ffmpeg = self.window.prefer_system_ffmpeg_setting == 1
         use_sys_deno = self.window.prefer_system_deno_setting == 1
+        use_sys_ytdlp = self.window.prefer_system_ytdlp_setting == 1
 
-        command = [self.window.ytdlp_path, "-f", format_selector]
+        command = [
+            "yt-dlp" if use_sys_ytdlp else self.window.ytdlp_path,
+            "-f",
+            format_selector,
+        ]
 
         if not use_sys_ffmpeg:
             command += ["--ffmpeg-location", self.window.ffmpeg_path]
@@ -188,7 +195,7 @@ class DownloadThread(QThread):
             for var in ("LD_LIBRARY_PATH", "LD_PRELOAD", "PYTHONHOME", "PYTHONPATH"):
                 env.pop(var, None)
 
-        if self.auto_update:
+        if self.auto_update and self.window.prefer_system_ytdlp_setting != 1:
             try:
                 cflags = (
                     subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0
