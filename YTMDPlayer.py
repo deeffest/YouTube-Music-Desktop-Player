@@ -3,17 +3,15 @@ import sys
 import socket
 import logging
 import platform
-from logging.handlers import RotatingFileHandler
 
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QPalette, QColor
 
-from core.main_window import MainWindow
 from core.application import SingletonApplication
 
 NAME = "Youtube-Music-Desktop-Player"
 DISPLAY_NAME = "YouTube Music Desktop Player"
-VERSION = "1.27.0-rc1"
+VERSION = "1.27.0-rc2"
 AUTHOR = "deeffest"
 WEBSITE = "deeffest.pythonanywhere.com"
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -22,6 +20,9 @@ HOME_DIR = os.path.join(os.path.expanduser("~"), NAME)
 UNIQUE_KEY = f"{AUTHOR}.{NAME}"
 ACCENT_COLOR = QColor(255, 41, 41)
 DEBUG = not getattr(sys, "frozen", False)
+IS_WINDOWS_11 = (
+    platform.system() == "Windows" and sys.getwindowsversion().build >= 22000
+)
 
 
 def find_free_port():
@@ -64,17 +65,18 @@ def hide_home_folder():
 
 
 def init_logging():
-    logging.getLogger().handlers.clear()
-
     log_dir = os.path.join(HOME_DIR, "logs")
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-    log_file = os.path.join(log_dir, "app.log")
+    os.makedirs(log_dir, exist_ok=True)
+
+    from logging.handlers import RotatingFileHandler
 
     rotating_handler = RotatingFileHandler(
-        log_file, maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8"
+        os.path.join(log_dir, "app.log"),
+        maxBytes=5 * 1024 * 1024,
+        backupCount=5,
+        encoding="utf-8",
     )
-    rotating_handler.setLevel(logging.INFO)
+    rotating_handler.setLevel(logging.ERROR)
     rotating_handler.setFormatter(
         logging.Formatter(
             "[%(asctime)s] %(name)s - %(levelname)s - %(filename)s:"
@@ -83,11 +85,11 @@ def init_logging():
     )
 
     logging.basicConfig(
-        level=logging.INFO, handlers=[rotating_handler, logging.StreamHandler()]
+        level=logging.ERROR, handlers=[rotating_handler, logging.StreamHandler()]
     )
 
 
-def ensure_desktop_icon():
+def set_desktop_icon():
     if platform.system() == "Linux":
         try:
             icon_path = os.path.join(CURRENT_DIR, "resources", "icons", "logo.png")
@@ -110,137 +112,176 @@ def ensure_desktop_icon():
 
             os.system("update-desktop-database ~/.local/share/applications 2>/dev/null")
         except Exception as e:
-            print(f"Failed to ensure desktop icon: {e}")
+            print(f"Failed to set desktop icon: {e}")
 
 
 def set_app_palette(app, theme_setting):
+    def qcolor_to_rgb(color):
+        return f"rgb({color.red()}, {color.green()}, {color.blue()})"
+
     palette = QPalette()
 
     if theme_setting == 0:
-        palette.setColor(QPalette.ColorRole.Window, QColor(39, 39, 39))
-        palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
-        palette.setColor(QPalette.ColorRole.Base, QColor(32, 32, 32))
-        palette.setColor(QPalette.ColorRole.AlternateBase, QColor(43, 43, 43))
-        palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
-        palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(110, 110, 110))
-        palette.setColor(QPalette.ColorRole.BrightText, QColor(255, 41, 41))
-        palette.setColor(QPalette.ColorRole.Button, QColor(50, 50, 50))
-        palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
-        palette.setColor(QPalette.ColorRole.Light, QColor(55, 55, 55))
-        palette.setColor(QPalette.ColorRole.Midlight, QColor(52, 52, 52))
-        palette.setColor(QPalette.ColorRole.Mid, QColor(45, 45, 45))
-        palette.setColor(QPalette.ColorRole.Dark, QColor(30, 30, 30))
-        palette.setColor(QPalette.ColorRole.Shadow, QColor(10, 10, 10))
+        if not IS_WINDOWS_11:
+            palette.setColor(QPalette.ColorRole.Window, QColor(39, 39, 39))
+            palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.Base, QColor(32, 32, 32))
+            palette.setColor(QPalette.ColorRole.AlternateBase, QColor(43, 43, 43))
+            palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(110, 110, 110))
+            palette.setColor(QPalette.ColorRole.BrightText, QColor(255, 41, 41))
+            palette.setColor(QPalette.ColorRole.Button, QColor(50, 50, 50))
+            palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.Light, QColor(55, 55, 55))
+            palette.setColor(QPalette.ColorRole.Midlight, QColor(52, 52, 52))
+            palette.setColor(QPalette.ColorRole.Mid, QColor(45, 45, 45))
+            palette.setColor(QPalette.ColorRole.Dark, QColor(30, 30, 30))
+            palette.setColor(QPalette.ColorRole.Shadow, QColor(10, 10, 10))
+            palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(31, 31, 31))
+            palette.setColor(QPalette.ColorRole.ToolTipText, QColor(202, 202, 202))
+
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.WindowText,
+                QColor(109, 109, 109),
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.Text,
+                QColor(109, 109, 109),
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.PlaceholderText,
+                QColor(70, 70, 70),
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.ButtonText,
+                QColor(109, 109, 109),
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.Base,
+                QColor(28, 28, 28),
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.Highlight,
+                QColor(60, 60, 60),
+            )
+
         palette.setColor(QPalette.ColorRole.Highlight, ACCENT_COLOR)
-        palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
         palette.setColor(QPalette.ColorRole.Accent, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.Link, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.LinkVisited, ACCENT_COLOR)
-        palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(31, 31, 31))
-        palette.setColor(QPalette.ColorRole.ToolTipText, QColor(202, 202, 202))
 
-        palette.setColor(
-            QPalette.ColorGroup.Disabled,
-            QPalette.ColorRole.WindowText,
-            QColor(109, 109, 109),
-        )
-        palette.setColor(
-            QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, QColor(109, 109, 109)
-        )
-        palette.setColor(
-            QPalette.ColorGroup.Disabled,
-            QPalette.ColorRole.PlaceholderText,
-            QColor(70, 70, 70),
-        )
-        palette.setColor(
-            QPalette.ColorGroup.Disabled,
-            QPalette.ColorRole.ButtonText,
-            QColor(109, 109, 109),
-        )
-        palette.setColor(
-            QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, QColor(28, 28, 28)
-        )
-        palette.setColor(
-            QPalette.ColorGroup.Disabled,
-            QPalette.ColorRole.Highlight,
-            QColor(60, 60, 60),
-        )
-
-        style_sheet = """
-            QToolTip {
+        style_sheet = f"""
+            QToolTip {{
                 color: rgb(202, 202, 202);
                 background-color: rgb(31, 31, 31);
                 border: 1px solid rgb(202, 202, 202);
                 padding: 2px;
-            }
+            }}
 
-            QFrame#ToolBar {
+            QFrame#ToolBar {{
+                background-color: rgb(39, 39, 39);
                 border: none;
                 border-bottom: 1px solid rgb(12, 12, 13);
-            }
+            }}
+
+            QLabel#url_label {{
+                color: rgb(210, 210, 210);
+                background-color: rgb(33, 33, 33);
+                border: 1px solid transparent;
+                border-radius: 6px;
+                padding: 3px 6px;
+            }}
+
+            QLabel#url_label:hover {{
+                border: 1px solid {qcolor_to_rgb(ACCENT_COLOR)};
+            }}
         """
     else:
-        palette.setColor(QPalette.ColorRole.Window, QColor(240, 240, 240))
-        palette.setColor(QPalette.ColorRole.WindowText, QColor(30, 30, 30))
-        palette.setColor(QPalette.ColorRole.Base, QColor(255, 255, 255))
-        palette.setColor(QPalette.ColorRole.AlternateBase, QColor(233, 233, 233))
-        palette.setColor(QPalette.ColorRole.Text, QColor(30, 30, 30))
-        palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(160, 160, 160))
-        palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
-        palette.setColor(QPalette.ColorRole.Button, QColor(225, 225, 225))
-        palette.setColor(QPalette.ColorRole.ButtonText, QColor(30, 30, 30))
-        palette.setColor(QPalette.ColorRole.Light, QColor(255, 255, 255))
-        palette.setColor(QPalette.ColorRole.Midlight, QColor(227, 227, 227))
-        palette.setColor(QPalette.ColorRole.Mid, QColor(200, 200, 200))
-        palette.setColor(QPalette.ColorRole.Dark, QColor(160, 160, 160))
-        palette.setColor(QPalette.ColorRole.Shadow, QColor(100, 100, 100))
+        if not IS_WINDOWS_11:
+            palette.setColor(QPalette.ColorRole.Window, QColor(240, 240, 240))
+            palette.setColor(QPalette.ColorRole.WindowText, QColor(30, 30, 30))
+            palette.setColor(QPalette.ColorRole.Base, QColor(255, 255, 255))
+            palette.setColor(QPalette.ColorRole.AlternateBase, QColor(233, 233, 233))
+            palette.setColor(QPalette.ColorRole.Text, QColor(30, 30, 30))
+            palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(160, 160, 160))
+            palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+            palette.setColor(QPalette.ColorRole.Button, QColor(225, 225, 225))
+            palette.setColor(QPalette.ColorRole.ButtonText, QColor(30, 30, 30))
+            palette.setColor(QPalette.ColorRole.Light, QColor(255, 255, 255))
+            palette.setColor(QPalette.ColorRole.Midlight, QColor(227, 227, 227))
+            palette.setColor(QPalette.ColorRole.Mid, QColor(200, 200, 200))
+            palette.setColor(QPalette.ColorRole.Dark, QColor(160, 160, 160))
+            palette.setColor(QPalette.ColorRole.Shadow, QColor(100, 100, 100))
+            palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(245, 245, 245))
+            palette.setColor(QPalette.ColorRole.ToolTipText, QColor(53, 53, 53))
+
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.WindowText,
+                QColor(160, 160, 160),
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.Text,
+                QColor(160, 160, 160),
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.PlaceholderText,
+                QColor(200, 200, 200),
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.ButtonText,
+                QColor(160, 160, 160),
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.Base,
+                QColor(235, 235, 235),
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.Highlight,
+                QColor(200, 200, 200),
+            )
+
         palette.setColor(QPalette.ColorRole.Highlight, ACCENT_COLOR)
-        palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
         palette.setColor(QPalette.ColorRole.Accent, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.Link, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.LinkVisited, ACCENT_COLOR)
-        palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(245, 245, 245))
-        palette.setColor(QPalette.ColorRole.ToolTipText, QColor(53, 53, 53))
 
-        palette.setColor(
-            QPalette.ColorGroup.Disabled,
-            QPalette.ColorRole.WindowText,
-            QColor(160, 160, 160),
-        )
-        palette.setColor(
-            QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, QColor(160, 160, 160)
-        )
-        palette.setColor(
-            QPalette.ColorGroup.Disabled,
-            QPalette.ColorRole.PlaceholderText,
-            QColor(200, 200, 200),
-        )
-        palette.setColor(
-            QPalette.ColorGroup.Disabled,
-            QPalette.ColorRole.ButtonText,
-            QColor(160, 160, 160),
-        )
-        palette.setColor(
-            QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, QColor(235, 235, 235)
-        )
-        palette.setColor(
-            QPalette.ColorGroup.Disabled,
-            QPalette.ColorRole.Highlight,
-            QColor(200, 200, 200),
-        )
-
-        style_sheet = """
-            QToolTip {
+        style_sheet = f"""
+            QToolTip {{
                 color: rgb(53, 53, 53);
                 background-color: rgb(245, 245, 245);
                 border: 1px solid rgb(180, 180, 180);
                 padding: 2px;
-            }
+            }}
 
-            QFrame#ToolBar {
+            QFrame#ToolBar {{
+                background-color: rgb(240, 240, 240);
                 border: none;
                 border-bottom: 1px solid rgb(204, 204, 204);
-            }
+            }}
+
+            QLabel#url_label {{
+                color: rgb(30, 30, 30);
+                background-color: rgb(234, 234, 234);
+                border: 1px solid transparent;
+                border-radius: 6px;
+                padding: 3px 6px;
+            }}
+
+            QLabel#url_label:hover {{
+                border: 1px solid {qcolor_to_rgb(ACCENT_COLOR)};
+            }}
         """
 
     app.setPalette(palette)
@@ -250,7 +291,7 @@ def set_app_palette(app, theme_setting):
 def main():
     hide_home_folder()
     init_logging()
-    ensure_desktop_icon()
+    set_desktop_icon()
 
     app_settings = init_app_settings()
     light_theme_setting = int(app_settings.value("light_theme"))
@@ -266,6 +307,8 @@ def main():
     if DEBUG:
         os.environ["QTWEBENGINE_REMOTE_DEBUGGING"] = str(find_free_port())
 
+    from core.main_window import MainWindow
+
     app = SingletonApplication(sys.argv, UNIQUE_KEY)
     app.setApplicationName(NAME)
     app.setApplicationVersion(VERSION)
@@ -274,7 +317,7 @@ def main():
     app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
     app.setDesktopFileName(NAME)
 
-    app.setStyle("Fusion")
+    app.setStyle("windows11") if IS_WINDOWS_11 else app.setStyle("Fusion")
     if light_theme_setting == 0:
         app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
     else:

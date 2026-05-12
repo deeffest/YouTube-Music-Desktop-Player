@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>320</width>
-    <height>500</height>
+    <width>335</width>
+    <height>525</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>320</width>
-    <height>500</height>
+    <width>335</width>
+    <height>525</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -142,7 +142,7 @@
                   <enum>Qt::FocusPolicy::NoFocus</enum>
                  </property>
                  <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting applies only to the icons in the system tray.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>This setting applies only to the icons in the system tray!</string>
                  </property>
                  <item>
                   <property name="text">
@@ -205,7 +205,9 @@
                 <enum>Qt::FocusPolicy::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>• Ctrl + Shift + Space: Play/Pause.
+                <string>It may not work on Wayland.
+
+• Ctrl + Shift + Space: Play/Pause.
 • Ctrl + Shift + Left: Previous.
 • Ctrl + Shift + Right: Next.</string>
                </property>
@@ -227,8 +229,8 @@
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>20</width>
-              <height>0</height>
+              <width>293</width>
+              <height>54</height>
              </size>
             </property>
            </spacer>
@@ -278,12 +280,7 @@
              <item>
               <widget class="QCheckBox" name="checkBox_12">
                <property name="toolTip">
-                <string>This setting removes the 60 fps limit,
-but puts a heavy load on the CPU
-during video playback (even in the background).
-
-Recommended to use only with
-the Audio-only mode plugin.</string>
+                <string>This setting removes the 60 FPS limit, but may consume more CPU resources.</string>
                </property>
                <property name="text">
                 <string>Disable frame rate limit</string>
@@ -380,6 +377,9 @@ the Audio-only mode plugin.</string>
                  <property name="focusPolicy">
                   <enum>Qt::FocusPolicy::NoFocus</enum>
                  </property>
+                 <property name="toolTip">
+                  <string>All of these formats are provided by YouTube itself, so the audio is not transcoded.</string>
+                 </property>
                  <item>
                   <property name="text">
                    <string>Opus</string>
@@ -435,9 +435,23 @@ the Audio-only mode plugin.</string>
               </widget>
              </item>
              <item>
+              <widget class="QCheckBox" name="checkBox_16">
+               <property name="toolTip">
+                <string>The system's yt-dlp will be used, if available.
+Make sure that the version of yt-dlp installed is 2025.11.12 or later.</string>
+               </property>
+               <property name="text">
+                <string>Prefer system yt-dlp</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QPushButton" name="pushButton">
                <property name="focusPolicy">
                 <enum>Qt::FocusPolicy::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>This will not remove the system version of yt-dlp - only the built-in version!</string>
                </property>
                <property name="text">
                 <string>Remove from device</string>
@@ -471,7 +485,8 @@ the Audio-only mode plugin.</string>
                 <enum>Qt::FocusPolicy::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>The system's FFmpeg will be used, if available.</string>
+                <string>The system's FFmpeg will be used, if available.
+If you encounter errors, make sure that yt-dlp is compatible with your version of FFmpeg.</string>
                </property>
                <property name="text">
                 <string>Prefer system FFmpeg</string>
@@ -484,7 +499,7 @@ the Audio-only mode plugin.</string>
                 <enum>Qt::FocusPolicy::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>This will not remove the system version of FFmpeg - only the built-in version.</string>
+                <string>This will not remove the system version of FFmpeg - only the built-in version!</string>
                </property>
                <property name="text">
                 <string>Remove from device</string>
@@ -512,7 +527,8 @@ the Audio-only mode plugin.</string>
                 <enum>Qt::FocusPolicy::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>The system's Deno will be used, if available.</string>
+                <string>The system's Deno will be used, if available.
+If you encounter errors, make sure that yt-dlp is compatible with your version of Deno.</string>
                </property>
                <property name="text">
                 <string>Prefer system Deno</string>
@@ -525,7 +541,7 @@ the Audio-only mode plugin.</string>
                 <enum>Qt::FocusPolicy::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>This will not remove the system version of Deno - only the built-in version.</string>
+                <string>This will not remove the system version of Deno - only the built-in version!</string>
                </property>
                <property name="text">
                 <string>Remove from device</string>
@@ -582,7 +598,8 @@ the Audio-only mode plugin.</string>
                   <enum>Qt::FocusPolicy::ClickFocus</enum>
                  </property>
                  <property name="toolTip">
-                  <string>To get more than 10 recognitions, obtain a token from the AudD API dashboard.</string>
+                  <string>To get more than 10 recognitions, obtain a token from the AudD API dashboard.
+Alternatively, please wait; recognitions should be restored shortly.</string>
                  </property>
                  <property name="placeholderText">
                   <string>Enter your AudD token here</string>
@@ -633,6 +650,9 @@ the Audio-only mode plugin.</string>
                  <property name="text">
                   <string>1s</string>
                  </property>
+                 <property name="alignment">
+                  <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+                 </property>
                 </widget>
                </item>
               </layout>
@@ -650,8 +670,8 @@ the Audio-only mode plugin.</string>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>20</width>
-              <height>0</height>
+              <width>275</width>
+              <height>196</height>
              </size>
             </property>
            </spacer>

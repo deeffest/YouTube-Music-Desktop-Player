@@ -1,3 +1,10 @@
+v1.27.0-rc2 is Here! (12.05.2026)
+- Added "Prefer system yt-dlp" setting.
+- Added some tooltips for settings items in settings dialog.
+- Added "windows11" style for Windows 11 (Fusion style is still using on other systems).
+- Fixed settings dialog size on linux (Cosmic DE).
+- Other fixes and improvements.
+
 v1.27.0-rc1 is Here! (08.05.2026)
 - Added lyrics dialog.
 - Added comments dialog.

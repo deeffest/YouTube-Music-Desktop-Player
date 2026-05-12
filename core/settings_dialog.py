@@ -69,7 +69,11 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         )
         self.pushButton_4.clicked.connect(delete_all_saved_cookies)
         self.checkBox_4.setChecked(self.window.use_cookies_setting)
-        self.checkBox_6.setChecked(self.window.auto_update_ytdlp_setting)
+        if self.window.prefer_system_ytdlp_setting == 0:
+            self.checkBox_6.setChecked(self.window.auto_update_ytdlp_setting)
+        else:
+            self.checkBox_6.setEnabled(False)
+            self.checkBox_6.setToolTip("Not available for the system yt-dlp.")
         self.checkBox_17.setChecked(self.window.embed_metadata_setting)
         self.comboBox_3.setCurrentIndex(
             1
@@ -136,6 +140,11 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         self.pushButton_3.clicked.connect(remove_deno_from_device)
         self.lineEdit.setText(self.window.audd_api_token_setting)
         self.label_6.setText(f"{self.window.audd_recording_lenght_setting}s")
+        self.label_6.setFixedWidth(
+            self.label_6.fontMetrics().horizontalAdvance(
+                str(self.horizontalSlider.maximum()) + "s"
+            )
+        )
         self.horizontalSlider.setValue(self.window.audd_recording_lenght_setting)
         self.horizontalSlider.valueChanged.connect(
             lambda value: self.label_6.setText(f"{value}s")
@@ -146,6 +155,7 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         if not platform.system() == "Windows":
             self.checkBox_14.setEnabled(False)
             self.checkBox_14.setToolTip("Works only on Windows.")
+        self.checkBox_16.setChecked(self.window.prefer_system_ytdlp_setting)
 
     def save_settings(self):
         self.window.save_last_win_geometry_setting = int(self.checkBox.isChecked())
@@ -225,16 +235,32 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         self.window.settings_.setValue(
             "win_thumbnail_buttons", self.window.win_thumbnail_buttons_setting
         )
+        self.window.prefer_system_ytdlp_setting = int(self.checkBox_16.isChecked())
+        self.window.settings_.setValue(
+            "prefer_system_ytdlp", self.window.prefer_system_ytdlp_setting
+        )
 
         self.close()
+
+    def fix_size(self):
+        hint = self.minimumSizeHint()
+        if self.width() < hint.width() or self.height() < hint.height():
+            self.resize(hint)
 
     def focusNextPrevChild(self, next):
         return False
 
     def showEvent(self, event):
         super().showEvent(event)
-        self.adjustSize()
-        self.setMinimumSize(self.size())
+        hint = self.minimumSizeHint()
+        current_min = self.minimumSize()
+        if hint.width() > current_min.width() or hint.height() > current_min.height():
+            self.setMinimumSize(hint)
+        self.fix_size()
+
+    def resizeEvent(self, event):
+        self.fix_size()
+        super().resizeEvent(event)
 
     def closeEvent(self, event):
         self.window.settings_dialog = None

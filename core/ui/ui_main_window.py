@@ -69,17 +69,6 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.url_label.sizePolicy().hasHeightForWidth())
         self.url_label.setSizePolicy(sizePolicy)
         self.url_label.setMinimumSize(QSize(30, 0))
-        self.url_label.setStyleSheet(u"QLabel {\n"
-"    color: rgb(210, 210, 210);\n"
-"    background-color: rgb(33, 33, 33);\n"
-"    border: 1px solid transparent;\n"
-"    border-radius: 6px;\n"
-"    padding: 3px 6px;\n"
-"}\n"
-"QLabel:hover {\n"
-"    border: 1px solid rgb(255, 41, 41);\n"
-"}\n"
-"")
 
         self.toolbar_layout.addWidget(self.url_label)
 
