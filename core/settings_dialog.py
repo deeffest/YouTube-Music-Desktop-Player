@@ -204,11 +204,12 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         self.window.settings_.setValue(
             "use_cookies", "true" if self.window.use_cookies_setting else "false"
         )
-        self.window.auto_update_ytdlp_setting = self.checkBox_6.isChecked()
-        self.window.settings_.setValue(
-            "auto_update_ytdlp",
-            "true" if self.window.auto_update_ytdlp_setting else "false",
-        )
+        if self.window.prefer_system_ytdlp_setting == 0:
+            self.window.auto_update_ytdlp_setting = self.checkBox_6.isChecked()
+            self.window.settings_.setValue(
+                "auto_update_ytdlp",
+                "true" if self.window.auto_update_ytdlp_setting else "false",
+            )
         self.window.embed_metadata_setting = int(self.checkBox_17.isChecked())
         self.window.settings_.setValue(
             "embed_metadata", self.window.embed_metadata_setting
