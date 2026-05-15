@@ -3,8 +3,8 @@ import shutil
 import platform
 import subprocess
 
-SHORT_NAME = "YTMDPlayer"
-VERSION = "v1.27.0-rc2"
+NAME = "YTMDPlayer"
+VERSION = "1.27.0"
 
 
 def main():
@@ -14,12 +14,12 @@ def main():
         print(f"Unsupported platform: {sys_platform}")
         exit(1)
 
-    dist_base = f"{SHORT_NAME}.dist"
-    dist_name = f"{SHORT_NAME}-{VERSION}-{platform_name}"
+    dist_base = f"{NAME}.dist"
+    dist_name = f"{NAME}-v{VERSION}-{platform_name}"
     base_output_dir = os.path.join(dist_base, dist_name)
     os.makedirs(base_output_dir, exist_ok=True)
 
-    script_path = os.path.abspath(f"{SHORT_NAME}.py")
+    script_path = os.path.abspath(f"{NAME}.py")
     icon_path = (
         os.path.abspath("resources/icons/icon.ico")
         if sys_platform == "Windows"
@@ -45,7 +45,7 @@ def main():
         "--distpath",
         base_output_dir,
         "--name",
-        SHORT_NAME,
+        NAME,
     ]
 
     if icon_path:
@@ -67,7 +67,7 @@ def main():
         print(f"Build failed: {e}")
 
     build_dir = os.path.join(os.getcwd(), "build")
-    spec_file = os.path.join(os.getcwd(), f"{SHORT_NAME}.spec")
+    spec_file = os.path.join(os.getcwd(), f"{NAME}.spec")
 
     if os.path.exists(build_dir):
         shutil.rmtree(build_dir)
@@ -78,7 +78,7 @@ def main():
         print("Removed spec file")
 
     def clean_dist(dist_dir):
-        internal_dir = os.path.join(dist_dir, SHORT_NAME, "_internal")
+        internal_dir = os.path.join(dist_dir, NAME, "_internal")
 
         core_dir = os.path.join(internal_dir, "core")
         if os.path.exists(core_dir):
