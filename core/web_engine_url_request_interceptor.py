@@ -1,6 +1,6 @@
 from PySide6.QtWebEngineCore import (
-    QWebEngineUrlRequestInterceptor,
     QWebEngineUrlRequestInfo,
+    QWebEngineUrlRequestInterceptor,
 )
 
 
@@ -9,7 +9,6 @@ class WebEngineUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
         url = info.requestUrl().toString()
         first_party = info.firstPartyUrl().toString()
         res_type = info.resourceType()
-        RT = QWebEngineUrlRequestInfo.ResourceType
 
         if "m.youtube.com" in first_party:
             info.setHttpHeader(
@@ -18,18 +17,18 @@ class WebEngineUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
                 b"Gecko/48.0 Firefox/48.0 KAIOS/2.5",
             )
 
-            strictly_blocked = (
-                RT.ResourceTypeMedia,
-                RT.ResourceTypeFontResource,
-                RT.ResourceTypeWorker,
-                RT.ResourceTypeSharedWorker,
-                RT.ResourceTypeServiceWorker,
-                RT.ResourceTypePing,
+            blocked_types = (
+                QWebEngineUrlRequestInfo.ResourceType.ResourceTypeMedia,
+                QWebEngineUrlRequestInfo.ResourceType.ResourceTypeFontResource,
+                QWebEngineUrlRequestInfo.ResourceType.ResourceTypeWorker,
+                QWebEngineUrlRequestInfo.ResourceType.ResourceTypeSharedWorker,
+                QWebEngineUrlRequestInfo.ResourceType.ResourceTypeServiceWorker,
+                QWebEngineUrlRequestInfo.ResourceType.ResourceTypePing,
             )
-            if res_type in strictly_blocked:
+            if res_type in blocked_types:
                 return info.block(True)
 
-            if res_type == RT.ResourceTypeXhr:
+            if res_type == QWebEngineUrlRequestInfo.ResourceType.ResourceTypeXhr:
                 if "/youtubei/v1/" in url:
                     essential_api = ("next", "comment", "get_panel", "flow")
                     if not any(a in url for a in essential_api):
@@ -37,16 +36,16 @@ class WebEngineUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
                 else:
                     return info.block(True)
 
-            patterns = (
+            blocked_substrings = (
                 "googleads",
                 "doubleclick",
                 "log_event",
                 "lottie",
                 "google.com/js",
             )
-            if any(p in url for p in patterns):
+            if any(p in url for p in blocked_substrings):
                 return info.block(True)
 
-            if res_type == RT.ResourceTypeImage:
+            if res_type == QWebEngineUrlRequestInfo.ResourceType.ResourceTypeImage:
                 if "yt3.ggpht.com" not in url and "fonts.gstatic.com" not in url:
                     info.block(True)

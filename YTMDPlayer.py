@@ -11,7 +11,7 @@ from core.application import SingletonApplication
 
 NAME = "Youtube-Music-Desktop-Player"
 DISPLAY_NAME = "YouTube Music Desktop Player"
-VERSION = "1.27.0-rc2"
+VERSION = "1.27.0"
 AUTHOR = "deeffest"
 WEBSITE = "deeffest.pythonanywhere.com"
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -171,18 +171,28 @@ def set_app_palette(app, theme_setting):
                 QColor(60, 60, 60),
             )
 
+            os_style_sheet = """
+                QToolTip {
+                    color: rgb(202, 202, 202);
+                    background-color: rgb(31, 31, 31);
+                    border: 1px solid rgb(202, 202, 202);
+                    padding: 2px;
+                }
+            """
+        else:
+            os_style_sheet = """
+                QWidget#scrollAreaWidgetContents {
+                    background-color: rgb(39, 39, 39);
+                }
+            """
+
         palette.setColor(QPalette.ColorRole.Highlight, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.Accent, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.Link, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.LinkVisited, ACCENT_COLOR)
 
         style_sheet = f"""
-            QToolTip {{
-                color: rgb(202, 202, 202);
-                background-color: rgb(31, 31, 31);
-                border: 1px solid rgb(202, 202, 202);
-                padding: 2px;
-            }}
+            {os_style_sheet}
 
             QFrame#ToolBar {{
                 background-color: rgb(39, 39, 39);
@@ -252,18 +262,28 @@ def set_app_palette(app, theme_setting):
                 QColor(200, 200, 200),
             )
 
+            os_style_sheet = """
+                QToolTip {
+                    color: rgb(53, 53, 53);
+                    background-color: rgb(245, 245, 245);
+                    border: 1px solid rgb(180, 180, 180);
+                    padding: 2px;
+                }
+            """
+        else:
+            os_style_sheet = """
+                QWidget#scrollAreaWidgetContents {
+                    background-color: rgb(240, 240, 240);
+                }
+            """
+
         palette.setColor(QPalette.ColorRole.Highlight, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.Accent, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.Link, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.LinkVisited, ACCENT_COLOR)
 
         style_sheet = f"""
-            QToolTip {{
-                color: rgb(53, 53, 53);
-                background-color: rgb(245, 245, 245);
-                border: 1px solid rgb(180, 180, 180);
-                padding: 2px;
-            }}
+            {os_style_sheet}
 
             QFrame#ToolBar {{
                 background-color: rgb(240, 240, 240);

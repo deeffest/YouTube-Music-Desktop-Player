@@ -2075,16 +2075,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                 "id": 1,
                                 "icon": f"{self.icon_folder}/previous-taskbar.png",
                                 "tooltip": "Previous",
+                                "flags": THBF_DISABLED,
                             },
                             {
                                 "id": 2,
                                 "icon": f"{self.icon_folder}/play-taskbar.png",
                                 "tooltip": "Play/Pause",
+                                "flags": THBF_DISABLED,
                             },
                             {
                                 "id": 3,
                                 "icon": f"{self.icon_folder}/next-taskbar.png",
                                 "tooltip": "Next",
+                                "flags": THBF_DISABLED,
                             },
                         ]
                     )
