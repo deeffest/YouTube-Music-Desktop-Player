@@ -18,7 +18,6 @@ from PySide6.QtCore import (
     QProcess,
     QIODevice,
     QTextStream,
-    QStandardPaths,
 )
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -98,11 +97,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.disable_frame_rate_limit_setting = disable_frame_rate_limit_setting
         self.name = app_info[0]
         self.display_name = app_info[1]
-        self.version = app_info[2]
-        self.author = app_info[3]
-        self.website = app_info[4]
-        self.current_dir = app_info[5]
-        self.home_dir = app_info[6]
+        self.short_name = app_info[2]
+        self.version = app_info[3]
+        self.author = app_info[4]
+        self.website = app_info[5]
+        self.current_dir = app_info[6]
+        self.home_dir = app_info[7]
+        self.data_dir = app_info[8]
 
         self.title = ""
         self.artist = ""
@@ -128,10 +129,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.default_geometry = QRect(get_geometry(1000, 799))
         self.default_home_url = "https://music.youtube.com/"
         self.system_tray_icon = None
-        local_data = QStandardPaths.writableLocation(
-            QStandardPaths.StandardLocation.AppLocalDataLocation
-        )
-        self.default_cookies_path = f"{local_data}/QtWebEngine/Default"
         self.comments_dialogs = {}
         self.lyrics_dialog = None
         self.settings_dialog = None
@@ -441,7 +438,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.webprofile = QWebEngineProfile(self)
         else:
             self.webprofile = QWebEngineProfile("Default", self)
-            self.webprofile.setPersistentStoragePath(self.default_cookies_path)
+            self.webprofile.setPersistentStoragePath(
+                f"{self.data_dir}/QtWebEngine/Default"
+            )
+            self.webprofile.setCachePath(f"{self.data_dir}/cache/QtWebEngine/Default")
 
         self.webinterceptor = WebEngineUrlRequestInterceptor()
         self.webprofile.setUrlRequestInterceptor(self.webinterceptor)

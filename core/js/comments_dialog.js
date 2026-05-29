@@ -8,6 +8,7 @@
         "ytm-slim-owner-renderer",
         "ytm-slim-video-action-bar-renderer",
         "ytm-item-section-renderer[section-identifier='related-items']",
+        "ad-slot-renderer",
     ];
 
     const setTheme = () => {
@@ -22,7 +23,7 @@
         const style = document.createElement("style");
         style.textContent = `
             * { animation: none !important; transition: none !important; will-change: auto !important; }
-            #app { overflow: hidden !important; }
+            #app { overflow: hidden !important; padding-top: 0 !important; }
             ::-webkit-scrollbar { width: 10px; height: 10px; }
             ::-webkit-scrollbar-track { background-color: transparent; }
             ::-webkit-scrollbar-corner { background-color: transparent; }
