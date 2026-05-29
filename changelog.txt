@@ -1,3 +1,8 @@
+v1.27.1 is Here! (30.05.2026)
+- Fixed .desktop file on linux.
+- Fixed padding and ads in comments dialog.
+- Other fixes and improvements.
+
 v1.27.0 is Here! (15.05.2026)
 ⚠️ Due to the upgrade to Qt6, you will need to log back into your account after updating the application!
 

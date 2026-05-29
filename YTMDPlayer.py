@@ -4,18 +4,26 @@ import socket
 import logging
 import platform
 
-from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QPalette, QColor
+from PySide6.QtCore import Qt, QSettings, QStandardPaths
 
 from core.application import SingletonApplication
 
 NAME = "Youtube-Music-Desktop-Player"
 DISPLAY_NAME = "YouTube Music Desktop Player"
-VERSION = "1.27.0"
+SHORT_NAME = "YTMDPlayer"
+VERSION = "1.27.1"
 AUTHOR = "deeffest"
 WEBSITE = "deeffest.pythonanywhere.com"
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 HOME_DIR = os.path.join(os.path.expanduser("~"), NAME)
+DATA_DIR = os.path.join(
+    QStandardPaths.writableLocation(
+        QStandardPaths.StandardLocation.AppLocalDataLocation
+    ),
+    AUTHOR,
+    NAME,
+)
 
 UNIQUE_KEY = f"{AUTHOR}.{NAME}"
 ACCENT_COLOR = QColor(255, 41, 41)
@@ -93,12 +101,11 @@ def set_desktop_icon():
     if platform.system() == "Linux":
         try:
             icon_path = os.path.join(CURRENT_DIR, "resources", "icons", "logo.png")
+            applications = os.path.expanduser("~/.local/share/applications")
+            desktop_path = f"{applications}/{NAME}.desktop"
             content = (
-                f"[Desktop Entry]\nType=Application\nName={NAME}"
-                f"\nIcon={icon_path}\nNoDisplay=true\nStartupWMClass={NAME}\n"
-            )
-            desktop_path = os.path.expanduser(
-                f"~/.local/share/applications/{NAME}.desktop"
+                f"[Desktop Entry]\nType=Application\nName={SHORT_NAME}"
+                f"\nIcon={icon_path}\nNoDisplay=true\nStartupWMClass={SHORT_NAME}\n"
             )
 
             if os.path.exists(desktop_path):
@@ -106,11 +113,9 @@ def set_desktop_icon():
                     if f.read() == content:
                         return
 
-            os.makedirs(os.path.dirname(desktop_path), exist_ok=True)
+            os.makedirs(applications, exist_ok=True)
             with open(desktop_path, "w") as f:
                 f.write(content)
-
-            os.system("update-desktop-database ~/.local/share/applications 2>/dev/null")
         except Exception as e:
             print(f"Failed to set desktop icon: {e}")
 
@@ -330,12 +335,12 @@ def main():
     from core.main_window import MainWindow
 
     app = SingletonApplication(sys.argv, UNIQUE_KEY)
-    app.setApplicationName(NAME)
+    app.setApplicationName(SHORT_NAME)
     app.setApplicationVersion(VERSION)
     app.setOrganizationName(AUTHOR)
     app.setOrganizationDomain(WEBSITE)
     app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
-    app.setDesktopFileName(NAME)
+    app.setDesktopFileName(SHORT_NAME)
 
     app.setStyle("windows11") if IS_WINDOWS_11 else app.setStyle("Fusion")
     if light_theme_setting == 0:
@@ -348,7 +353,17 @@ def main():
         app_settings,
         light_theme_setting,
         disable_frame_rate_limit_setting,
-        app_info=[NAME, DISPLAY_NAME, VERSION, AUTHOR, WEBSITE, CURRENT_DIR, HOME_DIR],
+        app_info=[
+            NAME,
+            DISPLAY_NAME,
+            SHORT_NAME,
+            VERSION,
+            AUTHOR,
+            WEBSITE,
+            CURRENT_DIR,
+            HOME_DIR,
+            DATA_DIR,
+        ],
     )
     app.aboutToQuit.connect(window.app_quit)
     window.show_window()
