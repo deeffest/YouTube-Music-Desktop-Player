@@ -19,9 +19,9 @@ if (typeof qt !== "undefined" && qt.webChannelTransport) {
             const src = document.querySelector(
                 ".thumbnail-image-wrapper .image.style-scope.ytmusic-player-bar",
             )?.src;
-            return src?.includes("lh3.googleusercontent.com")
+            return /w\d+-h\d+/.test(src)
                 ? src.replace(/w\d+-h\d+/, "w544-h544")
-                : src || "";
+                : src;
         };
 
         const updateSongInfo = () => {

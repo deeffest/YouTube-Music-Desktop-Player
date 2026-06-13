@@ -1638,7 +1638,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             large_image = self.artwork
             small_image = (
                 "https://cdn.discordapp.com/app-icons/1254202610781655050/"
-                "b4ede41d663f6caa7e45c6a042e447c9.png?size=32"
+                "7b17108b8163296be0fc10b7de248e70.png"
             )
             duration = self.duration
             project_url = f"https://github.com/{self.author}/{self.name}"
