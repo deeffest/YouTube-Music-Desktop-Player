@@ -10,4 +10,4 @@ numpy==2.5.0; sys_platform=="win32"
 comtypes==1.4.16; sys_platform=="win32"
 soundfile==0.14.0; sys_platform=="win32"
 pyaudiowpatch==0.2.12.8; sys_platform=="win32"
-git+https://github.com/deeffest/PyQt-Fluent-Widgets.git@53785c6
+git+https://github.com/deeffest/PyQt-Fluent-Widgets.git@5869960
