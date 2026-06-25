@@ -51,7 +51,7 @@ from qfluentwidgets import (
     InfoBarPosition,
 )
 from packaging import version as pkg_version
-from discordrpc import RPC, Button, Activity, ProgressBar
+from discordrpc import RPC, Button, Activity, progress_bar
 
 from core.helpers import (
     open_url,
@@ -110,8 +110,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.artwork = ""
         self.video_id = ""
         self.duration = 0
-        self.current_time = "0:00"
-        self.total_time = "0:00"
+        self.current_time = "0"
         self.song_state = "NoSong"
         self.song_status = "Indifferent"
         self.icon_folder = f"{self.current_dir}/resources/icons"
@@ -1651,7 +1650,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     large_image=large_image,
                     small_image=small_image,
                     act_type=Activity.Listening,
-                    **ProgressBar(0, duration),
+                    **progress_bar(0, duration),
                     buttons=[
                         Button("Play in Browser", video_url),
                         Button("Get App on GitHub", project_url),

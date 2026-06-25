@@ -174,8 +174,9 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         self.window.settings_.setValue("light_theme", self.window.light_theme_setting)
         self.window.icon_color_setting = int(self.comboBox_2.currentIndex())
         self.window.settings_.setValue("icon_color", self.window.icon_color_setting)
-        self.window.tray_icon_setting = int(self.checkBox_10.isChecked())
-        self.window.settings_.setValue("tray_icon", self.window.tray_icon_setting)
+        if QSystemTrayIcon.isSystemTrayAvailable():
+            self.window.tray_icon_setting = int(self.checkBox_10.isChecked())
+            self.window.settings_.setValue("tray_icon", self.window.tray_icon_setting)
         self.window.discord_rpc_setting = int(self.checkBox_11.isChecked())
         self.window.settings_.setValue("discord_rpc", self.window.discord_rpc_setting)
         self.window.hotkey_playback_control_setting = int(self.checkBox_13.isChecked())

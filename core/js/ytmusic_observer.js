@@ -103,21 +103,9 @@ if (typeof qt !== "undefined" && qt.webChannelTransport) {
             }
         };
 
-        const updateSongProgress = () => {
-            const [currentTime, totalTime] =
-                document
-                    .querySelector(".time-info.style-scope.ytmusic-player-bar")
-                    ?.textContent.trim()
-                    .split("/")
-                    .map((t) => t.trim()) || [];
-            if (
-                currentTime !== lastSongProgress.currentTime ||
-                totalTime !== lastSongProgress.totalTime
-            ) {
-                if (isAdPlaying()) return;
-                backend.song_progress_changed(currentTime, totalTime);
-                lastSongProgress = { currentTime, totalTime };
-            }
+        const updateSongProgress = (e) => {
+            if (isAdPlaying()) return;
+            backend.song_progress_changed(e.target.currentTime.toFixed(2));
         };
 
         const updateSongStatus = () => {
@@ -151,11 +139,6 @@ if (typeof qt !== "undefined" && qt.webChannelTransport) {
             subtree: true,
         });
         observe(
-            document.querySelector(".time-info.style-scope.ytmusic-player-bar"),
-            updateSongProgress,
-            { characterData: true, subtree: true },
-        );
-        observe(
             document.querySelector(
                 "ytmusic-player-bar ytmusic-like-button-renderer#like-button-renderer",
             ),
@@ -170,6 +153,7 @@ if (typeof qt !== "undefined" && qt.webChannelTransport) {
             video._ytBound = true;
             video.addEventListener("loadedmetadata", updateSongInfo);
             video.addEventListener("durationchange", updateSongInfo);
+            video.addEventListener("timeupdate", updateSongProgress);
         };
 
         addVideoListeners();
@@ -180,7 +164,6 @@ if (typeof qt !== "undefined" && qt.webChannelTransport) {
 
         updateSongInfo();
         updateSongState();
-        updateSongProgress();
         updateSongStatus();
     });
 }

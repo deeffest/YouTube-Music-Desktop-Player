@@ -1,5 +1,6 @@
 import os
 import re
+import bisect
 import logging
 from typing import TYPE_CHECKING
 
@@ -8,6 +9,8 @@ from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt, QThread, QSize, Signal
 from PySide6.QtWidgets import QDialog, QLabel, QFileDialog
 from qfluentwidgets import SplashScreen, Action, RoundMenu
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from core.helpers import recolor_icon, open_url
 from core.ui.ui_lyrics_dialog import Ui_LyricsDialog
@@ -21,38 +24,68 @@ class LoadLyricsThread(QThread):
     load_lyrics_failed = Signal()
     load_lyrics_error = Signal(str)
 
-    def __init__(self, title, artist, duration, parent=None):
+    def __init__(self, title, artist, duration, cache_dir, video_id, parent=None):
         super().__init__(parent)
         self.title = title
         self.artist = artist
         self.duration = duration
+        self.cache_dir = cache_dir
+        self.video_id = video_id
 
     def run(self):
+        cache_path = os.path.join(self.cache_dir, "lyrics", f"{self.video_id}.lrc")
+        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+
+        files = sorted(
+            [
+                os.path.join(self.cache_dir, "lyrics", f)
+                for f in os.listdir(os.path.join(self.cache_dir, "lyrics"))
+                if f.endswith(".lrc")
+            ],
+            key=os.path.getmtime,
+        )
+        while len(files) >= 100:
+            os.remove(files.pop(0))
+
+        def parse(lrc):
+            pattern = re.compile(r"\[(\d+):(\d+(?:\.\d+)?)\](.*)")
+            lines = []
+            for raw in lrc.splitlines():
+                m = pattern.match(raw.strip())
+                if m:
+                    t = int(m.group(1)) * 60 + float(m.group(2))
+                    lines.append((t, m.group(3).strip()))
+            return lines
+
+        if os.path.exists(cache_path):
+            with open(cache_path, encoding="utf-8") as f:
+                lrc = f.read()
+            lines = parse(lrc)
+            if lines:
+                self.load_lyrics_success.emit(lines)
+                return
+
+        session = requests.Session()
+        retry = Retry(total=2, backoff_factor=0.3)
+        session.mount("https://", HTTPAdapter(max_retries=retry))
+
         try:
-            resp = requests.get(
+            resp = session.get(
                 "https://lrclib.net/api/get",
                 params={
                     "track_name": self.title,
                     "artist_name": self.artist,
                     "duration": self.duration,
                 },
-                timeout=10,
+                timeout=15,
             )
             data = resp.json() if resp.status_code == 200 else {}
             lrc = data.get("syncedLyrics", "")
-
-            def parse(lrc):
-                pattern = re.compile(r"\[(\d+):(\d+(?:\.\d+)?)\](.*)")
-                lines = []
-                for raw in lrc.splitlines():
-                    m = pattern.match(raw.strip())
-                    if m:
-                        t = int(m.group(1)) * 60 + float(m.group(2))
-                        lines.append((t, m.group(3).strip()))
-                return lines
-
             lines = parse(lrc) if lrc else []
+
             if lines:
+                with open(cache_path, "w", encoding="utf-8") as f:
+                    f.write(lrc)
                 self.load_lyrics_success.emit(lines)
             else:
                 self.load_lyrics_failed.emit()
@@ -72,6 +105,7 @@ class LyricsDialog(QDialog, Ui_LyricsDialog):
 
         self.lines = []
         self.labels = []
+        self.timestamps = []
         self.current_index = -1
         self.load_lyrics_thread = None
         self.is_lyrics_loading = False
@@ -100,6 +134,7 @@ class LyricsDialog(QDialog, Ui_LyricsDialog):
         self.labels = []
         self.current_index = -1
         self.is_lyrics_loading = True
+        self.main_menu.setActionVisible(self.reload_lyrics_action, False)
         self.save_lyrics_as_action.setEnabled(False)
 
         while self.verticalLayout_4.count():
@@ -119,7 +154,12 @@ class LyricsDialog(QDialog, Ui_LyricsDialog):
             self.load_lyrics_thread.stop()
 
         self.load_lyrics_thread = LoadLyricsThread(
-            self.window.title, self.window.artist, self.window.duration, self
+            self.window.title,
+            self.window.artist,
+            self.window.duration,
+            self.window.cache_dir,
+            self.window.video_id,
+            self,
         )
         self.load_lyrics_thread.load_lyrics_success.connect(self.on_load_lyrics_success)
         self.load_lyrics_thread.load_lyrics_failed.connect(self.on_load_lyrics_failed)
@@ -132,6 +172,7 @@ class LyricsDialog(QDialog, Ui_LyricsDialog):
         self.save_lyrics_as_action.setEnabled(True)
 
         self.lines = lines
+        self.timestamps = [t for t, _ in lines]
         for _, text in lines:
             label = self.create_label(text)
             self.labels.append(label)
@@ -153,6 +194,7 @@ class LyricsDialog(QDialog, Ui_LyricsDialog):
 
     def on_load_lyrics_error(self, msg):
         self.is_lyrics_loading = False
+        self.main_menu.setActionVisible(self.reload_lyrics_action, True)
 
         self.verticalLayout_4.addWidget(self.create_label(msg, "red"))
 
@@ -161,6 +203,15 @@ class LyricsDialog(QDialog, Ui_LyricsDialog):
             self.splash_screen.hide()
 
     def create_actions(self):
+        self.reload_lyrics_action = Action("Reload lyrics")
+        self.reload_lyrics_action.setIcon(
+            recolor_icon(
+                f"{self.window.icon_folder}/reload.png",
+                self.window.light_theme_setting,
+            )
+        )
+        self.reload_lyrics_action.triggered.connect(self.load_lyrics)
+
         self.save_lyrics_as_action = Action("Save lyrics as...")
         self.save_lyrics_as_action.setIcon(
             recolor_icon(
@@ -209,6 +260,9 @@ class LyricsDialog(QDialog, Ui_LyricsDialog):
 
     def create_context_menus(self):
         self.main_menu = RoundMenu()
+        self.main_menu.addAction(self.reload_lyrics_action)
+        self.main_menu.setActionVisible(self.reload_lyrics_action, False)
+        self.main_menu.addSeparator()
         self.main_menu.addAction(self.save_lyrics_as_action)
         self.main_menu.addAction(self.powered_by_lrclib_action)
 
@@ -216,24 +270,8 @@ class LyricsDialog(QDialog, Ui_LyricsDialog):
         if not self.lines:
             return
 
-        def to_seconds(time_str):
-            try:
-                parts = time_str.strip().split(":")
-                return (
-                    int(parts[0]) * 60 + float(parts[1])
-                    if len(parts) == 2
-                    else float(parts[0])
-                )
-            except Exception:
-                return 0.0
-
-        seconds = to_seconds(current_time) + 1.0
-        idx = -1
-        for i, (t, _) in enumerate(self.lines):
-            if t <= seconds:
-                idx = i
-            else:
-                break
+        seconds = float(current_time)
+        idx = bisect.bisect_right(self.timestamps, seconds) - 1
 
         if idx == self.current_index:
             return
