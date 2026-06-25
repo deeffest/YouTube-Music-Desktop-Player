@@ -76,10 +76,9 @@ class WebChannelBackend(QObject):
         self.window.update_win_thumbnail_buttons_song_state()
         self.window.update_system_tray_icon_song_state()
 
-    @Slot(str, str)
-    def song_progress_changed(self, current_time, total_time):
+    @Slot(str)
+    def song_progress_changed(self, current_time):
         self.window.current_time = current_time
-        self.window.total_time = total_time
 
         if self.window.lyrics_dialog is not None:
             self.window.lyrics_dialog.sync_lyrics_to_time(current_time)

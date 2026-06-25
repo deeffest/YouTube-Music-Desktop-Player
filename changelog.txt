@@ -1,3 +1,8 @@
+v1.27.3-rc1 is Here! (25.06.2026)
+- Fixed app crash on machines without X86_V2 support.
+- Fixed lyrics dialog.
+- Other fixes and improvements.
+
 v1.27.2 is Here! (13.06.2026)
 - Fixed "Discord Rich Presence" feature.
 - Other fixes and improvements.
