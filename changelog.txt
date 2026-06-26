@@ -1,3 +1,7 @@
+v1.27.3-rc2 is Here! (26.06.2026)
+- Added support and builds for legacy Qt5.
+- Other fixes and improvements.
+
 v1.27.3-rc1 is Here! (25.06.2026)
 - Fixed app crash on machines without X86_V2 support.
 - Fixed lyrics dialog.

@@ -3,7 +3,7 @@ import shutil
 import platform
 import subprocess
 
-VERSION = "1.27.3-rc1"
+VERSION = "1.27.3-rc2"
 APP_NAME = "YTMDPlayer"
 
 
