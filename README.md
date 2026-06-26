@@ -33,12 +33,12 @@ or... add custom plugins! [Learn more](plugins/README.txt)
 Just download and extract ↓
 
 ### Linux
-[![Download tar.xz](https://img.shields.io/badge/Download%20Archive-.tar.xz-lightgrey?logo=linux&style=for-the-badge)](https://deeffest.pythonanywhere.com/ytmdplayer/latest_legacy_tar_xz)
+[![Download tar.xz](https://img.shields.io/badge/Download%20Archive-.tar.xz-lightgrey?logo=linux&style=for-the-badge)](https://deeffest.pythonanywhere.com/ytmdplayer/qt5_latest_tar_xz)
 
 ---
 
 ### Windows
-[![Download .rar](https://img.shields.io/badge/Download%20Archive-.rar-lightgrey?logo=windows&style=for-the-badge)](https://deeffest.pythonanywhere.com/ytmdplayer/latest_legacy_rar)
+[![Download .rar](https://img.shields.io/badge/Download%20Archive-.rar-lightgrey?logo=windows&style=for-the-badge)](https://deeffest.pythonanywhere.com/ytmdplayer/qt5_latest_rar)
 
 ## Disclaimer
 This application is unofficial and not affiliated with YouTube or Google Inc. "YouTube", "YouTube Music", and the "YouTube Logo" are registered trademarks of Google Inc. Use this application at your own risk. The author assumes no responsibility for the accounts you use to log in.

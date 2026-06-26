@@ -15,7 +15,7 @@ from core.application import SingletonApplication
 NAME = "Youtube-Music-Desktop-Player"
 DISPLAY_NAME = "YouTube Music Desktop Player"
 SHORT_NAME = "YTMDPlayer"
-VERSION = "1.27.3-rc1"
+VERSION = "1.27.3-rc2"
 AUTHOR = "deeffest"
 WEBSITE = "deeffest.pythonanywhere.com"
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -319,7 +319,12 @@ def main():
     from core.main_window import MainWindow
 
     app = SingletonApplication(
-        sys.argv + ["-platform", f"windows:darkmode={int(not light_theme_setting)}"],
+        sys.argv
+        + (
+            ["-platform", f"windows:darkmode={int(not light_theme_setting)}"]
+            if platform.system() == "Windows"
+            else []
+        ),
         UNIQUE_KEY,
     )
     app.setApplicationName(SHORT_NAME)

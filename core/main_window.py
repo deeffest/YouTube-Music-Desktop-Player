@@ -1007,7 +1007,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         card = AboutCard(
             f"{self.icon_folder}/logo.png",
             self.display_name,
-            f"Version: {self.version}",
+            f"Version: {self.version} (Qt5)",
             self,
         )
         card.setFixedSize(card.sizeHint())
@@ -2104,7 +2104,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self.play_pause()
                 elif event["type"] == "click" and event["id"] == 3:
                     self.next()
-            return False, 0
+        return False, 0
 
     def eventFilter(self, obj, event):
         if obj == self.ToolBar:

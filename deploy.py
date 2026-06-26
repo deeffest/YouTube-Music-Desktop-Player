@@ -3,7 +3,7 @@ import shutil
 import platform
 import subprocess
 
-VERSION = "1.27.3-rc1"
+VERSION = "1.27.3-rc2"
 APP_NAME = "YTMDPlayer"
 
 
@@ -15,7 +15,7 @@ def main():
         exit(1)
 
     dist_base = f"{APP_NAME}.dist"
-    dist_name = f"{APP_NAME}-v{VERSION}-{platform_name}"
+    dist_name = f"{APP_NAME}-v{VERSION}-{platform_name}-Qt5"
     base_output_dir = os.path.join(dist_base, dist_name)
     os.makedirs(base_output_dir, exist_ok=True)
 
