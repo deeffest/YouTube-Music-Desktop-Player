@@ -1,4 +1,4 @@
-from PySide6.QtWebEngineCore import (
+from PyQt5.QtWebEngineCore import (
     QWebEngineUrlRequestInfo,
     QWebEngineUrlRequestInterceptor,
 )

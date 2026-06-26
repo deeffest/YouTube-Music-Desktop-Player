@@ -3,9 +3,9 @@ import platform
 import subprocess
 from urllib.parse import urlparse
 
-from PySide6.QtCore import QRect, Qt
-from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QColor, QIcon, QPixmap, QPainter
+from PyQt5.QtCore import QRect, Qt
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QColor, QIcon, QPixmap, QPainter
 
 
 def str_to_bool(value):

@@ -54,7 +54,7 @@
           <bool>false</bool>
          </property>
          <property name="focusPolicy">
-          <enum>Qt::FocusPolicy::NoFocus</enum>
+          <enum>Qt::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>Back</string>
@@ -67,7 +67,7 @@
           <bool>false</bool>
          </property>
          <property name="focusPolicy">
-          <enum>Qt::FocusPolicy::NoFocus</enum>
+          <enum>Qt::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>Forward</string>
@@ -77,28 +77,12 @@
        <item>
         <widget class="TransparentToolButton" name="reload_tbutton">
          <property name="focusPolicy">
-          <enum>Qt::FocusPolicy::NoFocus</enum>
+          <enum>Qt::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>Reload</string>
          </property>
         </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Orientation::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Policy::Fixed</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>6</width>
-           <height>0</height>
-          </size>
-         </property>
-        </spacer>
        </item>
        <item>
         <widget class="BodyLabel" name="url_label">
@@ -120,25 +104,9 @@
         </widget>
        </item>
        <item>
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Orientation::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Policy::Fixed</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>6</width>
-           <height>0</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
         <widget class="TransparentDropDownToolButton" name="download_ddtbutton">
          <property name="focusPolicy">
-          <enum>Qt::FocusPolicy::NoFocus</enum>
+          <enum>Qt::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>Download</string>
@@ -168,7 +136,7 @@
        <item>
         <widget class="TransparentToolButtonWithMenu" name="settings_ddtbutton">
          <property name="focusPolicy">
-          <enum>Qt::FocusPolicy::NoFocus</enum>
+          <enum>Qt::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>Settings...</string>
@@ -178,7 +146,7 @@
        <item>
         <widget class="TransparentDropDownToolButton" name="plugins_ddtbutton">
          <property name="focusPolicy">
-          <enum>Qt::FocusPolicy::NoFocus</enum>
+          <enum>Qt::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>Plugins</string>
@@ -191,7 +159,7 @@
        <item>
         <widget class="TransparentToolButtonWithMenu" name="see_more_ddtbutton">
          <property name="focusPolicy">
-          <enum>Qt::FocusPolicy::NoFocus</enum>
+          <enum>Qt::NoFocus</enum>
          </property>
          <property name="toolTip">
           <string>See more</string>
@@ -205,9 +173,6 @@
      <layout class="QHBoxLayout" name="MainLayout">
       <item>
        <spacer name="verticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Orientation::Vertical</enum>
-        </property>
         <property name="sizeHint" stdset="0">
          <size>
           <width>0</width>

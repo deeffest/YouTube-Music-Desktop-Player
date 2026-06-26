@@ -1,8 +1,9 @@
 import platform
 from typing import TYPE_CHECKING
 
-from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QDialog, QSystemTrayIcon
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QDialog, QSystemTrayIcon
 
 from core.helpers import recolor_icon
 from core.ui.ui_settings_dialog import Ui_SettingsDialog
@@ -22,6 +23,7 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
     def configure_window(self):
         self.setupUi(self)
         self.setWindowIcon(QIcon(f"{self.window.icon_folder}/settings-colored.png"))
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
 
     def configure_ui_elements(self):
         def remove_deno_from_device():

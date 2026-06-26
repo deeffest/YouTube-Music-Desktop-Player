@@ -3,9 +3,9 @@ import logging
 import traceback
 from typing import List
 
-from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QSharedMemory, QIODevice
-from PySide6.QtNetwork import QLocalServer, QLocalSocket
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QSharedMemory, QIODevice
+from PyQt5.QtNetwork import QLocalServer, QLocalSocket
 
 from core.signal_bus import signal_bus
 

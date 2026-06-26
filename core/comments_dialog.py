@@ -2,11 +2,10 @@ import re
 import logging
 from typing import TYPE_CHECKING
 
-from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QDialog
-from PySide6.QtCore import QUrl, Qt, QSize
-from PySide6.QtWebEngineCore import QWebEnginePage
-from PySide6.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QDialog
+from PyQt5.QtCore import QUrl, Qt, QSize
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from qfluentwidgets import SplashScreen
 
 from core.ui.ui_comments_dialog import Ui_CommentsDialog
@@ -62,6 +61,7 @@ class CommentsDialog(QDialog, Ui_CommentsDialog):
         self.setWindowTitle(f"Comments │ {self.window.title}")
         self.setWindowIcon(QIcon(f"{self.window.icon_folder}/comments-colored.png"))
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
 
     def setup_web_engine(self):
         self.webpage = WebEnginePage(self.window.webprofile, self)

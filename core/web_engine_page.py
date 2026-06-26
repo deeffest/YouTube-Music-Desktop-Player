@@ -2,7 +2,7 @@ import re
 import logging
 from typing import TYPE_CHECKING
 
-from PySide6.QtWebEngineCore import QWebEnginePage
+from PyQt5.QtWebEngineWidgets import QWebEnginePage
 from qfluentwidgets import MessageBox
 
 from core.input_msg_box import InputMessageBox

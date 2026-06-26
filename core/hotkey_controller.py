@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import QThread, Signal
+from PyQt5.QtCore import QThread, pyqtSignal
 from pynput import keyboard
 
 if TYPE_CHECKING:
@@ -9,9 +9,9 @@ if TYPE_CHECKING:
 
 
 class HotkeyController(QThread):
-    play_pause = Signal()
-    previous = Signal()
-    next = Signal()
+    play_pause = pyqtSignal()
+    previous = pyqtSignal()
+    next = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)

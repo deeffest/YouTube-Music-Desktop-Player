@@ -43,13 +43,13 @@
      <item>
       <widget class="QScrollArea" name="scrollArea">
        <property name="frameShape">
-        <enum>QFrame::Shape::NoFrame</enum>
+        <enum>QFrame::NoFrame</enum>
        </property>
        <property name="verticalScrollBarPolicy">
-        <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+        <enum>Qt::ScrollBarAlwaysOff</enum>
        </property>
        <property name="horizontalScrollBarPolicy">
-        <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+        <enum>Qt::ScrollBarAlwaysOff</enum>
        </property>
        <property name="widgetResizable">
         <bool>true</bool>

@@ -9,7 +9,7 @@ ui_files = [
 
 for ui_file in ui_files:
     subprocess.run(
-        ["pyside6-uic", f"core/ui/{ui_file}.ui", "-o", f"core/ui/ui_{ui_file}.py"],
+        ["pyuic5", f"core/ui/{ui_file}.ui", "-o", f"core/ui/ui_{ui_file}.py"],
         check=True,
     )
     print(f"Converted {ui_file}.ui to ui_{ui_file}.py")

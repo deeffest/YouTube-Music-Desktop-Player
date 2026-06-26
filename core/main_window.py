@@ -6,7 +6,7 @@ import logging
 import platform
 from urllib.parse import urlparse, quote_plus
 
-from PySide6.QtCore import (
+from PyQt5.QtCore import (
     Qt,
     QUrl,
     QSize,
@@ -19,21 +19,23 @@ from PySide6.QtCore import (
     QIODevice,
     QTextStream,
 )
-from PySide6.QtWidgets import (
+from PyQt5.QtWidgets import (
+    QAction,
+    QShortcut,
     QFileDialog,
     QMainWindow,
     QApplication,
     QSystemTrayIcon,
 )
-from PySide6.QtTest import QTest
-from PySide6.QtWebEngineCore import (
+from PyQt5.QtTest import QTest
+from PyQt5.QtWebEngineWidgets import (
     QWebEnginePage,
     QWebEngineScript,
     QWebEngineProfile,
     QWebEngineSettings,
 )
-from PySide6.QtWebChannel import QWebChannel
-from PySide6.QtGui import QIcon, QKeySequence, QAction, QShortcut
+from PyQt5.QtWebChannel import QWebChannel
+from PyQt5.QtGui import QIcon, QKeySequence
 from qfluentwidgets import (
     Theme,
     Action,
@@ -1185,8 +1187,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         for item in filenames:
             filename, script_run_at = (item, run_at) if isinstance(item, str) else item
-            for script in scripts.find(filename):
-                scripts.remove(script)
+            for script in scripts.toList():
+                if script.name() == filename:
+                    scripts.remove(script)
             if enabled:
                 src = source or self.read_script(filename)
                 if config is not None:
@@ -1203,6 +1206,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.toggle_script("trustedtypes.js", True, run_at=1)
         self.toggle_script("greasemonkey.js", True, run_at=1)
         self.toggle_script("ytmusic_observer.js", True)
+        self.toggle_script("scrollbar_styles.js", True)
         if self.ad_blocker_setting == 1:
             self.toggle_script("skip_video_ads.js", True)
         if self.only_audio_mode_setting == 1:
@@ -1387,7 +1391,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def update_url_label(self, url):
         def lock_svg(locked):
-            icon_name = "lock.svg" if locked else "lock2.svg"
+            icon_name = (
+                f"lock1-{self.light_theme_setting}.svg"
+                if locked
+                else f"lock2-{self.light_theme_setting}.svg"
+            )
             icon_path = f"{self.icon_folder}/{icon_name}"
             with open(icon_path, "rb") as f:
                 b64 = base64.b64encode(f.read()).decode()

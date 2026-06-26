@@ -1,11 +1,14 @@
 import os
 import sys
+import shutil
 import socket
 import logging
 import platform
+import subprocess
 
-from PySide6.QtGui import QPalette, QColor
-from PySide6.QtCore import Qt, QSettings, QStandardPaths
+from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import Qt, QSettings, QStandardPaths
 
 from core.application import SingletonApplication
 
@@ -28,9 +31,6 @@ DATA_DIR = os.path.join(
 UNIQUE_KEY = f"{AUTHOR}.{NAME}"
 ACCENT_COLOR = QColor(255, 41, 41)
 DEBUG = not getattr(sys, "frozen", False)
-IS_WINDOWS_11 = (
-    platform.system() == "Windows" and sys.getwindowsversion().build >= 22000
-)
 
 
 def find_free_port():
@@ -127,72 +127,64 @@ def set_app_palette(app, theme_setting):
     palette = QPalette()
 
     if theme_setting == 0:
-        if not IS_WINDOWS_11:
-            palette.setColor(QPalette.ColorRole.Window, QColor(39, 39, 39))
-            palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
-            palette.setColor(QPalette.ColorRole.Base, QColor(32, 32, 32))
-            palette.setColor(QPalette.ColorRole.AlternateBase, QColor(43, 43, 43))
-            palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
-            palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(110, 110, 110))
-            palette.setColor(QPalette.ColorRole.BrightText, QColor(255, 41, 41))
-            palette.setColor(QPalette.ColorRole.Button, QColor(50, 50, 50))
-            palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
-            palette.setColor(QPalette.ColorRole.Light, QColor(55, 55, 55))
-            palette.setColor(QPalette.ColorRole.Midlight, QColor(52, 52, 52))
-            palette.setColor(QPalette.ColorRole.Mid, QColor(45, 45, 45))
-            palette.setColor(QPalette.ColorRole.Dark, QColor(30, 30, 30))
-            palette.setColor(QPalette.ColorRole.Shadow, QColor(10, 10, 10))
-            palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(31, 31, 31))
-            palette.setColor(QPalette.ColorRole.ToolTipText, QColor(202, 202, 202))
+        palette.setColor(QPalette.ColorRole.Window, QColor(39, 39, 39))
+        palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
+        palette.setColor(QPalette.ColorRole.Base, QColor(32, 32, 32))
+        palette.setColor(QPalette.ColorRole.AlternateBase, QColor(43, 43, 43))
+        palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
+        palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(110, 110, 110))
+        palette.setColor(QPalette.ColorRole.BrightText, QColor(255, 41, 41))
+        palette.setColor(QPalette.ColorRole.Button, QColor(50, 50, 50))
+        palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
+        palette.setColor(QPalette.ColorRole.Light, QColor(55, 55, 55))
+        palette.setColor(QPalette.ColorRole.Midlight, QColor(52, 52, 52))
+        palette.setColor(QPalette.ColorRole.Mid, QColor(45, 45, 45))
+        palette.setColor(QPalette.ColorRole.Dark, QColor(30, 30, 30))
+        palette.setColor(QPalette.ColorRole.Shadow, QColor(10, 10, 10))
+        palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(31, 31, 31))
+        palette.setColor(QPalette.ColorRole.ToolTipText, QColor(202, 202, 202))
 
-            palette.setColor(
-                QPalette.ColorGroup.Disabled,
-                QPalette.ColorRole.WindowText,
-                QColor(109, 109, 109),
-            )
-            palette.setColor(
-                QPalette.ColorGroup.Disabled,
-                QPalette.ColorRole.Text,
-                QColor(109, 109, 109),
-            )
-            palette.setColor(
-                QPalette.ColorGroup.Disabled,
-                QPalette.ColorRole.PlaceholderText,
-                QColor(70, 70, 70),
-            )
-            palette.setColor(
-                QPalette.ColorGroup.Disabled,
-                QPalette.ColorRole.ButtonText,
-                QColor(109, 109, 109),
-            )
-            palette.setColor(
-                QPalette.ColorGroup.Disabled,
-                QPalette.ColorRole.Base,
-                QColor(28, 28, 28),
-            )
-            palette.setColor(
-                QPalette.ColorGroup.Disabled,
-                QPalette.ColorRole.Highlight,
-                QColor(60, 60, 60),
-            )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled,
+            QPalette.ColorRole.WindowText,
+            QColor(109, 109, 109),
+        )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled,
+            QPalette.ColorRole.Text,
+            QColor(109, 109, 109),
+        )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled,
+            QPalette.ColorRole.PlaceholderText,
+            QColor(70, 70, 70),
+        )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled,
+            QPalette.ColorRole.ButtonText,
+            QColor(109, 109, 109),
+        )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled,
+            QPalette.ColorRole.Base,
+            QColor(28, 28, 28),
+        )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled,
+            QPalette.ColorRole.Highlight,
+            QColor(60, 60, 60),
+        )
 
-            os_style_sheet = """
-                QToolTip {
-                    color: rgb(202, 202, 202);
-                    background-color: rgb(31, 31, 31);
-                    border: 1px solid rgb(202, 202, 202);
-                    padding: 2px;
-                }
-            """
-        else:
-            os_style_sheet = """
-                QWidget#scrollAreaWidgetContents {
-                    background-color: rgb(39, 39, 39);
-                }
-            """
+        os_style_sheet = """
+            QToolTip {
+                color: rgb(202, 202, 202);
+                background-color: rgb(31, 31, 31);
+                border: 1px solid rgb(202, 202, 202);
+                padding: 2px;
+            }
+        """
 
         palette.setColor(QPalette.ColorRole.Highlight, ACCENT_COLOR)
-        palette.setColor(QPalette.ColorRole.Accent, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.Link, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.LinkVisited, ACCENT_COLOR)
 
@@ -218,72 +210,64 @@ def set_app_palette(app, theme_setting):
             }}
         """
     else:
-        if not IS_WINDOWS_11:
-            palette.setColor(QPalette.ColorRole.Window, QColor(240, 240, 240))
-            palette.setColor(QPalette.ColorRole.WindowText, QColor(30, 30, 30))
-            palette.setColor(QPalette.ColorRole.Base, QColor(255, 255, 255))
-            palette.setColor(QPalette.ColorRole.AlternateBase, QColor(233, 233, 233))
-            palette.setColor(QPalette.ColorRole.Text, QColor(30, 30, 30))
-            palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(160, 160, 160))
-            palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
-            palette.setColor(QPalette.ColorRole.Button, QColor(225, 225, 225))
-            palette.setColor(QPalette.ColorRole.ButtonText, QColor(30, 30, 30))
-            palette.setColor(QPalette.ColorRole.Light, QColor(255, 255, 255))
-            palette.setColor(QPalette.ColorRole.Midlight, QColor(227, 227, 227))
-            palette.setColor(QPalette.ColorRole.Mid, QColor(200, 200, 200))
-            palette.setColor(QPalette.ColorRole.Dark, QColor(160, 160, 160))
-            palette.setColor(QPalette.ColorRole.Shadow, QColor(100, 100, 100))
-            palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(245, 245, 245))
-            palette.setColor(QPalette.ColorRole.ToolTipText, QColor(53, 53, 53))
+        palette.setColor(QPalette.ColorRole.Window, QColor(240, 240, 240))
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(30, 30, 30))
+        palette.setColor(QPalette.ColorRole.Base, QColor(255, 255, 255))
+        palette.setColor(QPalette.ColorRole.AlternateBase, QColor(233, 233, 233))
+        palette.setColor(QPalette.ColorRole.Text, QColor(30, 30, 30))
+        palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(160, 160, 160))
+        palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+        palette.setColor(QPalette.ColorRole.Button, QColor(225, 225, 225))
+        palette.setColor(QPalette.ColorRole.ButtonText, QColor(30, 30, 30))
+        palette.setColor(QPalette.ColorRole.Light, QColor(255, 255, 255))
+        palette.setColor(QPalette.ColorRole.Midlight, QColor(227, 227, 227))
+        palette.setColor(QPalette.ColorRole.Mid, QColor(200, 200, 200))
+        palette.setColor(QPalette.ColorRole.Dark, QColor(160, 160, 160))
+        palette.setColor(QPalette.ColorRole.Shadow, QColor(100, 100, 100))
+        palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(245, 245, 245))
+        palette.setColor(QPalette.ColorRole.ToolTipText, QColor(53, 53, 53))
 
-            palette.setColor(
-                QPalette.ColorGroup.Disabled,
-                QPalette.ColorRole.WindowText,
-                QColor(160, 160, 160),
-            )
-            palette.setColor(
-                QPalette.ColorGroup.Disabled,
-                QPalette.ColorRole.Text,
-                QColor(160, 160, 160),
-            )
-            palette.setColor(
-                QPalette.ColorGroup.Disabled,
-                QPalette.ColorRole.PlaceholderText,
-                QColor(200, 200, 200),
-            )
-            palette.setColor(
-                QPalette.ColorGroup.Disabled,
-                QPalette.ColorRole.ButtonText,
-                QColor(160, 160, 160),
-            )
-            palette.setColor(
-                QPalette.ColorGroup.Disabled,
-                QPalette.ColorRole.Base,
-                QColor(235, 235, 235),
-            )
-            palette.setColor(
-                QPalette.ColorGroup.Disabled,
-                QPalette.ColorRole.Highlight,
-                QColor(200, 200, 200),
-            )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled,
+            QPalette.ColorRole.WindowText,
+            QColor(160, 160, 160),
+        )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled,
+            QPalette.ColorRole.Text,
+            QColor(160, 160, 160),
+        )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled,
+            QPalette.ColorRole.PlaceholderText,
+            QColor(200, 200, 200),
+        )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled,
+            QPalette.ColorRole.ButtonText,
+            QColor(160, 160, 160),
+        )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled,
+            QPalette.ColorRole.Base,
+            QColor(235, 235, 235),
+        )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled,
+            QPalette.ColorRole.Highlight,
+            QColor(200, 200, 200),
+        )
 
-            os_style_sheet = """
-                QToolTip {
-                    color: rgb(53, 53, 53);
-                    background-color: rgb(245, 245, 245);
-                    border: 1px solid rgb(180, 180, 180);
-                    padding: 2px;
-                }
-            """
-        else:
-            os_style_sheet = """
-                QWidget#scrollAreaWidgetContents {
-                    background-color: rgb(240, 240, 240);
-                }
-            """
+        os_style_sheet = """
+            QToolTip {
+                color: rgb(53, 53, 53);
+                background-color: rgb(245, 245, 245);
+                border: 1px solid rgb(180, 180, 180);
+                padding: 2px;
+            }
+        """
 
         palette.setColor(QPalette.ColorRole.Highlight, ACCENT_COLOR)
-        palette.setColor(QPalette.ColorRole.Accent, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.Link, ACCENT_COLOR)
         palette.setColor(QPalette.ColorRole.LinkVisited, ACCENT_COLOR)
 
@@ -334,7 +318,10 @@ def main():
 
     from core.main_window import MainWindow
 
-    app = SingletonApplication(sys.argv, UNIQUE_KEY)
+    app = SingletonApplication(
+        sys.argv + ["-platform", f"windows:darkmode={int(not light_theme_setting)}"],
+        UNIQUE_KEY,
+    )
     app.setApplicationName(SHORT_NAME)
     app.setApplicationVersion(VERSION)
     app.setOrganizationName(AUTHOR)
@@ -342,12 +329,22 @@ def main():
     app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
     app.setDesktopFileName(SHORT_NAME)
 
-    app.setStyle("windows11") if IS_WINDOWS_11 else app.setStyle("Fusion")
-    if light_theme_setting == 0:
-        app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
-    else:
-        app.styleHints().setColorScheme(Qt.ColorScheme.Light)
+    app.setStyle("Fusion")
     set_app_palette(app, light_theme_setting)
+
+    # https://stackoverflow.com/q/76724700/20546833
+    if platform.system() == "Windows":
+        sw_dir = os.path.expanduser(
+            f"~/AppData/Local/{AUTHOR}/{NAME}/QtWebEngine/Default/Service Worker"
+        )
+    else:
+        sw_dir = os.path.expanduser(
+            f"~/.local/share/{AUTHOR}/{NAME}/QtWebEngine/Default/Service Worker"
+        )
+    try:
+        shutil.rmtree(sw_dir)
+    except Exception as e:
+        logging.error(f"Failed to remove Service Worker: {str(e)}")
 
     window = MainWindow(
         app_settings,
@@ -371,5 +368,22 @@ def main():
     sys.exit(app.exec())
 
 
+def check_glx():
+    if "--child" in sys.argv:
+        app = QApplication([])  # noqa: F841
+        sys.exit(0)
+
+    env = os.environ.copy()
+    env["LD_PRELOAD"] = os.path.join(CURRENT_DIR, "core", "glx", "abort_override.so")
+
+    result = subprocess.run(
+        [sys.executable, sys.argv[0], "--child"], stdout=subprocess.DEVNULL, env=env
+    )
+    return result.returncode == 0
+
+
 if __name__ == "__main__":
+    if not platform.system() == "Windows" and not check_glx():
+        os.environ["QT_XCB_GL_INTEGRATION"] = "none"
+
     main()

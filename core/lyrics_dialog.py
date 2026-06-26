@@ -5,9 +5,9 @@ import logging
 from typing import TYPE_CHECKING
 
 import requests
-from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt, QThread, QSize, Signal
-from PySide6.QtWidgets import QDialog, QLabel, QFileDialog
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt, QThread, QSize, pyqtSignal
+from PyQt5.QtWidgets import QDialog, QLabel, QFileDialog
 from qfluentwidgets import SplashScreen, Action, RoundMenu
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -20,9 +20,9 @@ if TYPE_CHECKING:
 
 
 class LoadLyricsThread(QThread):
-    load_lyrics_success = Signal(list)
-    load_lyrics_failed = Signal()
-    load_lyrics_error = Signal(str)
+    load_lyrics_success = pyqtSignal(list)
+    load_lyrics_failed = pyqtSignal()
+    load_lyrics_error = pyqtSignal(str)
 
     def __init__(self, title, artist, duration, cache_dir, video_id, parent=None):
         super().__init__(parent)
@@ -120,6 +120,7 @@ class LyricsDialog(QDialog, Ui_LyricsDialog):
         self.setupUi(self)
         self.setWindowTitle(f"Lyrics │ {self.window.title}")
         self.setWindowIcon(QIcon(f"{self.window.icon_folder}/lyrics-colored.png"))
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
 
         self.splash_screen = SplashScreen(
             self.windowIcon(), self.scrollArea, enableTitleBar=False

@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
-from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QSystemTrayIcon, QApplication
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QSystemTrayIcon, QApplication
 from qfluentwidgets import SystemTrayMenu, Action
 
 from core.helpers import recolor_icon
