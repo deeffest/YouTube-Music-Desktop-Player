@@ -1387,7 +1387,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def update_url_label(self, url):
         def lock_svg(locked):
-            icon_name = "lock.svg" if locked else "lock2.svg"
+            icon_name = (
+                f"lock1-{self.light_theme_setting}.svg"
+                if locked
+                else f"lock2-{self.light_theme_setting}.svg"
+            )
             icon_path = f"{self.icon_folder}/{icon_name}"
             with open(icon_path, "rb") as f:
                 b64 = base64.b64encode(f.read()).decode()
