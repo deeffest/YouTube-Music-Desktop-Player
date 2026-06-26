@@ -1,14 +1,14 @@
 import sys
 import subprocess
 
-QT5 = [
-    "PyQt5-Fluent-Widgets",
-    "PyQt5-Frameless-Window",
+QT5 = [    
     "PyQt5",
     "PyQt5-Qt5",
     "PyQt5-sip",
     "PyQtWebEngine",
     "PyQtWebEngine-Qt5",
+    "PyQt5-Fluent-Widgets",
+    "PyQt5-Frameless-Window",
 ]
 
 subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", *QT5])
