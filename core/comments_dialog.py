@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import QUrl, Qt, QSize
 from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from qfluentwidgets import SplashScreen
+from qfluentwidgets6 import SplashScreen
 
 from core.ui.ui_comments_dialog import Ui_CommentsDialog
 

@@ -225,22 +225,22 @@
   <customwidget>
    <class>TransparentToolButton</class>
    <extends>QToolButton</extends>
-   <header>qfluentwidgets</header>
+   <header>qfluentwidgets6</header>
   </customwidget>
   <customwidget>
    <class>TransparentToolButtonWithMenu</class>
    <extends>QToolButton</extends>
-   <header>qfluentwidgets</header>
+   <header>qfluentwidgets6</header>
   </customwidget>
   <customwidget>
    <class>BodyLabel</class>
    <extends>QLabel</extends>
-   <header>qfluentwidgets</header>
+   <header>qfluentwidgets6</header>
   </customwidget>
   <customwidget>
    <class>TransparentDropDownToolButton</class>
    <extends>QToolButton</extends>
-   <header>qfluentwidgets</header>
+   <header>qfluentwidgets6</header>
   </customwidget>
  </customwidgets>
  <resources/>

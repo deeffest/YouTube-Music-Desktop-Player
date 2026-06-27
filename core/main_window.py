@@ -34,7 +34,7 @@ from PySide6.QtWebEngineCore import (
 )
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtGui import QIcon, QKeySequence, QAction, QShortcut
-from qfluentwidgets import (
+from qfluentwidgets6 import (
     Theme,
     Action,
     InfoBar,

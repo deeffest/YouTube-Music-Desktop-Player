@@ -8,7 +8,7 @@ import requests
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt, QThread, QSize, Signal
 from PySide6.QtWidgets import QDialog, QLabel, QFileDialog
-from qfluentwidgets import SplashScreen, Action, RoundMenu
+from qfluentwidgets6 import SplashScreen, Action, RoundMenu
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 

@@ -18,7 +18,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QMainWindow,
     QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
 
-from qfluentwidgets import (BodyLabel, TransparentDropDownToolButton, TransparentToolButton, TransparentToolButtonWithMenu)
+from qfluentwidgets6 import (BodyLabel, TransparentDropDownToolButton, TransparentToolButton, TransparentToolButtonWithMenu)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):

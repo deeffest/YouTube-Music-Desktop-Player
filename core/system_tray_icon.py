@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QSystemTrayIcon, QApplication
-from qfluentwidgets import SystemTrayMenu, Action
+from qfluentwidgets6 import SystemTrayMenu, Action
 
 from core.helpers import recolor_icon
 

@@ -1,4 +1,4 @@
-from qfluentwidgets import MessageBoxBase, SubtitleLabel, TextEdit
+from qfluentwidgets6 import MessageBoxBase, SubtitleLabel, TextEdit
 
 
 class TextViewMessageBox(MessageBoxBase):
