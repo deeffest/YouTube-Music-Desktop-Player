@@ -62,7 +62,15 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         self.checkBox_13.setChecked(self.window.hotkey_playback_control_setting)
         self.checkBox_8.setChecked(self.window.fullscreen_mode_support_setting)
         self.checkBox_9.setChecked(self.window.support_animated_scrolling_setting)
-        self.checkBox_12.setChecked(self.window.disable_frame_rate_limit_setting)
+        self.comboBox.setCurrentIndex(
+            1
+            if self.window.opengl_enviroment_setting == "Desktop"
+            else (
+                2
+                if self.window.opengl_enviroment_setting == "Angle"
+                else 3 if self.window.opengl_enviroment_setting == "Software" else 0
+            )
+        )
         self.checkBox_15.setChecked(self.window.do_not_save_cookies_setting)
         self.pushButton_4.setIcon(
             recolor_icon(
@@ -195,9 +203,17 @@ class SettingsDialog(QDialog, Ui_SettingsDialog):
         self.window.settings_.setValue(
             "support_animated_scrolling", self.window.support_animated_scrolling_setting
         )
-        self.window.disable_frame_rate_limit_setting = int(self.checkBox_12.isChecked())
+        self.window.opengl_enviroment_setting = (
+            "Desktop"
+            if self.comboBox.currentIndex() == 1
+            else (
+                "Angle"
+                if self.comboBox.currentIndex() == 2
+                else "Software" if self.comboBox.currentIndex() == 3 else "Auto"
+            )
+        )
         self.window.settings_.setValue(
-            "disable_frame_rate_limit", self.window.disable_frame_rate_limit_setting
+            "opengl_enviroment", self.window.opengl_enviroment_setting
         )
         self.window.do_not_save_cookies_setting = int(self.checkBox_15.isChecked())
         self.window.settings_.setValue(

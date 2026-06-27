@@ -36,7 +36,7 @@ from PyQt5.QtWebEngineWidgets import (
 )
 from PyQt5.QtWebChannel import QWebChannel
 from PyQt5.QtGui import QIcon, QKeySequence
-from qfluentwidgets import (
+from qfluentwidgets5 import (
     Theme,
     Action,
     InfoBar,
@@ -89,14 +89,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(
         self,
         app_settings,
+        opengl_enviroment_setting,
         light_theme_setting,
-        disable_frame_rate_limit_setting,
         app_info,
     ):
         super().__init__()
         self.settings_ = app_settings
+        self.opengl_enviroment_setting = opengl_enviroment_setting
         self.light_theme_setting = light_theme_setting
-        self.disable_frame_rate_limit_setting = disable_frame_rate_limit_setting
         self.name = app_info[0]
         self.display_name = app_info[1]
         self.short_name = app_info[2]

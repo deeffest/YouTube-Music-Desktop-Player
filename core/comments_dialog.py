@@ -6,7 +6,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import QUrl, Qt, QSize
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
-from qfluentwidgets import SplashScreen
+from qfluentwidgets5 import SplashScreen
 
 from core.ui.ui_comments_dialog import Ui_CommentsDialog
 

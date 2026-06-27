@@ -85,6 +85,22 @@
         </widget>
        </item>
        <item>
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>6</width>
+           <height>0</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
         <widget class="BodyLabel" name="url_label">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -102,6 +118,22 @@
           <string>music.youtube.com</string>
          </property>
         </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>6</width>
+           <height>0</height>
+          </size>
+         </property>
+        </spacer>
        </item>
        <item>
         <widget class="TransparentDropDownToolButton" name="download_ddtbutton">
@@ -173,6 +205,9 @@
      <layout class="QHBoxLayout" name="MainLayout">
       <item>
        <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
         <property name="sizeHint" stdset="0">
          <size>
           <width>0</width>
@@ -190,22 +225,22 @@
   <customwidget>
    <class>TransparentToolButton</class>
    <extends>QToolButton</extends>
-   <header>qfluentwidgets</header>
+   <header>qfluentwidgets5</header>
   </customwidget>
   <customwidget>
    <class>TransparentToolButtonWithMenu</class>
    <extends>QToolButton</extends>
-   <header>qfluentwidgets</header>
+   <header>qfluentwidgets5</header>
   </customwidget>
   <customwidget>
    <class>BodyLabel</class>
    <extends>QLabel</extends>
-   <header>qfluentwidgets</header>
+   <header>qfluentwidgets5</header>
   </customwidget>
   <customwidget>
    <class>TransparentDropDownToolButton</class>
    <extends>QToolButton</extends>
-   <header>qfluentwidgets</header>
+   <header>qfluentwidgets5</header>
   </customwidget>
  </customwidgets>
  <resources/>

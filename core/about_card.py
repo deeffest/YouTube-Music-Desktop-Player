@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
-from qfluentwidgets import AvatarWidget, BodyLabel, CaptionLabel
+from qfluentwidgets5 import AvatarWidget, BodyLabel, CaptionLabel
 
 if TYPE_CHECKING:
     from core.main_window import MainWindow

@@ -41,6 +41,8 @@ class Ui_MainWindow(object):
         self.reload_tbutton.setFocusPolicy(QtCore.Qt.NoFocus)
         self.reload_tbutton.setObjectName("reload_tbutton")
         self.toolbar_layout.addWidget(self.reload_tbutton)
+        spacerItem = QtWidgets.QSpacerItem(6, 0, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.toolbar_layout.addItem(spacerItem)
         self.url_label = BodyLabel(self.ToolBar)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -50,6 +52,8 @@ class Ui_MainWindow(object):
         self.url_label.setMinimumSize(QtCore.QSize(30, 0))
         self.url_label.setObjectName("url_label")
         self.toolbar_layout.addWidget(self.url_label)
+        spacerItem1 = QtWidgets.QSpacerItem(6, 0, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.toolbar_layout.addItem(spacerItem1)
         self.download_ddtbutton = TransparentDropDownToolButton(self.ToolBar)
         self.download_ddtbutton.setFocusPolicy(QtCore.Qt.NoFocus)
         self.download_ddtbutton.setObjectName("download_ddtbutton")
@@ -78,8 +82,8 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.ToolBar)
         self.MainLayout = QtWidgets.QHBoxLayout()
         self.MainLayout.setObjectName("MainLayout")
-        spacerItem = QtWidgets.QSpacerItem(0, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.MainLayout.addItem(spacerItem)
+        spacerItem2 = QtWidgets.QSpacerItem(0, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.MainLayout.addItem(spacerItem2)
         self.verticalLayout.addLayout(self.MainLayout)
         MainWindow.setCentralWidget(self.centralwidget)
 
@@ -99,4 +103,4 @@ class Ui_MainWindow(object):
         self.settings_ddtbutton.setToolTip(_translate("MainWindow", "Settings..."))
         self.plugins_ddtbutton.setToolTip(_translate("MainWindow", "Plugins"))
         self.see_more_ddtbutton.setToolTip(_translate("MainWindow", "See more"))
-from qfluentwidgets import BodyLabel, TransparentDropDownToolButton, TransparentToolButton, TransparentToolButtonWithMenu
+from qfluentwidgets5 import BodyLabel, TransparentDropDownToolButton, TransparentToolButton, TransparentToolButtonWithMenu

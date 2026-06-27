@@ -15,7 +15,7 @@ from core.application import SingletonApplication
 NAME = "Youtube-Music-Desktop-Player"
 DISPLAY_NAME = "YouTube Music Desktop Player"
 SHORT_NAME = "YTMDPlayer"
-VERSION = "1.27.3-rc2"
+VERSION = "1.27.3"
 AUTHOR = "deeffest"
 WEBSITE = "deeffest.pythonanywhere.com"
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -46,6 +46,19 @@ def init_app_settings():
     if app_settings.value("disable_frame_rate_limit") is None:
         app_settings.setValue("disable_frame_rate_limit", 0)
     return app_settings
+
+
+def setup_opengl_environment(app_settings):
+    setting = app_settings.value("opengl_enviroment")
+    if setting == "Desktop":
+        os.environ["QT_OPENGL"] = "desktop"
+    elif setting == "Angle":
+        os.environ["QT_OPENGL"] = "angle"
+    elif setting == "Software":
+        os.environ["QT_OPENGL"] = "software"
+    else:
+        os.environ.pop("QT_OPENGL", None)
+    return setting
 
 
 def hide_home_folder():
@@ -303,16 +316,11 @@ def main():
     set_desktop_icon()
 
     app_settings = init_app_settings()
+    opengl_setting = setup_opengl_environment(app_settings)
     light_theme_setting = int(app_settings.value("light_theme"))
-    disable_frame_rate_limit_setting = int(
-        app_settings.value("disable_frame_rate_limit")
-    )
 
-    os.environ.pop("QTWEBENGINE_CHROMIUM_FLAGS", None)
     os.environ.pop("QTWEBENGINE_REMOTE_DEBUGGING", None)
 
-    if disable_frame_rate_limit_setting == 1:
-        os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-frame-rate-limit"
     if DEBUG:
         os.environ["QTWEBENGINE_REMOTE_DEBUGGING"] = str(find_free_port())
 
@@ -353,8 +361,8 @@ def main():
 
     window = MainWindow(
         app_settings,
+        opengl_setting,
         light_theme_setting,
-        disable_frame_rate_limit_setting,
         app_info=[
             NAME,
             DISPLAY_NAME,

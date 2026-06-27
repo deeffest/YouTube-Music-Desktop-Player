@@ -275,14 +275,53 @@
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_6">
              <item>
-              <widget class="QCheckBox" name="checkBox_12">
-               <property name="toolTip">
-                <string>This setting removes the 60 FPS limit, but may consume more CPU resources.</string>
-               </property>
-               <property name="text">
-                <string>Disable frame rate limit</string>
-               </property>
-              </widget>
+              <layout class="QHBoxLayout" name="horizontalLayout">
+               <item>
+                <widget class="QLabel" name="label_2">
+                 <property name="text">
+                  <string>OpenGL backend</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QComboBox" name="comboBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>ANGLE is recommended if you have a working graphics card.
+
+• Auto: Automatic selection based on system.
+• Desktop: Native OpenGL implementation.
+• ANGLE: OpenGL over Direct3D.
+• Software: Software-based rendering.</string>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>Auto</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Desktop</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>ANGLE</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Software</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+              </layout>
              </item>
             </layout>
            </widget>

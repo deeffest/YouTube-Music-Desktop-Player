@@ -3,7 +3,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from PyQt5.QtWebEngineWidgets import QWebEnginePage
-from qfluentwidgets import MessageBox
+from qfluentwidgets5 import MessageBox
 
 from core.input_msg_box import InputMessageBox
 

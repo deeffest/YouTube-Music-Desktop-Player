@@ -8,7 +8,7 @@ import requests
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QThread, QSize, pyqtSignal
 from PyQt5.QtWidgets import QDialog, QLabel, QFileDialog
-from qfluentwidgets import SplashScreen, Action, RoundMenu
+from qfluentwidgets5 import SplashScreen, Action, RoundMenu
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 

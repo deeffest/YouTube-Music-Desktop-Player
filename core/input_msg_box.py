@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QTimer
-from qfluentwidgets import MessageBoxBase, SubtitleLabel, LineEdit
+from qfluentwidgets5 import MessageBoxBase, SubtitleLabel, LineEdit
 
 
 class InputMessageBox(MessageBoxBase):
