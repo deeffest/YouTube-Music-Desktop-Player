@@ -12,7 +12,7 @@ from core.application import SingletonApplication
 NAME = "Youtube-Music-Desktop-Player"
 DISPLAY_NAME = "YouTube Music Desktop Player"
 SHORT_NAME = "YTMDPlayer"
-VERSION = "1.27.3-rc2"
+VERSION = "1.27.3"
 AUTHOR = "deeffest"
 WEBSITE = "deeffest.pythonanywhere.com"
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
